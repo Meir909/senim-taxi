@@ -552,6 +552,27 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      topup_wallet: {
+        Args: { _amount: number; _card_last4: string }
+        Returns: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          metadata: Json
+          ride_id: string | null
+          status: Database["public"]["Enums"]["tx_status"]
+          type: Database["public"]["Enums"]["tx_type"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "transactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "passenger" | "driver" | "admin"
