@@ -162,18 +162,31 @@ function ProfilePage() {
         </form>
       </Card>
 
-      {isDriver && driver && (
-        <VehicleCard
-          driver={driver}
-          onSaved={(d) => setDriver(d)}
-        />
+      {hasDriverApplication && driver && (
+        <VehicleCard driver={driver} onSaved={(d) => setDriver(d)} />
       )}
 
-      {!isDriver && (
+      {!hasDriverApplication && (
         <Card className="p-5">
           <h2 className="font-semibold">Хотите водить?</h2>
           <p className="mt-1 text-sm text-muted-foreground">Добавьте данные авто и начните зарабатывать.</p>
           <Button asChild className="mt-3 w-full"><Link to="/become-driver">Стать водителем</Link></Button>
+        </Card>
+      )}
+
+      {hasDriverApplication && !isDriver && (
+        <Card className="p-5">
+          <h2 className="font-semibold">Заявка водителя</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {driverVerification === "pending"
+              ? "Документы на проверке у администратора. Доступ к разделу водителя откроется после одобрения."
+              : "Заявка отклонена. Обновите данные и подайте повторно."}
+          </p>
+          {driverVerification === "rejected" && (
+            <Button asChild className="mt-3 w-full" variant="outline">
+              <Link to="/become-driver">Подать заново</Link>
+            </Button>
+          )}
         </Card>
       )}
 
