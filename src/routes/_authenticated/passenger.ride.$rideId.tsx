@@ -211,6 +211,7 @@ function RideView() {
         driver={driver}
         driverProfile={driverProfile}
         driverLoc={driverLoc}
+        locError={locError}
         onCancel={cancel}
         cancelling={cancelling}
       />
