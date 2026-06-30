@@ -83,7 +83,7 @@ function VerifyIdentity() {
         _gender: parsed.gender,
         _selfie_path: path,
         _ai_confidence: confidence,
-        _ai_reason: result.reason ?? null,
+        _ai_reason: result.reason ?? "",
       });
       if (error) throw error;
       setResultStatus(data?.status ?? "manual_review");
