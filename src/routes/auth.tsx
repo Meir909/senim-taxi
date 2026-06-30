@@ -308,7 +308,8 @@ function AuthPage() {
                 )}
                 <div className="space-y-1.5">
                   <Label htmlFor="phone_signup">Телефон</Label>
-                  <Input id="phone_signup" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+7 700 000 00 00" maxLength={20} required autoComplete="tel" />
+                  <Input id="phone_signup" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(formatKzPhone(e.target.value))} placeholder="+7 700 000 00 00" maxLength={20} required autoComplete="tel" />
+
                 </div>
                 <Field label="Email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
                 <Field label="Пароль" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
