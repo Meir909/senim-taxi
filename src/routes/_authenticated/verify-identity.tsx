@@ -153,6 +153,18 @@ function VerifyIdentity() {
           </div>
         </div>
 
+        {priorStatus && step === "form" && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>
+              {priorStatus === "rejected" ? "Заявка отклонена" : "Требуется повторная отправка"}
+            </AlertTitle>
+            <AlertDescription>
+              {priorReason || "Данные не прошли проверку. Сервис доступен только женщинам 18+. Отправьте заявку повторно с корректными данными."}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {step === "form" && (
           <form onSubmit={submitForm} className="mt-5 space-y-4">
             <div className="space-y-1.5">
