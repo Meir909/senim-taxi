@@ -41,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 });
 
 function ProfilePage() {
-  const { user, isDriver, roles, signOut } = useAuth();
+  const { user, isDriver, hasDriverApplication, driverVerification, roles, signOut } = useAuth();
   const isAdmin = roles.includes("admin");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
@@ -53,7 +53,7 @@ function ProfilePage() {
     void (async () => {
       const [{ data: p }, { data: d }, { count }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-        isDriver
+        hasDriverApplication
           ? supabase.from("drivers").select("*").eq("id", user.id).maybeSingle()
           : Promise.resolve({ data: null as Driver | null }),
         supabase
@@ -66,7 +66,7 @@ function ProfilePage() {
       setDriver(d);
       setRideCount(count ?? 0);
     })();
-  }, [user, isDriver]);
+  }, [user, isDriver, hasDriverApplication]);
 
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
