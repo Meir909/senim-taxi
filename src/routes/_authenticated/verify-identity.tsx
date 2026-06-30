@@ -39,6 +39,7 @@ function VerifyIdentity() {
   const [busy, setBusy] = useState(false);
   const [priorStatus, setPriorStatus] = useState<string | null>(null);
   const [priorReason, setPriorReason] = useState<string | null>(null);
+  const [iinRejection, setIinRejection] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
