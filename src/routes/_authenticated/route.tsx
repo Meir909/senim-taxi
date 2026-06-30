@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Car, Wallet, User as UserIcon, LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Bell } from "lucide-react";
+import { useRealtimeNotifications } from "@/lib/notifications";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -13,6 +15,7 @@ function AuthLayout() {
   const { user, loading, isDriver, signOut } = useAuth();
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const { permission, requestPermission } = useRealtimeNotifications();
 
   useEffect(() => {
     if (!loading && !user) void navigate({ to: "/auth", replace: true });
@@ -34,9 +37,16 @@ function AuthLayout() {
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground"><Car className="h-4 w-4" /></div>
             <span className="font-semibold">RideNow</span>
           </Link>
-          <Button variant="ghost" size="sm" onClick={async () => { await signOut(); void navigate({ to: "/auth", replace: true }); }}>
-            <LogOut className="mr-1.5 h-4 w-4" /> Sign out
-          </Button>
+          <div className="flex items-center gap-1">
+            {permission !== "granted" && (
+              <Button variant="ghost" size="sm" onClick={() => void requestPermission()} title="Enable notifications">
+                <Bell className="h-4 w-4" />
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={async () => { await signOut(); void navigate({ to: "/auth", replace: true }); }}>
+              <LogOut className="mr-1.5 h-4 w-4" /> Sign out
+            </Button>
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6"><Outlet /></main>
