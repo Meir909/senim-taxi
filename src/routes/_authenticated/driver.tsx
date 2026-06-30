@@ -44,7 +44,7 @@ const RIDE_STATUS_RU: Partial<Record<Ride["status"], string>> = {
 };
 
 function DriverHome() {
-  const { user, isDriver } = useAuth();
+  const { user, isDriver, hasDriverApplication, driverVerification } = useAuth();
   const [driver, setDriver] = useState<Driver | null>(null);
   const [loading, setLoading] = useState(true);
   const [offers, setOffers] = useState<Offer[]>([]);
