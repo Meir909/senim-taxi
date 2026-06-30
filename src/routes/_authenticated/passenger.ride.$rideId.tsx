@@ -454,6 +454,7 @@ function AwaitingDriverScreen({
   driver,
   driverProfile,
   driverLoc,
+  locError,
   onCancel,
   cancelling,
 }: {
@@ -461,10 +462,11 @@ function AwaitingDriverScreen({
   driver: Driver | null;
   driverProfile: Profile | null;
   driverLoc: Loc | null;
+  locError: string | null;
   onCancel: () => void | Promise<void>;
   cancelling?: boolean;
 }) {
-  const [elapsed, setElapsed] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const [confirmCancel, setConfirmCancel] = useState(false);
   const startedAt = useMemo(
     () => new Date(ride.accepted_at ?? ride.requested_at).getTime(),
@@ -472,17 +474,29 @@ function AwaitingDriverScreen({
   );
 
   useEffect(() => {
-    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
-    tick();
-    const i = window.setInterval(tick, 1000);
+    setNow(Date.now());
+    const i = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(i);
-  }, [startedAt]);
+  }, []);
+
+  const elapsed = Math.max(0, Math.floor((now - startedAt) / 1000));
 
   const distanceKm = driverLoc
     ? haversineKm({ lat: driverLoc.lat, lng: driverLoc.lng }, { lat: ride.pickup_lat, lng: ride.pickup_lng })
     : null;
   // ~30 км/ч в городе → 2 мин/км, минимум 1 мин
   const etaMin = distanceKm != null ? Math.max(1, Math.round(distanceKm * 2)) : null;
+  const locAgeSec = driverLoc ? Math.max(0, Math.floor((now - new Date(driverLoc.updated_at).getTime()) / 1000)) : null;
+  const stale = locAgeSec != null && locAgeSec > 20;
+  const freshness =
+    locAgeSec == null
+      ? "ожидаем координаты…"
+      : locAgeSec < 5
+        ? "только что"
+        : locAgeSec < 60
+          ? `${locAgeSec} сек назад`
+          : `${Math.floor(locAgeSec / 60)} мин назад`;
+
 
   const tariff = TARIFFS[(ride.tariff as keyof typeof TARIFFS) ?? "standard"] ?? TARIFFS.standard;
   const driverName =
