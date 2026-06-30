@@ -26,6 +26,15 @@ const passwordSchema = z.string().min(6, "Минимум 6 символов").ma
 const nameSchema = z.string().trim().min(1, "Обязательное поле").max(60);
 const phoneSchema = z.string().trim().regex(/^\+?[0-9\s\-()]{7,20}$/, "Неверный телефон");
 
+function formatKzPhone(input: string): string {
+  // Keep only digits; auto-prepend "+" for KZ numbers (starting with 7 or 8→7).
+  let digits = input.replace(/\D/g, "");
+  if (digits.startsWith("8")) digits = "7" + digits.slice(1);
+  if (digits.length === 0) return "";
+  if (digits[0] !== "7") return "+" + digits;
+  return "+" + digits.slice(0, 11);
+}
+
 type SignupStep = "form" | "selfie1" | "selfie2" | "submitting";
 
 function AuthPage() {
@@ -308,7 +317,8 @@ function AuthPage() {
                 )}
                 <div className="space-y-1.5">
                   <Label htmlFor="phone_signup">Телефон</Label>
-                  <Input id="phone_signup" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+7 700 000 00 00" maxLength={20} required autoComplete="tel" />
+                  <Input id="phone_signup" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(formatKzPhone(e.target.value))} placeholder="+7 700 000 00 00" maxLength={20} required autoComplete="tel" />
+
                 </div>
                 <Field label="Email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
                 <Field label="Пароль" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
