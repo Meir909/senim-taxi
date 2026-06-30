@@ -17,6 +17,9 @@ type Props = {
   center?: { lat: number; lng: number };
   zoom?: number;
   markers?: MapMarker[];
+  /** Optional polyline coordinates as [lng, lat] pairs (e.g. driving route). */
+  polyline?: Array<[number, number]>;
+  polylineColor?: string;
   className?: string;
   onClick?: (coords: { lat: number; lng: number }) => void;
   /** Auto-fit bounds to markers when count >= 2. */
@@ -25,10 +28,11 @@ type Props = {
 
 const DEFAULT_CENTER = { lat: 55.7558, lng: 37.6173 }; // Moscow fallback
 
-export function MapGL({ center, zoom = 13, markers = [], className, onClick, fitMarkers = true }: Props) {
+export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor = "#2563eb", className, onClick, fitMarkers = true }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<Map<string, any>>(new Map());
+  const polylineRef = useRef<any>(null);
   const onClickRef = useRef(onClick);
   onClickRef.current = onClick;
 
