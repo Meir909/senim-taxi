@@ -346,15 +346,19 @@ const STATUS_NEXT_LABEL: Partial<Record<Ride["status"], string>> = {
 };
 
 function ActiveRideCard({
-  ride, onArrived, onStart, onComplete, onCancel,
+  ride, pos, onArrived, onStart, onComplete, onCancel,
 }: {
   ride: Ride;
+  pos: { lat: number; lng: number } | null;
   onArrived: () => void; onStart: () => void; onComplete: () => void; onCancel: () => void;
 }) {
   const nextLabel = STATUS_NEXT_LABEL[ride.status];
   const handleNext =
     ride.status === "in_progress" ? onComplete :
     ride.status === "driver_arrived" ? onStart : onArrived;
+
+  const distToDropoff = pos ? distanceMeters(pos, { lat: ride.dropoff_lat, lng: ride.dropoff_lng }) : null;
+  const tooFar = ride.status === "in_progress" && (distToDropoff == null || distToDropoff > 200);
 
   const openInMaps = () => {
     const target = ride.status === "in_progress"
@@ -372,9 +376,19 @@ function ActiveRideCard({
       <div className="space-y-1 text-sm">
         <div><span className="text-muted-foreground">Откуда:</span> {ride.pickup_address || `${ride.pickup_lat.toFixed(5)}, ${ride.pickup_lng.toFixed(5)}`}</div>
         <div><span className="text-muted-foreground">Куда:</span> {ride.dropoff_address || `${ride.dropoff_lat.toFixed(5)}, ${ride.dropoff_lng.toFixed(5)}`}</div>
+        {ride.status === "in_progress" && distToDropoff != null && (
+          <div className="text-xs text-muted-foreground">
+            До точки назначения: {distToDropoff < 1000 ? `${Math.round(distToDropoff)} м` : `${(distToDropoff / 1000).toFixed(2)} км`}
+            {tooFar && " — кнопка завершения активируется в радиусе 200 м"}
+          </div>
+        )}
       </div>
       <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
-        {nextLabel && <Button onClick={handleNext}>{nextLabel}</Button>}
+        {nextLabel && (
+          <Button onClick={handleNext} disabled={ride.status === "in_progress" && tooFar}>
+            {nextLabel}
+          </Button>
+        )}
         <Button variant="outline" onClick={openInMaps}><Navigation className="mr-1.5 h-4 w-4" />Маршрут</Button>
         {ride.status !== "in_progress" && (
           <Button variant="ghost" onClick={onCancel}><X className="mr-1.5 h-4 w-4" />Отменить</Button>
