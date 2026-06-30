@@ -192,7 +192,14 @@ function VerifyIdentity() {
                 </p>
               )}
             </div>
-            <Button type="submit" className="w-full">Далее</Button>
+            {iinRejection && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Заявка отклонена</AlertTitle>
+                <AlertDescription>{iinRejection}</AlertDescription>
+              </Alert>
+            )}
+            <Button type="submit" className="w-full">{iinRejection ? "Отправить повторно" : "Далее"}</Button>
           </form>
         )}
 
