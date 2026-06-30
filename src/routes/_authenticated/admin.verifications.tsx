@@ -1,14 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, RefreshCw, CheckCircle2, XCircle, Clock, FileText, ExternalLink } from "lucide-react";
+import { Loader2, ShieldCheck, RefreshCw, CheckCircle2, XCircle, Clock, FileText, ExternalLink, Ban, Trash2, ShieldOff } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import { deleteUserAdmin } from "@/lib/admin.functions";
 
 type VR = Database["public"]["Tables"]["verification_requests"]["Row"];
 type DocRow = Database["public"]["Tables"]["driver_documents"]["Row"];
