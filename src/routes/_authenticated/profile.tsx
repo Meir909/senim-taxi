@@ -190,6 +190,94 @@ function StatBox({ icon, label, value }: { icon: React.ReactNode; label: string;
   );
 }
 
+function VehicleCard({ driver, onSaved }: { driver: Driver; onSaved: (d: Driver) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  async function save(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    try {
+      const v = VehicleSchema.parse({
+        vehicle_make: String(fd.get("vehicle_make") ?? ""),
+        vehicle_model: String(fd.get("vehicle_model") ?? ""),
+        vehicle_color: String(fd.get("vehicle_color") ?? ""),
+        vehicle_plate: String(fd.get("vehicle_plate") ?? "").toUpperCase(),
+      });
+      setBusy(true);
+      const { data, error } = await supabase
+        .from("drivers")
+        .update(v)
+        .eq("id", driver.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      onSaved(data);
+      setEditing(false);
+      toast.success("Данные авто сохранены");
+    } catch (err) {
+      if (err instanceof z.ZodError) toast.error(err.issues[0]?.message ?? "Проверьте данные");
+      else toast.error(err instanceof Error ? err.message : "Не удалось сохранить");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold">Автомобиль</h2>
+        {!editing && (
+          <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Изменить</Button>
+        )}
+      </div>
+
+      {editing ? (
+        <form onSubmit={save} className="mt-4 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="vehicle_make">Марка</Label>
+              <Input id="vehicle_make" name="vehicle_make" defaultValue={driver.vehicle_make ?? ""} maxLength={40} required />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="vehicle_model">Модель</Label>
+              <Input id="vehicle_model" name="vehicle_model" defaultValue={driver.vehicle_model ?? ""} maxLength={40} required />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="vehicle_color">Цвет</Label>
+            <Input id="vehicle_color" name="vehicle_color" defaultValue={driver.vehicle_color ?? ""} maxLength={30} required />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="vehicle_plate">Гос. номер</Label>
+            <Input
+              id="vehicle_plate" name="vehicle_plate"
+              defaultValue={driver.vehicle_plate ?? ""}
+              maxLength={15} required
+              className="uppercase"
+              placeholder="123 ABC 02"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setEditing(false)} disabled={busy}>
+              Отмена
+            </Button>
+            <Button type="submit" className="flex-1" disabled={busy}>
+              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Сохранить
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <div className="mt-3 space-y-2 text-sm">
+          <Row label="Марка / модель" value={[driver.vehicle_make, driver.vehicle_model].filter(Boolean).join(" ") || "—"} />
+          <Row label="Цвет" value={driver.vehicle_color || "—"} />
+          <Row label="Номер" value={driver.vehicle_plate || "—"} />
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4">
