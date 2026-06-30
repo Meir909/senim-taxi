@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Star, Car, MapPin } from "lucide-react";
+import { Loader2, Star, Car, MapPin, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -19,7 +19,8 @@ export const Route = createFileRoute("/_authenticated/profile")({
 });
 
 function ProfilePage() {
-  const { user, isDriver, signOut } = useAuth();
+  const { user, isDriver, roles, signOut } = useAuth();
+  const isAdmin = roles.includes("admin");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
   const [rideCount, setRideCount] = useState<number>(0);
@@ -104,6 +105,19 @@ function ProfilePage() {
         </div>
       </Card>
 
+      <VerificationCard status={profile.verification_status} />
+
+      {isAdmin && (
+        <Card className="p-5">
+          <h2 className="font-semibold">Администрирование</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Очередь заявок на верификацию.</p>
+          <Button asChild className="mt-3 w-full" variant="outline">
+            <Link to="/admin/verifications">Открыть админку</Link>
+          </Button>
+        </Card>
+      )}
+
+
       <Card className="p-5">
         <h2 className="font-semibold">Личные данные</h2>
         <form onSubmit={save} className="mt-4 space-y-3">
@@ -159,3 +173,35 @@ function Row({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function VerificationCard({ status }: { status: Profile["verification_status"] }) {
+  const meta: Record<string, { icon: React.ReactNode; title: string; desc: string; cta: string | null; variant: "default" | "secondary" | "outline" | "destructive" }> = {
+    pending: { icon: <ShieldAlert className="h-5 w-5 text-warning" />, title: "Личность не подтверждена", desc: "Пройдите проверку: ИИН + живое селфи.", cta: "Пройти верификацию", variant: "secondary" },
+    manual_review: { icon: <ShieldAlert className="h-5 w-5 text-warning" />, title: "На ручной проверке", desc: "Администратор рассмотрит заявку и пришлёт уведомление.", cta: null, variant: "secondary" },
+    auto_approved: { icon: <ShieldCheck className="h-5 w-5 text-success" />, title: "Подтверждено автоматически", desc: "Личность успешно проверена.", cta: null, variant: "default" },
+    approved: { icon: <ShieldCheck className="h-5 w-5 text-success" />, title: "Подтверждено администратором", desc: "Аккаунт активирован.", cta: null, variant: "default" },
+    rejected: { icon: <ShieldX className="h-5 w-5 text-destructive" />, title: "Верификация отклонена", desc: "Проверьте данные и подайте заявку повторно.", cta: "Подать снова", variant: "destructive" },
+    reupload_requested: { icon: <ShieldAlert className="h-5 w-5 text-warning" />, title: "Требуется повторная загрузка", desc: "Администратор запросил перезагрузку фото.", cta: "Перезагрузить", variant: "secondary" },
+  };
+  const m = meta[status] ?? meta.pending;
+  return (
+    <Card className="p-5">
+      <div className="flex items-start gap-3">
+        {m.icon}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-semibold">Верификация</h2>
+            <Badge variant={m.variant}>{m.title}</Badge>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">{m.desc}</p>
+          {m.cta && (
+            <Button asChild className="mt-3 w-full" variant="outline">
+              <Link to="/verify-identity">{m.cta}</Link>
+            </Button>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
