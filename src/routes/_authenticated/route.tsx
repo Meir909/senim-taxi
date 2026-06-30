@@ -15,6 +15,7 @@ function AuthLayout() {
   const { user, loading, isDriver, signOut } = useAuth();
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const { permission, requestPermission } = useRealtimeNotifications();
 
   useEffect(() => {
     if (!loading && !user) void navigate({ to: "/auth", replace: true });
