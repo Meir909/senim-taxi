@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Car, Wallet, User as UserIcon, LogOut, Loader2, Bell, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRealtimeNotifications } from "@/lib/notifications";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
