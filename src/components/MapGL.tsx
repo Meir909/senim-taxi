@@ -17,6 +17,9 @@ type Props = {
   center?: { lat: number; lng: number };
   zoom?: number;
   markers?: MapMarker[];
+  /** Optional polyline coordinates as [lng, lat] pairs (e.g. driving route). */
+  polyline?: Array<[number, number]>;
+  polylineColor?: string;
   className?: string;
   onClick?: (coords: { lat: number; lng: number }) => void;
   /** Auto-fit bounds to markers when count >= 2. */
@@ -25,10 +28,11 @@ type Props = {
 
 const DEFAULT_CENTER = { lat: 55.7558, lng: 37.6173 }; // Moscow fallback
 
-export function MapGL({ center, zoom = 13, markers = [], className, onClick, fitMarkers = true }: Props) {
+export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor = "#2563eb", className, onClick, fitMarkers = true }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<Map<string, any>>(new Map());
+  const polylineRef = useRef<any>(null);
   const onClickRef = useRef(onClick);
   onClickRef.current = onClick;
 
@@ -69,6 +73,10 @@ export function MapGL({ center, zoom = 13, markers = [], className, onClick, fit
       cancelled = true;
       markersRef.current.forEach((m) => m.destroy());
       markersRef.current.clear();
+      if (polylineRef.current) {
+        try { polylineRef.current.destroy(); } catch { /* noop */ }
+        polylineRef.current = null;
+      }
       if (mapRef.current) {
         try {
           mapRef.current.destroy();
@@ -133,6 +141,43 @@ export function MapGL({ center, zoom = 13, markers = [], className, onClick, fit
       }
     }
   }, [ready, markers, fitMarkers]);
+
+  // sync polyline (route)
+  useEffect(() => {
+    if (!ready || !mapRef.current || !window.mapgl) return;
+    const mapgl = window.mapgl;
+    if (polylineRef.current) {
+      try { polylineRef.current.destroy(); } catch { /* noop */ }
+      polylineRef.current = null;
+    }
+    if (polyline && polyline.length >= 2) {
+      try {
+        polylineRef.current = new mapgl.Polyline(mapRef.current, {
+          coordinates: polyline,
+          width: 5,
+          color: polylineColor,
+          color2: "#ffffff",
+          width2: 7,
+        });
+      } catch {
+        /* noop */
+      }
+      if (fitMarkers) {
+        const lngs = polyline.map((p) => p[0]);
+        const lats = polyline.map((p) => p[1]);
+        try {
+          mapRef.current.fitBounds(
+            {
+              southWest: [Math.min(...lngs), Math.min(...lats)],
+              northEast: [Math.max(...lngs), Math.max(...lats)],
+            },
+            { padding: { top: 60, right: 60, bottom: 200, left: 60 } },
+          );
+        } catch { /* noop */ }
+      }
+    }
+  }, [ready, polyline, polylineColor, fitMarkers]);
+
 
   if (keyLoading) {
     return (
