@@ -73,6 +73,10 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
       cancelled = true;
       markersRef.current.forEach((m) => m.destroy());
       markersRef.current.clear();
+      if (polylineRef.current) {
+        try { polylineRef.current.destroy(); } catch { /* noop */ }
+        polylineRef.current = null;
+      }
       if (mapRef.current) {
         try {
           mapRef.current.destroy();
