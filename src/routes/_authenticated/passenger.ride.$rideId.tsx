@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, X } from "lucide-react";
+import { MapGL, type MapMarker } from "@/components/MapGL";
 
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Loc = Database["public"]["Tables"]["driver_locations"]["Row"];
@@ -94,8 +95,17 @@ function RideView() {
 
   const canCancel = ["requested", "searching", "accepted", "driver_arriving"].includes(ride.status);
 
+  const markers: MapMarker[] = [
+    { id: "pickup", lat: ride.pickup_lat, lng: ride.pickup_lng, color: "#16a34a", label: "P" },
+    { id: "dropoff", lat: ride.dropoff_lat, lng: ride.dropoff_lng, color: "#2563eb", label: "D" },
+  ];
+  if (driverLoc) markers.push({ id: "driver", lat: driverLoc.lat, lng: driverLoc.lng, color: "#f59e0b", label: "🚗" });
+
   return (
     <div className="space-y-4">
+      <div className="overflow-hidden rounded-xl border">
+        <MapGL className="h-72 w-full" markers={markers} center={{ lat: ride.pickup_lat, lng: ride.pickup_lng }} zoom={13} />
+      </div>
       <Card className="p-5">
         <div className="flex items-center justify-between">
           <Badge variant={ride.status === "completed" ? "default" : "secondary"}>{STATUS_LABEL[ride.status]}</Badge>
@@ -104,23 +114,12 @@ function RideView() {
         <div className="mt-4 space-y-2 text-sm">
           <Row label="Pickup" value={ride.pickup_address || `${ride.pickup_lat.toFixed(5)}, ${ride.pickup_lng.toFixed(5)}`} />
           <Row label="Drop-off" value={ride.dropoff_address || `${ride.dropoff_lat.toFixed(5)}, ${ride.dropoff_lng.toFixed(5)}`} />
-          {ride.fare_amount != null && <Row label="Fare" value={`${ride.fare_amount} ${"USD"}`} />}
+          {ride.fare_amount != null && <Row label="Fare" value={`${ride.fare_amount} USD`} />}
+          {ride.driver_id && driverLoc && (
+            <Row label="Driver updated" value={new Date(driverLoc.updated_at).toLocaleTimeString()} />
+          )}
         </div>
       </Card>
-
-      {ride.driver_id && (
-        <Card className="p-5">
-          <div className="text-sm font-medium">Driver location</div>
-          {driverLoc ? (
-            <div className="mt-2 text-sm text-muted-foreground">
-              {driverLoc.lat.toFixed(5)}, {driverLoc.lng.toFixed(5)} — updated {new Date(driverLoc.updated_at).toLocaleTimeString()}
-            </div>
-          ) : (
-            <div className="mt-2 text-sm text-muted-foreground">Waiting for driver location…</div>
-          )}
-          <p className="mt-3 text-xs text-muted-foreground">Live map (2GIS) comes in next phase.</p>
-        </Card>
-      )}
 
       {canCancel && (
         <Button variant="outline" className="w-full" onClick={cancel}>
