@@ -46,12 +46,14 @@ function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
   const [rideCount, setRideCount] = useState<number>(0);
+  const [driverRatingsCount, setDriverRatingsCount] = useState<number>(0);
+  const [passengerRatingsCount, setPassengerRatingsCount] = useState<number>(0);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     void (async () => {
-      const [{ data: p }, { data: d }, { count }] = await Promise.all([
+      const [{ data: p }, { data: d }, { count }, { count: drvRatings }, { count: paxRatings }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
         hasDriverApplication
           ? supabase.from("drivers").select("*").eq("id", user.id).maybeSingle()
@@ -61,10 +63,22 @@ function ProfilePage() {
           .select("id", { count: "exact", head: true })
           .eq(isDriver ? "driver_id" : "passenger_id", user.id)
           .eq("status", "completed"),
+        supabase
+          .from("rides")
+          .select("id", { count: "exact", head: true })
+          .eq("driver_id", user.id)
+          .not("driver_rating", "is", null),
+        supabase
+          .from("rides")
+          .select("id", { count: "exact", head: true })
+          .eq("passenger_id", user.id)
+          .not("passenger_rating", "is", null),
       ]);
       setProfile(p);
       setDriver(d);
       setRideCount(count ?? 0);
+      setDriverRatingsCount(drvRatings ?? 0);
+      setPassengerRatingsCount(paxRatings ?? 0);
     })();
   }, [user, isDriver, hasDriverApplication]);
 
