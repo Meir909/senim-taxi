@@ -217,6 +217,9 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
           created_at: string
           date_of_birth: string | null
           first_name: string | null
@@ -228,6 +231,7 @@ export type Database = {
           live_photo_url: string | null
           patronymic: string | null
           phone: string | null
+          rating: number
           selfie_path: string | null
           updated_at: string
           verification_comment: string | null
@@ -237,6 +241,9 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           created_at?: string
           date_of_birth?: string | null
           first_name?: string | null
@@ -248,6 +255,7 @@ export type Database = {
           live_photo_url?: string | null
           patronymic?: string | null
           phone?: string | null
+          rating?: number
           selfie_path?: string | null
           updated_at?: string
           verification_comment?: string | null
@@ -257,6 +265,9 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           created_at?: string
           date_of_birth?: string | null
           first_name?: string | null
@@ -268,6 +279,7 @@ export type Database = {
           live_photo_url?: string | null
           patronymic?: string | null
           phone?: string | null
+          rating?: number
           selfie_path?: string | null
           updated_at?: string
           verification_comment?: string | null
@@ -665,6 +677,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_block_user: {
+        Args: { _reason: string; _user_id: string }
+        Returns: undefined
+      }
       admin_review_document: {
         Args: { _comment: string; _decision: string; _doc_id: string }
         Returns: {
@@ -716,46 +732,90 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      complete_ride: {
-        Args: {
-          _distance: number
-          _duration: number
-          _fare: number
-          _ride_id: string
-        }
-        Returns: {
-          accepted_at: string | null
-          cancellation_reason: string | null
-          cancelled_at: string | null
-          commission_amount: number | null
-          completed_at: string | null
-          distance_km: number | null
-          driver_id: string | null
-          driver_rating: number | null
-          dropoff_address: string | null
-          dropoff_lat: number
-          dropoff_lng: number
-          duration_min: number | null
-          fare_amount: number | null
-          id: string
-          passenger_id: string
-          passenger_rating: number | null
-          payment_method: Database["public"]["Enums"]["payment_method"]
-          pickup_address: string | null
-          pickup_lat: number
-          pickup_lng: number
-          requested_at: string
-          started_at: string | null
-          status: Database["public"]["Enums"]["ride_status"]
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "rides"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      admin_unblock_user: { Args: { _user_id: string }; Returns: undefined }
+      complete_ride:
+        | {
+            Args: {
+              _distance: number
+              _duration: number
+              _fare: number
+              _ride_id: string
+            }
+            Returns: {
+              accepted_at: string | null
+              cancellation_reason: string | null
+              cancelled_at: string | null
+              commission_amount: number | null
+              completed_at: string | null
+              distance_km: number | null
+              driver_id: string | null
+              driver_rating: number | null
+              dropoff_address: string | null
+              dropoff_lat: number
+              dropoff_lng: number
+              duration_min: number | null
+              fare_amount: number | null
+              id: string
+              passenger_id: string
+              passenger_rating: number | null
+              payment_method: Database["public"]["Enums"]["payment_method"]
+              pickup_address: string | null
+              pickup_lat: number
+              pickup_lng: number
+              requested_at: string
+              started_at: string | null
+              status: Database["public"]["Enums"]["ride_status"]
+              updated_at: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "rides"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _distance: number
+              _duration: number
+              _fare: number
+              _lat?: number
+              _lng?: number
+              _ride_id: string
+            }
+            Returns: {
+              accepted_at: string | null
+              cancellation_reason: string | null
+              cancelled_at: string | null
+              commission_amount: number | null
+              completed_at: string | null
+              distance_km: number | null
+              driver_id: string | null
+              driver_rating: number | null
+              dropoff_address: string | null
+              dropoff_lat: number
+              dropoff_lng: number
+              duration_min: number | null
+              fare_amount: number | null
+              id: string
+              passenger_id: string
+              passenger_rating: number | null
+              payment_method: Database["public"]["Enums"]["payment_method"]
+              pickup_address: string | null
+              pickup_lat: number
+              pickup_lng: number
+              requested_at: string
+              started_at: string | null
+              status: Database["public"]["Enums"]["ride_status"]
+              updated_at: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "rides"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       dispatch_ride: { Args: { _ride_id: string }; Returns: string }
       expire_offers_and_redispatch: { Args: never; Returns: number }
       find_nearby_drivers: {
