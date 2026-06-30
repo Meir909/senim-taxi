@@ -61,11 +61,16 @@ function RideView() {
   }, [rideId]);
 
   useEffect(() => {
-    if (!ride?.driver_id) return;
+    if (!ride?.driver_id) { setDriver(null); setDriverProfile(null); return; }
     let mounted = true;
     (async () => {
-      const { data } = await supabase.from("driver_locations").select("*").eq("driver_id", ride.driver_id!).maybeSingle();
-      if (mounted) setDriverLoc(data);
+      const [{ data: loc }, { data: d }, { data: p }] = await Promise.all([
+        supabase.from("driver_locations").select("*").eq("driver_id", ride.driver_id!).maybeSingle(),
+        supabase.from("drivers").select("*").eq("id", ride.driver_id!).maybeSingle(),
+        supabase.from("profiles").select("*").eq("id", ride.driver_id!).maybeSingle(),
+      ]);
+      if (!mounted) return;
+      setDriverLoc(loc); setDriver(d); setDriverProfile(p);
     })();
     const ch = supabase
       .channel(`driver-loc-${ride.driver_id}`)
