@@ -144,11 +144,28 @@ function ProfilePage() {
         <div className="mt-4 grid grid-cols-2 gap-2">
           <StatBox icon={<MapPin className="h-4 w-4" />} label="Поездок" value={String(rideCount)} />
           {isDriver ? (
-            <StatBox icon={<Star className="h-4 w-4 fill-warning text-warning" />} label="Рейтинг" value={Number(driver?.rating ?? 5).toFixed(2)} />
+            <StatBox
+              icon={<Star className="h-4 w-4 fill-warning text-warning" />}
+              label={`Рейтинг водителя (${driverRatingsCount})`}
+              value={Number(driver?.rating ?? 5).toFixed(2)}
+            />
           ) : (
-            <StatBox icon={<Car className="h-4 w-4" />} label="Статус" value="Активен" />
+            <StatBox
+              icon={<Star className="h-4 w-4 fill-warning text-warning" />}
+              label={`Рейтинг пассажира (${passengerRatingsCount})`}
+              value={Number(profile.rating ?? 5).toFixed(2)}
+            />
           )}
         </div>
+        {isDriver && (
+          <div className="mt-2">
+            <StatBox
+              icon={<Star className="h-4 w-4 fill-warning text-warning" />}
+              label={`Рейтинг пассажира (${passengerRatingsCount})`}
+              value={Number(profile.rating ?? 5).toFixed(2)}
+            />
+          </div>
+        )}
       </Card>
 
       <VerificationCard status={profile.verification_status} />
