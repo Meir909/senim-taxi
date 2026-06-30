@@ -296,14 +296,15 @@ function SearchingScreen({ ride, onCancel, cancelling }: { ride: Ride; onCancel:
         <Card className="space-y-3 p-4">
           <p className="text-sm">Отменить заказ? Поиск водителя будет остановлен.</p>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={() => setConfirmCancel(false)}>Нет</Button>
-            <Button variant="destructive" onClick={() => void onCancel()}>
-              <X className="mr-2 h-4 w-4" /> Отменить
+            <Button variant="outline" disabled={cancelling} onClick={() => setConfirmCancel(false)}>Нет</Button>
+            <Button variant="destructive" disabled={cancelling} onClick={() => void onCancel()}>
+              {cancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <X className="mr-2 h-4 w-4" />}
+              Отменить
             </Button>
           </div>
         </Card>
       ) : (
-        <Button variant="outline" className="w-full" size="lg" onClick={() => setConfirmCancel(true)}>
+        <Button variant="outline" className="w-full" size="lg" disabled={cancelling} onClick={() => setConfirmCancel(true)}>
           <X className="mr-2 h-4 w-4" /> Отменить заказ
         </Button>
       )}
