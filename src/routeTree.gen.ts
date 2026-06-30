@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedVerifyIdentityRouteImport } from './routes/_authenticated/verify-identity'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedPassengerRouteImport } from './routes/_authenticated/passenger'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
@@ -21,6 +22,12 @@ import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDriverRouteImport } from './routes/_authenticated/driver'
 import { Route as AuthenticatedBecomeDriverRouteImport } from './routes/_authenticated/become-driver'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
+import { Route as AuthenticatedSettingsTermsRouteImport } from './routes/_authenticated/settings.terms'
+import { Route as AuthenticatedSettingsSupportRouteImport } from './routes/_authenticated/settings.support'
+import { Route as AuthenticatedSettingsPrivacyRouteImport } from './routes/_authenticated/settings.privacy'
+import { Route as AuthenticatedSettingsAddressesRouteImport } from './routes/_authenticated/settings.addresses'
+import { Route as AuthenticatedSettingsAboutRouteImport } from './routes/_authenticated/settings.about'
 import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
 import { Route as AuthenticatedPassengerRideRideIdRouteImport } from './routes/_authenticated/passenger.ride.$rideId'
 
@@ -49,6 +56,11 @@ const AuthenticatedVerifyIdentityRoute =
     path: '/verify-identity',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -85,6 +97,42 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsTermsRoute =
+  AuthenticatedSettingsTermsRouteImport.update({
+    id: '/terms',
+    path: '/terms',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsSupportRoute =
+  AuthenticatedSettingsSupportRouteImport.update({
+    id: '/support',
+    path: '/support',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsPrivacyRoute =
+  AuthenticatedSettingsPrivacyRouteImport.update({
+    id: '/privacy',
+    path: '/privacy',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsAddressesRoute =
+  AuthenticatedSettingsAddressesRouteImport.update({
+    id: '/addresses',
+    path: '/addresses',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsAboutRoute =
+  AuthenticatedSettingsAboutRouteImport.update({
+    id: '/about',
+    path: '/about',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedAdminVerificationsRoute =
   AuthenticatedAdminVerificationsRouteImport.update({
     id: '/verifications',
@@ -108,9 +156,16 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/passenger': typeof AuthenticatedPassengerRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/verify-identity': typeof AuthenticatedVerifyIdentityRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/settings/about': typeof AuthenticatedSettingsAboutRoute
+  '/settings/addresses': typeof AuthenticatedSettingsAddressesRoute
+  '/settings/privacy': typeof AuthenticatedSettingsPrivacyRoute
+  '/settings/support': typeof AuthenticatedSettingsSupportRoute
+  '/settings/terms': typeof AuthenticatedSettingsTermsRoute
+  '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRoute
 }
 export interface FileRoutesByTo {
@@ -126,6 +181,12 @@ export interface FileRoutesByTo {
   '/verify-identity': typeof AuthenticatedVerifyIdentityRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/settings/about': typeof AuthenticatedSettingsAboutRoute
+  '/settings/addresses': typeof AuthenticatedSettingsAddressesRoute
+  '/settings/privacy': typeof AuthenticatedSettingsPrivacyRoute
+  '/settings/support': typeof AuthenticatedSettingsSupportRoute
+  '/settings/terms': typeof AuthenticatedSettingsTermsRoute
+  '/settings': typeof AuthenticatedSettingsIndexRoute
   '/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRoute
 }
 export interface FileRoutesById {
@@ -140,9 +201,16 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/passenger': typeof AuthenticatedPassengerRouteWithChildren
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/verify-identity': typeof AuthenticatedVerifyIdentityRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/_authenticated/settings/about': typeof AuthenticatedSettingsAboutRoute
+  '/_authenticated/settings/addresses': typeof AuthenticatedSettingsAddressesRoute
+  '/_authenticated/settings/privacy': typeof AuthenticatedSettingsPrivacyRoute
+  '/_authenticated/settings/support': typeof AuthenticatedSettingsSupportRoute
+  '/_authenticated/settings/terms': typeof AuthenticatedSettingsTermsRoute
+  '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRoute
 }
 export interface FileRouteTypes {
@@ -157,9 +225,16 @@ export interface FileRouteTypes {
     | '/home'
     | '/passenger'
     | '/profile'
+    | '/settings'
     | '/verify-identity'
     | '/wallet'
     | '/admin/verifications'
+    | '/settings/about'
+    | '/settings/addresses'
+    | '/settings/privacy'
+    | '/settings/support'
+    | '/settings/terms'
+    | '/settings/'
     | '/passenger/ride/$rideId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -175,6 +250,12 @@ export interface FileRouteTypes {
     | '/verify-identity'
     | '/wallet'
     | '/admin/verifications'
+    | '/settings/about'
+    | '/settings/addresses'
+    | '/settings/privacy'
+    | '/settings/support'
+    | '/settings/terms'
+    | '/settings'
     | '/passenger/ride/$rideId'
   id:
     | '__root__'
@@ -188,9 +269,16 @@ export interface FileRouteTypes {
     | '/_authenticated/home'
     | '/_authenticated/passenger'
     | '/_authenticated/profile'
+    | '/_authenticated/settings'
     | '/_authenticated/verify-identity'
     | '/_authenticated/wallet'
     | '/_authenticated/admin/verifications'
+    | '/_authenticated/settings/about'
+    | '/_authenticated/settings/addresses'
+    | '/_authenticated/settings/privacy'
+    | '/_authenticated/settings/support'
+    | '/_authenticated/settings/terms'
+    | '/_authenticated/settings/'
     | '/_authenticated/passenger/ride/$rideId'
   fileRoutesById: FileRoutesById
 }
@@ -235,6 +323,13 @@ declare module '@tanstack/react-router' {
       path: '/verify-identity'
       fullPath: '/verify-identity'
       preLoaderRoute: typeof AuthenticatedVerifyIdentityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/profile': {
@@ -286,6 +381,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/terms': {
+      id: '/_authenticated/settings/terms'
+      path: '/terms'
+      fullPath: '/settings/terms'
+      preLoaderRoute: typeof AuthenticatedSettingsTermsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/support': {
+      id: '/_authenticated/settings/support'
+      path: '/support'
+      fullPath: '/settings/support'
+      preLoaderRoute: typeof AuthenticatedSettingsSupportRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/privacy': {
+      id: '/_authenticated/settings/privacy'
+      path: '/privacy'
+      fullPath: '/settings/privacy'
+      preLoaderRoute: typeof AuthenticatedSettingsPrivacyRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/addresses': {
+      id: '/_authenticated/settings/addresses'
+      path: '/addresses'
+      fullPath: '/settings/addresses'
+      preLoaderRoute: typeof AuthenticatedSettingsAddressesRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/about': {
+      id: '/_authenticated/settings/about'
+      path: '/about'
+      fullPath: '/settings/about'
+      preLoaderRoute: typeof AuthenticatedSettingsAboutRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/admin/verifications': {
       id: '/_authenticated/admin/verifications'
       path: '/verifications'
@@ -329,6 +466,29 @@ const AuthenticatedPassengerRouteWithChildren =
     AuthenticatedPassengerRouteChildren,
   )
 
+interface AuthenticatedSettingsRouteChildren {
+  AuthenticatedSettingsAboutRoute: typeof AuthenticatedSettingsAboutRoute
+  AuthenticatedSettingsAddressesRoute: typeof AuthenticatedSettingsAddressesRoute
+  AuthenticatedSettingsPrivacyRoute: typeof AuthenticatedSettingsPrivacyRoute
+  AuthenticatedSettingsSupportRoute: typeof AuthenticatedSettingsSupportRoute
+  AuthenticatedSettingsTermsRoute: typeof AuthenticatedSettingsTermsRoute
+  AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
+}
+
+const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
+  AuthenticatedSettingsAboutRoute: AuthenticatedSettingsAboutRoute,
+  AuthenticatedSettingsAddressesRoute: AuthenticatedSettingsAddressesRoute,
+  AuthenticatedSettingsPrivacyRoute: AuthenticatedSettingsPrivacyRoute,
+  AuthenticatedSettingsSupportRoute: AuthenticatedSettingsSupportRoute,
+  AuthenticatedSettingsTermsRoute: AuthenticatedSettingsTermsRoute,
+  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
+}
+
+const AuthenticatedSettingsRouteWithChildren =
+  AuthenticatedSettingsRoute._addFileChildren(
+    AuthenticatedSettingsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedBecomeDriverRoute: typeof AuthenticatedBecomeDriverRoute
@@ -337,6 +497,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedPassengerRoute: typeof AuthenticatedPassengerRouteWithChildren
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedVerifyIdentityRoute: typeof AuthenticatedVerifyIdentityRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
 }
@@ -349,6 +510,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedPassengerRoute: AuthenticatedPassengerRouteWithChildren,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedVerifyIdentityRoute: AuthenticatedVerifyIdentityRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
 }
