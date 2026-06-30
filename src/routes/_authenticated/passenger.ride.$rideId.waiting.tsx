@@ -16,10 +16,10 @@ import {
   Route as RouteIcon,
   Car,
   CheckCircle2,
-  Phone,
 } from "lucide-react";
 import { UserBadgeCard } from "@/components/UserBadgeCard";
 import { TARIFFS, fmtKzt } from "@/lib/fare";
+import { DriverCallButton } from "@/components/DriverCallButton";
 
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Loc = Database["public"]["Tables"]["driver_locations"]["Row"];
@@ -362,12 +362,7 @@ function WaitingPage() {
             size="md"
           />
           {driverProfile?.phone && (
-            <a
-              href={`tel:${driverProfile.phone}`}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent"
-            >
-              <Phone className="h-4 w-4" /> Позвонить водителю
-            </a>
+            <DriverCallButton phone={driverProfile.phone} />
           )}
         </Card>
       )}
