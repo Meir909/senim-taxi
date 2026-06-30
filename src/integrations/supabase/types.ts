@@ -918,19 +918,14 @@ export type Database = {
       submit_driver_application: {
         Args: {
           _child_seat: boolean
-          _first_name: string
           _identity_mime: string
           _identity_path: string
-          _last_name: string
           _license_mime: string
           _license_path: string
-          _patronymic: string
           _vehicle_country: string
           _vehicle_documents_mime: string
           _vehicle_documents_path: string
           _vehicle_plate: string
-          _vehicle_registration_mime: string
-          _vehicle_registration_path: string
         }
         Returns: {
           admin_comment: string | null
