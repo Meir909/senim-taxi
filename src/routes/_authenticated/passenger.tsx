@@ -233,7 +233,7 @@ function PassengerHome() {
                   <span className="text-muted-foreground">Маршрут недоступен</span>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex gap-2 overflow-x-auto pb-1">
                 {(["standard", "kids", "delivery", "cargo"] as const).map((id) => {
                   const t = TARIFFS[id];
                   const img = TARIFF_IMAGES[id];
@@ -244,15 +244,12 @@ function PassengerHome() {
                       key={id}
                       type="button"
                       onClick={() => setTariff(id)}
-                      className={`overflow-hidden rounded-lg border text-left transition ${active ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-foreground/40"}`}
+                      className={`flex min-w-[5.5rem] flex-1 flex-col items-center gap-1 rounded-lg border p-2 text-center transition ${active ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-foreground/40"}`}
                     >
-                      <img src={img} alt={t.name} loading="lazy" width={512} height={512} className="h-20 w-full object-cover" />
-                      <div className="px-3 py-2">
-                        <div className="text-sm font-semibold">{t.name}</div>
-                        <div className="text-[11px] text-muted-foreground">{t.description}</div>
-                        <div className="mt-1 text-sm font-bold text-primary">
-                          {price != null ? fmtKzt(price) : routeLoading ? "…" : "—"}
-                        </div>
+                      <img src={img} alt={t.name} loading="lazy" width={128} height={128} className="h-12 w-12 rounded-md object-cover" />
+                      <div className="text-xs font-semibold leading-tight">{t.name}</div>
+                      <div className="text-[11px] font-bold text-primary">
+                        {price != null ? fmtKzt(price) : routeLoading ? "…" : "—"}
                       </div>
                     </button>
                   );
