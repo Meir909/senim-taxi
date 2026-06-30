@@ -513,6 +513,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      dispatch_ride: { Args: { _ride_id: string }; Returns: string }
+      expire_offers_and_redispatch: { Args: never; Returns: number }
       find_nearby_drivers: {
         Args: { _lat: number; _lng: number; _radius_km?: number }
         Returns: {
