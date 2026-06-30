@@ -360,6 +360,7 @@ export type Database = {
           pickup_address: string | null
           pickup_lat: number
           pickup_lng: number
+          pickup_wait_seconds: number | null
           requested_at: string
           started_at: string | null
           status: Database["public"]["Enums"]["ride_status"]
@@ -388,6 +389,7 @@ export type Database = {
           pickup_address?: string | null
           pickup_lat: number
           pickup_lng: number
+          pickup_wait_seconds?: number | null
           requested_at?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["ride_status"]
@@ -416,6 +418,7 @@ export type Database = {
           pickup_address?: string | null
           pickup_lat?: number
           pickup_lng?: number
+          pickup_wait_seconds?: number | null
           requested_at?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["ride_status"]
@@ -672,6 +675,7 @@ export type Database = {
           pickup_address: string | null
           pickup_lat: number
           pickup_lng: number
+          pickup_wait_seconds: number | null
           requested_at: string
           started_at: string | null
           status: Database["public"]["Enums"]["ride_status"]
@@ -771,6 +775,7 @@ export type Database = {
               pickup_address: string | null
               pickup_lat: number
               pickup_lng: number
+              pickup_wait_seconds: number | null
               requested_at: string
               started_at: string | null
               status: Database["public"]["Enums"]["ride_status"]
@@ -815,6 +820,7 @@ export type Database = {
               pickup_address: string | null
               pickup_lat: number
               pickup_lng: number
+              pickup_wait_seconds: number | null
               requested_at: string
               started_at: string | null
               status: Database["public"]["Enums"]["ride_status"]
@@ -870,6 +876,7 @@ export type Database = {
           pickup_address: string | null
           pickup_lat: number
           pickup_lng: number
+          pickup_wait_seconds: number | null
           requested_at: string
           started_at: string | null
           status: Database["public"]["Enums"]["ride_status"]
