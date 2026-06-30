@@ -39,6 +39,7 @@ function VerifyIdentity() {
   const [busy, setBusy] = useState(false);
   const [priorStatus, setPriorStatus] = useState<string | null>(null);
   const [priorReason, setPriorReason] = useState<string | null>(null);
+  const [iinRejection, setIinRejection] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -70,18 +71,24 @@ function VerifyIdentity() {
 
   function submitForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setIinRejection(null);
     try {
       const v = Schema.parse({ full_name: fullName, iin });
       const parsed = parseIin(v.iin);
-      if (!parsed) throw new Error("ИИН не прошёл проверку контрольной суммы");
+      if (!parsed) {
+        setIinRejection("ИИН не прошёл проверку контрольной суммы. Проверьте номер.");
+        return;
+      }
       if (parsed.gender !== "female") {
-        throw new Error("Сервис доступен только женщинам");
+        setIinRejection("По ИИН пол — мужской. Сервис доступен только женщинам. Заявка отклонена.");
+        return;
       }
       const dob = new Date(parsed.dob);
       const eighteen = new Date();
       eighteen.setFullYear(eighteen.getFullYear() - 18);
       if (dob > eighteen) {
-        throw new Error("Возраст должен быть не менее 18 лет");
+        setIinRejection("По ИИН возраст меньше 18 лет. Сервис доступен только совершеннолетним. Заявка отклонена.");
+        return;
       }
       setStep("selfie1");
     } catch (err) {
@@ -185,7 +192,14 @@ function VerifyIdentity() {
                 </p>
               )}
             </div>
-            <Button type="submit" className="w-full">Далее</Button>
+            {iinRejection && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Заявка отклонена</AlertTitle>
+                <AlertDescription>{iinRejection}</AlertDescription>
+              </Alert>
+            )}
+            <Button type="submit" className="w-full">{iinRejection ? "Отправить повторно" : "Далее"}</Button>
           </form>
         )}
 
