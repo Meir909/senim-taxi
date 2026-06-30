@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Car, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — RideNow" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Senim" }] }),
   component: AuthPage,
 });
 
@@ -84,7 +84,7 @@ function AuthPage() {
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2">
           <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground"><Car className="h-5 w-5" /></div>
-          <span className="text-xl font-semibold">RideNow</span>
+          <span className="text-xl font-semibold">Senim</span>
         </div>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <Tabs defaultValue="signin">

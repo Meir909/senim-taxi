@@ -35,7 +35,7 @@ function AuthLayout() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link to="/home" className="flex items-center gap-2">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground"><Car className="h-4 w-4" /></div>
-            <span className="font-semibold">RideNow</span>
+            <span className="font-semibold">Senim</span>
           </Link>
           <div className="flex items-center gap-1">
             {permission !== "granted" && (
