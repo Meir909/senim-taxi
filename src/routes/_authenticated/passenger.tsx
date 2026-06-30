@@ -159,6 +159,8 @@ function PassengerHome() {
       <MapGL
         className="absolute inset-0 h-full w-full"
         markers={markers}
+        polyline={route?.coords}
+        polylineColor="#2563eb"
         center={pickup ?? dropoff ?? center}
         zoom={pickup || dropoff ? 14 : 12}
         onClick={handleMapTap}
@@ -194,11 +196,32 @@ function PassengerHome() {
             onClear={() => setDropoff(null)}
             tapActive={tapField === "dropoff"}
           />
+          {pickup && dropoff && (
+            <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-xs">
+              {routeLoading ? (
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Строим оптимальный маршрут…
+                </span>
+              ) : route ? (
+                <>
+                  <span className="font-medium">
+                    {(route.distance_m / 1000).toFixed(1)} км
+                  </span>
+                  <span className="text-muted-foreground">
+                    ≈ {Math.max(1, Math.round(route.duration_s / 60))} мин в пути
+                  </span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">Маршрут недоступен</span>
+              )}
+            </div>
+          )}
           <Button onClick={handleRequest} disabled={!ready} size="lg" className="w-full">
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Заказать поездку
           </Button>
         </Card>
       </div>
+
 
       <AddressSearchDialog
         open={pickerField !== null}
