@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { Car, Wallet, User as UserIcon, LogOut, Loader2, Bell } from "lucide-react";
+import { Car, Wallet, User as UserIcon, LogOut, Loader2, Bell, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRealtimeNotifications } from "@/lib/notifications";
 
@@ -52,8 +52,9 @@ function AuthLayout() {
         <Outlet />
       </main>
       <nav className="sticky bottom-0 z-10 border-t border-border bg-card" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-        <div className="mx-auto grid max-w-5xl grid-cols-3">
+        <div className="mx-auto grid max-w-5xl grid-cols-4">
           <NavTab to={isDriver ? "/driver" : "/passenger"} active={path.startsWith("/passenger") || path.startsWith("/driver") || path === "/home"} icon={<Car className="h-5 w-5" />} label={isDriver ? "Поездки" : "Заказать"} />
+          <NavTab to="/history" active={path.startsWith("/history")} icon={<Clock className="h-5 w-5" />} label="История" />
           <NavTab to="/wallet" active={path.startsWith("/wallet")} icon={<Wallet className="h-5 w-5" />} label="Кошелёк" />
           <NavTab to="/profile" active={path.startsWith("/profile") || path.startsWith("/become-driver")} icon={<UserIcon className="h-5 w-5" />} label="Профиль" />
         </div>

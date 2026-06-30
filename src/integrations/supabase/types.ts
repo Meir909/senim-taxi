@@ -531,6 +531,41 @@ export type Database = {
         }
         Returns: boolean
       }
+      rate_ride: {
+        Args: { _comment?: string; _rating: number; _ride_id: string }
+        Returns: {
+          accepted_at: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          commission_amount: number | null
+          completed_at: string | null
+          distance_km: number | null
+          driver_id: string | null
+          driver_rating: number | null
+          dropoff_address: string | null
+          dropoff_lat: number
+          dropoff_lng: number
+          duration_min: number | null
+          fare_amount: number | null
+          id: string
+          passenger_id: string
+          passenger_rating: number | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          pickup_address: string | null
+          pickup_lat: number
+          pickup_lng: number
+          requested_at: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["ride_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "rides"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       reject_ride_offer: { Args: { _offer_id: string }; Returns: undefined }
       request_withdrawal: {
         Args: { _amount: number; _card_holder: string; _card_last4: string }
