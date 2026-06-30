@@ -214,11 +214,14 @@ function DriverHome() {
       {activeRide ? (
         <ActiveRideCard
           ride={activeRide}
+          pos={pos}
           onArrived={() => void setRideStatus("driver_arrived")}
           onStart={() => void setRideStatus("in_progress")}
           onComplete={() => setCompleteOpen(true)}
           onCancel={() => void cancelRide()}
         />
+      ) : rideToRate ? (
+        <RatePassengerCard ride={rideToRate} onDone={() => setRideToRate(null)} />
       ) : (
         <div>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Входящие заказы</h2>
