@@ -176,8 +176,15 @@ function VerifyIdentity() {
             <AlertTitle>
               {priorStatus === "rejected" ? "Заявка отклонена" : "Требуется повторная отправка"}
             </AlertTitle>
-            <AlertDescription>
-              {priorReason || "Данные не прошли проверку. Сервис доступен только женщинам 18+. Отправьте заявку повторно с корректными данными."}
+            <AlertDescription className="space-y-2">
+              <p>{priorReason || "Данные не прошли проверку. Сервис доступен только женщинам 18+. Отправьте заявку повторно с корректными данными."}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => { setIin(""); setFullName(""); resetForRetry(); }}
+              >
+                Очистить и начать заново
+              </Button>
             </AlertDescription>
           </Alert>
         )}
