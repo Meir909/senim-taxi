@@ -61,7 +61,7 @@ function AuthPage() {
         },
       });
       if (error) throw error;
-      toast.success("Аккаунт создан. Можно войти.");
+      toast.success("Аккаунт создан. Войдите и пройдите подтверждение личности.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось зарегистрироваться");
     } finally { setBusy(false); }

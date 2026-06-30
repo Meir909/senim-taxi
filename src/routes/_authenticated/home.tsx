@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/home")({
@@ -8,10 +9,34 @@ export const Route = createFileRoute("/_authenticated/home")({
 });
 
 function HomeRedirect() {
-  const { loading, isDriver } = useAuth();
+  const { loading, isDriver, user } = useAuth();
   const navigate = useNavigate();
+  const [checking, setChecking] = useState(true);
+
   useEffect(() => {
-    if (!loading) void navigate({ to: isDriver ? "/driver" : "/passenger", replace: true });
-  }, [loading, isDriver, navigate]);
-  return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+    if (loading || !user) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("verification_status")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      const status = data?.verification_status;
+      // Require passenger identity verification before using the app.
+      if (!status || status === "pending" || status === "reupload_requested" || status === "rejected") {
+        void navigate({ to: "/verify-identity", replace: true });
+        return;
+      }
+      void navigate({ to: isDriver ? "/driver" : "/passenger", replace: true });
+      setChecking(false);
+    })();
+    return () => { cancelled = true; };
+  }, [loading, isDriver, user, navigate]);
+
+  if (loading || checking) {
+    return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+  return null;
 }
