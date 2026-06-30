@@ -221,6 +221,10 @@ function ProfilePage() {
         </Card>
       )}
 
+      <Button variant="outline" className="w-full" asChild>
+        <Link to="/settings">Настройки</Link>
+      </Button>
+
       <Button variant="outline" className="w-full" onClick={() => void signOut()}>
         Выйти из аккаунта
       </Button>
