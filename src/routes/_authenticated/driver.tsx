@@ -71,7 +71,7 @@ function DriverHome() {
     const load = async () => {
       const { data } = await supabase
         .from("ride_offers")
-        .select("*, rides(pickup_address, dropoff_address, pickup_lat, pickup_lng)")
+        .select("*, rides(pickup_address, dropoff_address, pickup_lat, pickup_lng, passenger_id)")
         .eq("driver_id", user.id).eq("status", "pending")
         .order("created_at", { ascending: false });
       if (mounted) setOffers((data ?? []) as Offer[]);
