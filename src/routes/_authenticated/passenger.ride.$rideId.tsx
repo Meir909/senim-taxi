@@ -148,10 +148,17 @@ function RideView() {
         </div>
       </Card>
 
-      {canCancel && (
-        <Button variant="outline" className="w-full" onClick={cancel}>
-          <X className="mr-2 h-4 w-4" /> Отменить поездку
-        </Button>
+      {ride.driver_id && (driver || driverProfile) && (
+        <Card className="p-4">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ваш водитель</div>
+          <UserBadgeCard
+            userId={ride.driver_id}
+            name={[driverProfile?.last_name, driverProfile?.first_name].filter(Boolean).join(" ") || driverProfile?.full_name || "Водитель"}
+            rating={driver?.rating ?? null}
+            subtitle={[driver?.vehicle_make, driver?.vehicle_model, driver?.vehicle_plate].filter(Boolean).join(" · ") || null}
+            size="md"
+          />
+        </Card>
       )}
 
       {canCancel && (
@@ -159,6 +166,7 @@ function RideView() {
           <X className="mr-2 h-4 w-4" /> Отменить поездку
         </Button>
       )}
+
 
 
       {ride.status === "completed" && user?.id === ride.passenger_id && ride.driver_rating == null && (
