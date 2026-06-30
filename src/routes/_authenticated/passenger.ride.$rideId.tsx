@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, X, ArrowLeft, MapPin, Clock, Route as RouteIcon, Car, CheckCircle2, Phone } from "lucide-react";
+import { Loader2, X, ArrowLeft, MapPin, Clock, Route as RouteIcon, Car, CheckCircle2 } from "lucide-react";
 import { MapGL, type MapMarker } from "@/components/MapGL";
 import { StarRating } from "@/components/StarRating";
 import { UserBadgeCard } from "@/components/UserBadgeCard";
@@ -585,12 +585,9 @@ function AwaitingDriverScreen({
             size="md"
           />
           {driverProfile?.phone && (
-            <a
-              href={`tel:${driverProfile.phone}`}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent"
-            >
-              <Phone className="h-4 w-4" /> Позвонить водителю
-            </a>
+            <div className="mt-3">
+              <DriverCallButton phone={driverProfile.phone} />
+            </div>
           )}
         </Card>
       )}
