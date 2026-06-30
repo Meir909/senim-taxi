@@ -27,6 +27,11 @@ function AuthPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const blockedNotice = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const p = new URLSearchParams(window.location.search).get("blocked");
+    return p ? decodeURIComponent(p) : null;
+  }, []);
 
   useEffect(() => {
     if (!loading && user) void navigate({ to: "/home", replace: true });
