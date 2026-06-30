@@ -54,45 +54,57 @@ export type Database = {
       }
       drivers: {
         Row: {
+          admin_comment: string | null
           created_at: string
           id: string
           last_seen_at: string | null
           license_number: string | null
+          license_photo_path: string | null
           rating: number
+          selfie_path: string | null
           status: Database["public"]["Enums"]["driver_status"]
           total_rides: number
           updated_at: string
           vehicle_color: string | null
+          vehicle_doc_path: string | null
           vehicle_make: string | null
           vehicle_model: string | null
           vehicle_plate: string | null
           verification: Database["public"]["Enums"]["driver_verification"]
         }
         Insert: {
+          admin_comment?: string | null
           created_at?: string
           id: string
           last_seen_at?: string | null
           license_number?: string | null
+          license_photo_path?: string | null
           rating?: number
+          selfie_path?: string | null
           status?: Database["public"]["Enums"]["driver_status"]
           total_rides?: number
           updated_at?: string
           vehicle_color?: string | null
+          vehicle_doc_path?: string | null
           vehicle_make?: string | null
           vehicle_model?: string | null
           vehicle_plate?: string | null
           verification?: Database["public"]["Enums"]["driver_verification"]
         }
         Update: {
+          admin_comment?: string | null
           created_at?: string
           id?: string
           last_seen_at?: string | null
           license_number?: string | null
+          license_photo_path?: string | null
           rating?: number
+          selfie_path?: string | null
           status?: Database["public"]["Enums"]["driver_status"]
           total_rides?: number
           updated_at?: string
           vehicle_color?: string | null
+          vehicle_doc_path?: string | null
           vehicle_make?: string | null
           vehicle_model?: string | null
           vehicle_plate?: string | null
@@ -137,26 +149,41 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          date_of_birth: string | null
           full_name: string | null
+          gender: string | null
           id: string
+          iin: string | null
           phone: string | null
+          selfie_path: string | null
           updated_at: string
+          verification_status: Database["public"]["Enums"]["verify_status"]
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          date_of_birth?: string | null
           full_name?: string | null
+          gender?: string | null
           id: string
+          iin?: string | null
           phone?: string | null
+          selfie_path?: string | null
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["verify_status"]
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          date_of_birth?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
+          iin?: string | null
           phone?: string | null
+          selfie_path?: string | null
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["verify_status"]
         }
         Relationships: []
       }
@@ -365,6 +392,72 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_requests: {
+        Row: {
+          ai_confidence: number | null
+          ai_reason: string | null
+          created_at: string
+          date_of_birth: string | null
+          document_path: string | null
+          full_name: string | null
+          gender: string | null
+          id: string
+          iin: string | null
+          kind: Database["public"]["Enums"]["verify_kind"]
+          license_photo_path: string | null
+          reviewed_at: string | null
+          reviewer_comment: string | null
+          reviewer_id: string | null
+          selfie_path: string
+          status: Database["public"]["Enums"]["verify_status"]
+          updated_at: string
+          user_id: string
+          vehicle_doc_path: string | null
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_reason?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          document_path?: string | null
+          full_name?: string | null
+          gender?: string | null
+          id?: string
+          iin?: string | null
+          kind: Database["public"]["Enums"]["verify_kind"]
+          license_photo_path?: string | null
+          reviewed_at?: string | null
+          reviewer_comment?: string | null
+          reviewer_id?: string | null
+          selfie_path: string
+          status?: Database["public"]["Enums"]["verify_status"]
+          updated_at?: string
+          user_id: string
+          vehicle_doc_path?: string | null
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_reason?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          document_path?: string | null
+          full_name?: string | null
+          gender?: string | null
+          id?: string
+          iin?: string | null
+          kind?: Database["public"]["Enums"]["verify_kind"]
+          license_photo_path?: string | null
+          reviewed_at?: string | null
+          reviewer_comment?: string | null
+          reviewer_id?: string | null
+          selfie_path?: string
+          status?: Database["public"]["Enums"]["verify_status"]
+          updated_at?: string
+          user_id?: string
+          vehicle_doc_path?: string | null
+        }
+        Relationships: []
+      }
       wallets: {
         Row: {
           balance: number
@@ -469,6 +562,36 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "rides"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_review_verification: {
+        Args: { _comment: string; _decision: string; _request_id: string }
+        Returns: {
+          ai_confidence: number | null
+          ai_reason: string | null
+          created_at: string
+          date_of_birth: string | null
+          document_path: string | null
+          full_name: string | null
+          gender: string | null
+          id: string
+          iin: string | null
+          kind: Database["public"]["Enums"]["verify_kind"]
+          license_photo_path: string | null
+          reviewed_at: string | null
+          reviewer_comment: string | null
+          reviewer_id: string | null
+          selfie_path: string
+          status: Database["public"]["Enums"]["verify_status"]
+          updated_at: string
+          user_id: string
+          vehicle_doc_path: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "verification_requests"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -587,6 +710,80 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      submit_driver_verification: {
+        Args: {
+          _ai_confidence: number
+          _ai_reason: string
+          _license_path: string
+          _selfie_path: string
+          _vehicle_doc_path: string
+        }
+        Returns: {
+          ai_confidence: number | null
+          ai_reason: string | null
+          created_at: string
+          date_of_birth: string | null
+          document_path: string | null
+          full_name: string | null
+          gender: string | null
+          id: string
+          iin: string | null
+          kind: Database["public"]["Enums"]["verify_kind"]
+          license_photo_path: string | null
+          reviewed_at: string | null
+          reviewer_comment: string | null
+          reviewer_id: string | null
+          selfie_path: string
+          status: Database["public"]["Enums"]["verify_status"]
+          updated_at: string
+          user_id: string
+          vehicle_doc_path: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "verification_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      submit_passenger_verification: {
+        Args: {
+          _ai_confidence: number
+          _ai_reason: string
+          _dob: string
+          _full_name: string
+          _gender: string
+          _iin: string
+          _selfie_path: string
+        }
+        Returns: {
+          ai_confidence: number | null
+          ai_reason: string | null
+          created_at: string
+          date_of_birth: string | null
+          document_path: string | null
+          full_name: string | null
+          gender: string | null
+          id: string
+          iin: string | null
+          kind: Database["public"]["Enums"]["verify_kind"]
+          license_photo_path: string | null
+          reviewed_at: string | null
+          reviewer_comment: string | null
+          reviewer_id: string | null
+          selfie_path: string
+          status: Database["public"]["Enums"]["verify_status"]
+          updated_at: string
+          user_id: string
+          vehicle_doc_path: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "verification_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       topup_wallet: {
         Args: { _amount: number; _card_last4: string }
         Returns: {
@@ -638,6 +835,14 @@ export type Database = {
         | "topup"
         | "refund"
         | "adjustment"
+      verify_kind: "passenger" | "driver"
+      verify_status:
+        | "pending"
+        | "auto_approved"
+        | "manual_review"
+        | "approved"
+        | "rejected"
+        | "reupload_requested"
       withdrawal_status: "pending" | "approved" | "rejected" | "paid"
     }
     CompositeTypes: {
@@ -796,6 +1001,15 @@ export const Constants = {
         "topup",
         "refund",
         "adjustment",
+      ],
+      verify_kind: ["passenger", "driver"],
+      verify_status: [
+        "pending",
+        "auto_approved",
+        "manual_review",
+        "approved",
+        "rejected",
+        "reupload_requested",
       ],
       withdrawal_status: ["pending", "approved", "rejected", "paid"],
     },
