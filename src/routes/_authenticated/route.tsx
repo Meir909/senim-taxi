@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Car, Wallet, User as UserIcon, LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Bell } from "lucide-react";
+import { useRealtimeNotifications } from "@/lib/notifications";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
