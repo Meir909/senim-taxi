@@ -11,6 +11,7 @@ import { Loader2, X, ArrowLeft, MapPin, Clock, Route as RouteIcon, Car, CheckCir
 import { MapGL, type MapMarker } from "@/components/MapGL";
 import { StarRating } from "@/components/StarRating";
 import { UserBadgeCard } from "@/components/UserBadgeCard";
+import { DriverCallButton } from "@/components/DriverCallButton";
 import { TARIFFS, fmtKzt } from "@/lib/fare";
 
 type Driver = Database["public"]["Tables"]["drivers"]["Row"];
