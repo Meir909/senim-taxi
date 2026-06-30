@@ -84,9 +84,10 @@ function RideView() {
 
   const [rating, setRating] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
-    if (ride && (ride.status === "cancelled" || ride.status === "no_drivers")) {
+    if (ride && ride.status === "no_drivers") {
       const t = setTimeout(() => void navigate({ to: "/passenger", replace: true }), 4000);
       return () => clearTimeout(t);
     }
@@ -108,21 +109,30 @@ function RideView() {
   }
 
   async function cancel() {
-    if (!ride || !user) return;
-    const { error } = await supabase
-      .from("rides")
-      .update({ status: "cancelled", cancelled_at: new Date().toISOString(), cancellation_reason: "passenger_cancelled" })
-      .eq("id", ride.id)
-      .eq("passenger_id", user.id);
-    if (error) toast.error(error.message);
-    else toast.info("Поездка отменена");
+    if (!ride || !user || cancelling) return;
+    setCancelling(true);
+    try {
+      const { error } = await supabase
+        .from("rides")
+        .update({ status: "cancelled", cancelled_at: new Date().toISOString(), cancellation_reason: "passenger_cancelled" })
+        .eq("id", ride.id)
+        .eq("passenger_id", user.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.info("Поездка отменена");
+      void navigate({ to: "/passenger", replace: true });
+    } finally {
+      setCancelling(false);
+    }
   }
 
   if (loading) return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   if (!ride) return <div className="text-center text-muted-foreground">Поездка не найдена.</div>;
 
   if (ride.status === "searching" || ride.status === "requested") {
-    return <SearchingScreen ride={ride} onCancel={cancel} />;
+    return <SearchingScreen ride={ride} onCancel={cancel} cancelling={cancelling} />;
   }
 
 
@@ -220,7 +230,7 @@ function fmtElapsed(s: number): string {
   return `${m.toString().padStart(2, "0")}:${r.toString().padStart(2, "0")}`;
 }
 
-function SearchingScreen({ ride, onCancel }: { ride: Ride; onCancel: () => void | Promise<void> }) {
+function SearchingScreen({ ride, onCancel, cancelling }: { ride: Ride; onCancel: () => void | Promise<void>; cancelling?: boolean }) {
   const [elapsed, setElapsed] = useState(0);
   const [msgIdx, setMsgIdx] = useState(0);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -286,14 +296,15 @@ function SearchingScreen({ ride, onCancel }: { ride: Ride; onCancel: () => void 
         <Card className="space-y-3 p-4">
           <p className="text-sm">Отменить заказ? Поиск водителя будет остановлен.</p>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={() => setConfirmCancel(false)}>Нет</Button>
-            <Button variant="destructive" onClick={() => void onCancel()}>
-              <X className="mr-2 h-4 w-4" /> Отменить
+            <Button variant="outline" disabled={cancelling} onClick={() => setConfirmCancel(false)}>Нет</Button>
+            <Button variant="destructive" disabled={cancelling} onClick={() => void onCancel()}>
+              {cancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <X className="mr-2 h-4 w-4" />}
+              Отменить
             </Button>
           </div>
         </Card>
       ) : (
-        <Button variant="outline" className="w-full" size="lg" onClick={() => setConfirmCancel(true)}>
+        <Button variant="outline" className="w-full" size="lg" disabled={cancelling} onClick={() => setConfirmCancel(true)}>
           <X className="mr-2 h-4 w-4" /> Отменить заказ
         </Button>
       )}
