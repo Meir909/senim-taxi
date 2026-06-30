@@ -351,6 +351,7 @@ export type Database = {
           dropoff_lat: number
           dropoff_lng: number
           duration_min: number | null
+          estimated_fare: number | null
           fare_amount: number | null
           id: string
           passenger_id: string
@@ -362,6 +363,7 @@ export type Database = {
           requested_at: string
           started_at: string | null
           status: Database["public"]["Enums"]["ride_status"]
+          tariff: Database["public"]["Enums"]["ride_tariff"]
           updated_at: string
         }
         Insert: {
@@ -377,6 +379,7 @@ export type Database = {
           dropoff_lat: number
           dropoff_lng: number
           duration_min?: number | null
+          estimated_fare?: number | null
           fare_amount?: number | null
           id?: string
           passenger_id: string
@@ -388,6 +391,7 @@ export type Database = {
           requested_at?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["ride_status"]
+          tariff?: Database["public"]["Enums"]["ride_tariff"]
           updated_at?: string
         }
         Update: {
@@ -403,6 +407,7 @@ export type Database = {
           dropoff_lat?: number
           dropoff_lng?: number
           duration_min?: number | null
+          estimated_fare?: number | null
           fare_amount?: number | null
           id?: string
           passenger_id?: string
@@ -414,6 +419,7 @@ export type Database = {
           requested_at?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["ride_status"]
+          tariff?: Database["public"]["Enums"]["ride_tariff"]
           updated_at?: string
         }
         Relationships: [
@@ -657,6 +663,7 @@ export type Database = {
           dropoff_lat: number
           dropoff_lng: number
           duration_min: number | null
+          estimated_fare: number | null
           fare_amount: number | null
           id: string
           passenger_id: string
@@ -668,6 +675,7 @@ export type Database = {
           requested_at: string
           started_at: string | null
           status: Database["public"]["Enums"]["ride_status"]
+          tariff: Database["public"]["Enums"]["ride_tariff"]
           updated_at: string
         }
         SetofOptions: {
@@ -754,6 +762,7 @@ export type Database = {
               dropoff_lat: number
               dropoff_lng: number
               duration_min: number | null
+              estimated_fare: number | null
               fare_amount: number | null
               id: string
               passenger_id: string
@@ -765,6 +774,7 @@ export type Database = {
               requested_at: string
               started_at: string | null
               status: Database["public"]["Enums"]["ride_status"]
+              tariff: Database["public"]["Enums"]["ride_tariff"]
               updated_at: string
             }
             SetofOptions: {
@@ -796,6 +806,7 @@ export type Database = {
               dropoff_lat: number
               dropoff_lng: number
               duration_min: number | null
+              estimated_fare: number | null
               fare_amount: number | null
               id: string
               passenger_id: string
@@ -807,6 +818,7 @@ export type Database = {
               requested_at: string
               started_at: string | null
               status: Database["public"]["Enums"]["ride_status"]
+              tariff: Database["public"]["Enums"]["ride_tariff"]
               updated_at: string
             }
             SetofOptions: {
@@ -849,6 +861,7 @@ export type Database = {
           dropoff_lat: number
           dropoff_lng: number
           duration_min: number | null
+          estimated_fare: number | null
           fare_amount: number | null
           id: string
           passenger_id: string
@@ -860,6 +873,7 @@ export type Database = {
           requested_at: string
           started_at: string | null
           status: Database["public"]["Enums"]["ride_status"]
+          tariff: Database["public"]["Enums"]["ride_tariff"]
           updated_at: string
         }
         SetofOptions: {
@@ -1087,6 +1101,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "no_drivers"
+      ride_tariff: "standard" | "kids"
       tx_status: "pending" | "completed" | "failed" | "cancelled"
       tx_type:
         | "ride_earning"
@@ -1261,6 +1276,7 @@ export const Constants = {
         "cancelled",
         "no_drivers",
       ],
+      ride_tariff: ["standard", "kids"],
       tx_status: ["pending", "completed", "failed", "cancelled"],
       tx_type: [
         "ride_earning",

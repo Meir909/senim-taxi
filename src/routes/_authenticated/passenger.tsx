@@ -12,6 +12,10 @@ import { Loader2, MapPin, Search, X, Crosshair } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { MapGL, type MapMarker } from "@/components/MapGL";
 import { geocode2gis, reverseGeocode2gis, getRoute2gis } from "@/lib/maps.functions";
+import { TARIFFS, calcFare, fmtKzt, type Tariff } from "@/lib/fare";
+import tariffStandardImg from "@/assets/tariff-standard.jpg";
+import tariffKidsImg from "@/assets/tariff-kids.jpg";
+
 
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Point = { lat: number; lng: number; address: string };
@@ -36,6 +40,8 @@ function PassengerHome() {
   const fetchRoute = useServerFn(getRoute2gis);
   const [route, setRoute] = useState<{ coords: Array<[number, number]>; distance_m: number; duration_s: number } | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
+  const [tariff, setTariff] = useState<Tariff>("standard");
+
 
   useEffect(() => {
     if (!pickup || !dropoff) { setRoute(null); return; }
@@ -124,6 +130,7 @@ function PassengerHome() {
     if (!user || !pickup || !dropoff) return;
     setSubmitting(true);
     try {
+      const fare = route ? calcFare(tariff, route.distance_m, route.duration_s) : null;
       const { data, error } = await supabase
         .from("rides")
         .insert({
@@ -131,6 +138,10 @@ function PassengerHome() {
           pickup_lat: pickup.lat, pickup_lng: pickup.lng, pickup_address: pickup.address,
           dropoff_lat: dropoff.lat, dropoff_lng: dropoff.lng, dropoff_address: dropoff.address,
           status: "searching",
+          tariff,
+          estimated_fare: fare,
+          distance_km: route ? Number((route.distance_m / 1000).toFixed(2)) : null,
+          duration_min: route ? Math.max(1, Math.round(route.duration_s / 60)) : null,
         })
         .select().single();
       if (error) throw error;
@@ -142,6 +153,7 @@ function PassengerHome() {
       setSubmitting(false);
     }
   }
+
 
   if (loading) {
     return (
@@ -197,27 +209,53 @@ function PassengerHome() {
             tapActive={tapField === "dropoff"}
           />
           {pickup && dropoff && (
-            <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-xs">
-              {routeLoading ? (
-                <span className="flex items-center gap-2 text-muted-foreground">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Строим оптимальный маршрут…
-                </span>
-              ) : route ? (
-                <>
-                  <span className="font-medium">
-                    {(route.distance_m / 1000).toFixed(1)} км
+            <>
+              <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-xs">
+                {routeLoading ? (
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Строим оптимальный маршрут…
                   </span>
-                  <span className="text-muted-foreground">
-                    ≈ {Math.max(1, Math.round(route.duration_s / 60))} мин в пути
-                  </span>
-                </>
-              ) : (
-                <span className="text-muted-foreground">Маршрут недоступен</span>
-              )}
-            </div>
+                ) : route ? (
+                  <>
+                    <span className="font-medium">{(route.distance_m / 1000).toFixed(1)} км</span>
+                    <span className="text-muted-foreground">≈ {Math.max(1, Math.round(route.duration_s / 60))} мин в пути</span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">Маршрут недоступен</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {(["standard", "kids"] as const).map((id) => {
+                  const t = TARIFFS[id];
+                  const img = id === "standard" ? tariffStandardImg : tariffKidsImg;
+                  const price = route ? calcFare(id, route.distance_m, route.duration_s) : null;
+                  const active = tariff === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setTariff(id)}
+                      className={`overflow-hidden rounded-lg border text-left transition ${active ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-foreground/40"}`}
+                    >
+                      <img src={img} alt={t.name} loading="lazy" width={512} height={512} className="h-20 w-full object-cover" />
+                      <div className="px-3 py-2">
+                        <div className="text-sm font-semibold">{t.name}</div>
+                        <div className="text-[11px] text-muted-foreground">{t.description}</div>
+                        <div className="mt-1 text-sm font-bold text-primary">
+                          {price != null ? fmtKzt(price) : routeLoading ? "…" : "—"}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
           )}
           <Button onClick={handleRequest} disabled={!ready} size="lg" className="w-full">
-            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Заказать поездку
+            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {route && pickup && dropoff
+              ? `Заказать — ${fmtKzt(calcFare(tariff, route.distance_m, route.duration_s))}`
+              : "Заказать поездку"}
           </Button>
         </Card>
       </div>
