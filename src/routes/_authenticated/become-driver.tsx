@@ -130,6 +130,24 @@ function BecomeDriver() {
     );
   }
 
+  if (hasDriverApplication && driverVerification !== "rejected" && step !== "done") {
+    return (
+      <Card className="p-5 sm:p-6">
+        <h1 className="text-lg font-semibold">
+          {driverVerification === "approved" ? "Вы уже водитель" : "Заявка отправлена"}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {driverVerification === "approved"
+            ? "Раздел водителя доступен."
+            : "Заявка на проверке. Подождите решения администратора — повторно подавать не нужно."}
+        </p>
+        <Button className="mt-4 w-full" onClick={() => void navigate({ to: driverVerification === "approved" ? "/driver" : "/profile" })}>
+          {driverVerification === "approved" ? "В раздел водителя" : "В профиль"}
+        </Button>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-5 sm:p-6">
       <h1 className="text-xl font-semibold">Заявка водителя</h1>
