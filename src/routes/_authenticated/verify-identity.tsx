@@ -37,6 +37,36 @@ function VerifyIdentity() {
   const [selfie1, setSelfie1] = useState<string | null>(null);
   const [resultStatus, setResultStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [priorStatus, setPriorStatus] = useState<string | null>(null);
+  const [priorReason, setPriorReason] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("verification_status")
+        .eq("id", user.id)
+        .maybeSingle();
+      const status = profile?.verification_status ?? null;
+      if (cancelled) return;
+      if (status === "rejected" || status === "reupload_requested") {
+        setPriorStatus(status);
+        const { data: req } = await supabase
+          .from("verification_requests")
+          .select("reviewer_comment, ai_reason")
+          .eq("user_id", user.id)
+          .eq("kind", "passenger")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (cancelled) return;
+        setPriorReason(req?.reviewer_comment || req?.ai_reason || null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   function submitForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
