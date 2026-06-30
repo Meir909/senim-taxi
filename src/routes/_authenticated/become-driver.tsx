@@ -99,6 +99,7 @@ function BecomeDriver() {
         _ai_reason: result.reason ?? "",
       });
       if (error) throw error;
+      await refreshDriver();
       setStep("done");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось отправить");
