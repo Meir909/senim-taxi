@@ -324,6 +324,31 @@ function RatePassengerCard({ ride, onDone }: { ride: Ride; onDone: () => void })
 }
 
 function DriverMap({ activeRide, pos }: { activeRide: Ride | null; pos: { lat: number; lng: number } | null }) {
+  const fetchRoute = useServerFn(getRoute2gis);
+  const [route, setRoute] = useState<{ coords: Array<[number, number]>; distance_m: number; duration_s: number } | null>(null);
+
+  const target = useMemo(() => {
+    if (!activeRide) return null;
+    return activeRide.status === "in_progress"
+      ? { lat: activeRide.dropoff_lat, lng: activeRide.dropoff_lng, kind: "B" as const }
+      : { lat: activeRide.pickup_lat, lng: activeRide.pickup_lng, kind: "A" as const };
+  }, [activeRide?.id, activeRide?.status, activeRide?.pickup_lat, activeRide?.pickup_lng, activeRide?.dropoff_lat, activeRide?.dropoff_lng]);
+
+  // Refresh navigation route every 20s while driving
+  useEffect(() => {
+    if (!pos || !target) { setRoute(null); return; }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const r = await fetchRoute({ data: { pickup: { lat: pos.lat, lng: pos.lng }, dropoff: { lat: target.lat, lng: target.lng } } });
+        if (!cancelled) setRoute({ coords: r.coordinates as Array<[number, number]>, distance_m: r.distance_m, duration_s: r.duration_s });
+      } catch { /* noop */ }
+    };
+    void load();
+    const id = window.setInterval(load, 20000);
+    return () => { cancelled = true; window.clearInterval(id); };
+  }, [fetchRoute, target?.kind, target?.lat, target?.lng, pos?.lat, pos?.lng]);
+
   const markers = useMemo<MapMarker[]>(() => {
     const m: MapMarker[] = [];
     if (pos) m.push({ id: "me", lat: pos.lat, lng: pos.lng, color: "#f59e0b", label: "🚗" });
@@ -334,9 +359,25 @@ function DriverMap({ activeRide, pos }: { activeRide: Ride | null; pos: { lat: n
     return m;
   }, [activeRide, pos]);
 
+  const polylineColor = target?.kind === "B" ? "#2563eb" : "#16a34a";
+
   return (
-    <div className="overflow-hidden rounded-xl border">
-      <MapGL className="h-64 w-full sm:h-72" markers={markers} center={pos ?? undefined} zoom={13} />
+    <div className="relative overflow-hidden rounded-xl border">
+      <MapGL
+        className="h-64 w-full sm:h-72"
+        markers={markers}
+        center={pos ?? undefined}
+        zoom={13}
+        polyline={route?.coords && route.coords.length >= 2 ? route.coords : undefined}
+        polylineColor={polylineColor}
+        fitMarkers={!!route?.coords?.length}
+      />
+      {target && route && route.distance_m > 0 && (
+        <div className="pointer-events-none absolute left-2 top-2 rounded-md bg-background/90 px-2.5 py-1.5 text-xs font-medium shadow">
+          До точки {target.kind}: {route.distance_m < 1000 ? `${Math.round(route.distance_m)} м` : `${(route.distance_m / 1000).toFixed(1)} км`}
+          {" · "}≈ {Math.max(1, Math.round(route.duration_s / 60))} мин
+        </div>
+      )}
     </div>
   );
 }
