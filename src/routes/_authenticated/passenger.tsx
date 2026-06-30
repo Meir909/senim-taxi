@@ -130,6 +130,7 @@ function PassengerHome() {
     if (!user || !pickup || !dropoff) return;
     setSubmitting(true);
     try {
+      const fare = route ? calcFare(tariff, route.distance_m, route.duration_s) : null;
       const { data, error } = await supabase
         .from("rides")
         .insert({
@@ -137,6 +138,10 @@ function PassengerHome() {
           pickup_lat: pickup.lat, pickup_lng: pickup.lng, pickup_address: pickup.address,
           dropoff_lat: dropoff.lat, dropoff_lng: dropoff.lng, dropoff_address: dropoff.address,
           status: "searching",
+          tariff,
+          estimated_fare: fare,
+          distance_km: route ? Number((route.distance_m / 1000).toFixed(2)) : null,
+          duration_min: route ? Math.max(1, Math.round(route.duration_s / 60)) : null,
         })
         .select().single();
       if (error) throw error;
@@ -148,6 +153,7 @@ function PassengerHome() {
       setSubmitting(false);
     }
   }
+
 
   if (loading) {
     return (
