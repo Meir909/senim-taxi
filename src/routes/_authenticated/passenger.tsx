@@ -209,27 +209,53 @@ function PassengerHome() {
             tapActive={tapField === "dropoff"}
           />
           {pickup && dropoff && (
-            <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-xs">
-              {routeLoading ? (
-                <span className="flex items-center gap-2 text-muted-foreground">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Строим оптимальный маршрут…
-                </span>
-              ) : route ? (
-                <>
-                  <span className="font-medium">
-                    {(route.distance_m / 1000).toFixed(1)} км
+            <>
+              <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-xs">
+                {routeLoading ? (
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Строим оптимальный маршрут…
                   </span>
-                  <span className="text-muted-foreground">
-                    ≈ {Math.max(1, Math.round(route.duration_s / 60))} мин в пути
-                  </span>
-                </>
-              ) : (
-                <span className="text-muted-foreground">Маршрут недоступен</span>
-              )}
-            </div>
+                ) : route ? (
+                  <>
+                    <span className="font-medium">{(route.distance_m / 1000).toFixed(1)} км</span>
+                    <span className="text-muted-foreground">≈ {Math.max(1, Math.round(route.duration_s / 60))} мин в пути</span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">Маршрут недоступен</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {(["standard", "kids"] as const).map((id) => {
+                  const t = TARIFFS[id];
+                  const img = id === "standard" ? tariffStandardImg : tariffKidsImg;
+                  const price = route ? calcFare(id, route.distance_m, route.duration_s) : null;
+                  const active = tariff === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setTariff(id)}
+                      className={`overflow-hidden rounded-lg border text-left transition ${active ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-foreground/40"}`}
+                    >
+                      <img src={img} alt={t.name} loading="lazy" width={512} height={512} className="h-20 w-full object-cover" />
+                      <div className="px-3 py-2">
+                        <div className="text-sm font-semibold">{t.name}</div>
+                        <div className="text-[11px] text-muted-foreground">{t.description}</div>
+                        <div className="mt-1 text-sm font-bold text-primary">
+                          {price != null ? fmtKzt(price) : routeLoading ? "…" : "—"}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
           )}
           <Button onClick={handleRequest} disabled={!ready} size="lg" className="w-full">
-            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Заказать поездку
+            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {route && pickup && dropoff
+              ? `Заказать — ${fmtKzt(calcFare(tariff, route.distance_m, route.duration_s))}`
+              : "Заказать поездку"}
           </Button>
         </Card>
       </div>
