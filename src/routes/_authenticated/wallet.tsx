@@ -89,15 +89,22 @@ function WalletPage() {
 
   async function handleWithdraw(e: React.FormEvent) {
     e.preventDefault();
+    if (!user) return;
     if (!Number.isFinite(amt) || amt < 500) return toast.error("Минимум 500 ₸");
     if (!/^\d{4}$/.test(last4)) return toast.error("Введите номер карты");
     if (holder.trim().length < 2) return toast.error("Укажите владельца карты");
     try {
       setSubmitting(true);
-      const { error } = await supabase.rpc("request_withdrawal", {
-        _amount: amt,
-        _card_last4: last4,
-        _card_holder: holder.trim(),
+      const { error } = await supabase.from("notifications").insert({
+        user_id: user.id,
+        title: "Заявка на вывод средств отправлена",
+        body: `Запрос на вывод ${fmt(amt)} ₸ на карту ****${last4} (${holder.trim()}) принят. Мы свяжемся с вами в течение 24 часов.`,
+        type: "withdrawal_request",
+        data: {
+          amount: amt,
+          card_last4: last4,
+          card_holder: holder.trim(),
+        },
       });
       if (error) throw error;
       toast.success("Заявка на вывод отправлена");
@@ -111,6 +118,7 @@ function WalletPage() {
       setSubmitting(false);
     }
   }
+
 
   function formatCard(v: string) {
     const digits = v.replace(/\D/g, "").slice(0, 16);
