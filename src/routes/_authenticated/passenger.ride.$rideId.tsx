@@ -205,18 +205,18 @@ function RideView() {
   }
 
   if (ride.status === "accepted" || ride.status === "driver_arriving" || ride.status === "driver_arrived") {
+    void navigate({
+      to: "/passenger/ride/$rideId/waiting",
+      params: { rideId: ride.id },
+      replace: true,
+    });
     return (
-      <AwaitingDriverScreen
-        ride={ride}
-        driver={driver}
-        driverProfile={driverProfile}
-        driverLoc={driverLoc}
-        locError={locError}
-        onCancel={cancel}
-        cancelling={cancelling}
-      />
+      <div className="grid h-64 place-items-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
     );
   }
+
 
 
 

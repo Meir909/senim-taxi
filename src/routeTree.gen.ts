@@ -30,6 +30,7 @@ import { Route as AuthenticatedSettingsAddressesRouteImport } from './routes/_au
 import { Route as AuthenticatedSettingsAboutRouteImport } from './routes/_authenticated/settings.about'
 import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
 import { Route as AuthenticatedPassengerRideRideIdRouteImport } from './routes/_authenticated/passenger.ride.$rideId'
+import { Route as AuthenticatedPassengerRideRideIdWaitingRouteImport } from './routes/_authenticated/passenger.ride.$rideId.waiting'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -145,6 +146,12 @@ const AuthenticatedPassengerRideRideIdRoute =
     path: '/ride/$rideId',
     getParentRoute: () => AuthenticatedPassengerRoute,
   } as any)
+const AuthenticatedPassengerRideRideIdWaitingRoute =
+  AuthenticatedPassengerRideRideIdWaitingRouteImport.update({
+    id: '/waiting',
+    path: '/waiting',
+    getParentRoute: () => AuthenticatedPassengerRideRideIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -166,7 +173,8 @@ export interface FileRoutesByFullPath {
   '/settings/support': typeof AuthenticatedSettingsSupportRoute
   '/settings/terms': typeof AuthenticatedSettingsTermsRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
-  '/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRoute
+  '/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRouteWithChildren
+  '/passenger/ride/$rideId/waiting': typeof AuthenticatedPassengerRideRideIdWaitingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -187,7 +195,8 @@ export interface FileRoutesByTo {
   '/settings/support': typeof AuthenticatedSettingsSupportRoute
   '/settings/terms': typeof AuthenticatedSettingsTermsRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
-  '/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRoute
+  '/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRouteWithChildren
+  '/passenger/ride/$rideId/waiting': typeof AuthenticatedPassengerRideRideIdWaitingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -211,7 +220,8 @@ export interface FileRoutesById {
   '/_authenticated/settings/support': typeof AuthenticatedSettingsSupportRoute
   '/_authenticated/settings/terms': typeof AuthenticatedSettingsTermsRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
-  '/_authenticated/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRoute
+  '/_authenticated/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRouteWithChildren
+  '/_authenticated/passenger/ride/$rideId/waiting': typeof AuthenticatedPassengerRideRideIdWaitingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/settings/terms'
     | '/settings/'
     | '/passenger/ride/$rideId'
+    | '/passenger/ride/$rideId/waiting'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/settings/terms'
     | '/settings'
     | '/passenger/ride/$rideId'
+    | '/passenger/ride/$rideId/waiting'
   id:
     | '__root__'
     | '/'
@@ -280,6 +292,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/terms'
     | '/_authenticated/settings/'
     | '/_authenticated/passenger/ride/$rideId'
+    | '/_authenticated/passenger/ride/$rideId/waiting'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -437,6 +450,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPassengerRideRideIdRouteImport
       parentRoute: typeof AuthenticatedPassengerRoute
     }
+    '/_authenticated/passenger/ride/$rideId/waiting': {
+      id: '/_authenticated/passenger/ride/$rideId/waiting'
+      path: '/waiting'
+      fullPath: '/passenger/ride/$rideId/waiting'
+      preLoaderRoute: typeof AuthenticatedPassengerRideRideIdWaitingRouteImport
+      parentRoute: typeof AuthenticatedPassengerRideRideIdRoute
+    }
   }
 }
 
@@ -451,14 +471,29 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
+interface AuthenticatedPassengerRideRideIdRouteChildren {
+  AuthenticatedPassengerRideRideIdWaitingRoute: typeof AuthenticatedPassengerRideRideIdWaitingRoute
+}
+
+const AuthenticatedPassengerRideRideIdRouteChildren: AuthenticatedPassengerRideRideIdRouteChildren =
+  {
+    AuthenticatedPassengerRideRideIdWaitingRoute:
+      AuthenticatedPassengerRideRideIdWaitingRoute,
+  }
+
+const AuthenticatedPassengerRideRideIdRouteWithChildren =
+  AuthenticatedPassengerRideRideIdRoute._addFileChildren(
+    AuthenticatedPassengerRideRideIdRouteChildren,
+  )
+
 interface AuthenticatedPassengerRouteChildren {
-  AuthenticatedPassengerRideRideIdRoute: typeof AuthenticatedPassengerRideRideIdRoute
+  AuthenticatedPassengerRideRideIdRoute: typeof AuthenticatedPassengerRideRideIdRouteWithChildren
 }
 
 const AuthenticatedPassengerRouteChildren: AuthenticatedPassengerRouteChildren =
   {
     AuthenticatedPassengerRideRideIdRoute:
-      AuthenticatedPassengerRideRideIdRoute,
+      AuthenticatedPassengerRideRideIdRouteWithChildren,
   }
 
 const AuthenticatedPassengerRouteWithChildren =
