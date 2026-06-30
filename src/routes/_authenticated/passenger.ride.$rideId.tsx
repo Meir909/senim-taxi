@@ -135,6 +135,20 @@ function RideView() {
     return <SearchingScreen ride={ride} onCancel={cancel} cancelling={cancelling} />;
   }
 
+  if (ride.status === "accepted" || ride.status === "driver_arriving" || ride.status === "driver_arrived") {
+    return (
+      <AwaitingDriverScreen
+        ride={ride}
+        driver={driver}
+        driverProfile={driverProfile}
+        driverLoc={driverLoc}
+        onCancel={cancel}
+        cancelling={cancelling}
+      />
+    );
+  }
+
+
 
   const canCancel = ["requested", "searching", "accepted", "driver_arriving"].includes(ride.status);
 
