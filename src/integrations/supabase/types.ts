@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      driver_documents: {
+        Row: {
+          comment: string | null
+          driver_id: string
+          file_path: string
+          id: string
+          kind: Database["public"]["Enums"]["driver_doc_kind"]
+          mime_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["driver_doc_status"]
+          uploaded_at: string
+        }
+        Insert: {
+          comment?: string | null
+          driver_id: string
+          file_path: string
+          id?: string
+          kind: Database["public"]["Enums"]["driver_doc_kind"]
+          mime_type: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["driver_doc_status"]
+          uploaded_at?: string
+        }
+        Update: {
+          comment?: string | null
+          driver_id?: string
+          file_path?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["driver_doc_kind"]
+          mime_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["driver_doc_status"]
+          uploaded_at?: string
+        }
+        Relationships: []
+      }
       driver_locations: {
         Row: {
           accuracy: number | null
@@ -55,17 +94,27 @@ export type Database = {
       drivers: {
         Row: {
           admin_comment: string | null
+          application_status: Database["public"]["Enums"]["driver_app_status"]
+          child_seat: boolean
           created_at: string
+          first_name: string | null
           id: string
+          last_name: string | null
           last_seen_at: string | null
           license_number: string | null
           license_photo_path: string | null
+          patronymic: string | null
           rating: number
+          review_comment: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           selfie_path: string | null
           status: Database["public"]["Enums"]["driver_status"]
+          submitted_at: string | null
           total_rides: number
           updated_at: string
           vehicle_color: string | null
+          vehicle_country: string | null
           vehicle_doc_path: string | null
           vehicle_make: string | null
           vehicle_model: string | null
@@ -74,17 +123,27 @@ export type Database = {
         }
         Insert: {
           admin_comment?: string | null
+          application_status?: Database["public"]["Enums"]["driver_app_status"]
+          child_seat?: boolean
           created_at?: string
+          first_name?: string | null
           id: string
+          last_name?: string | null
           last_seen_at?: string | null
           license_number?: string | null
           license_photo_path?: string | null
+          patronymic?: string | null
           rating?: number
+          review_comment?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           selfie_path?: string | null
           status?: Database["public"]["Enums"]["driver_status"]
+          submitted_at?: string | null
           total_rides?: number
           updated_at?: string
           vehicle_color?: string | null
+          vehicle_country?: string | null
           vehicle_doc_path?: string | null
           vehicle_make?: string | null
           vehicle_model?: string | null
@@ -93,17 +152,27 @@ export type Database = {
         }
         Update: {
           admin_comment?: string | null
+          application_status?: Database["public"]["Enums"]["driver_app_status"]
+          child_seat?: boolean
           created_at?: string
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           last_seen_at?: string | null
           license_number?: string | null
           license_photo_path?: string | null
+          patronymic?: string | null
           rating?: number
+          review_comment?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           selfie_path?: string | null
           status?: Database["public"]["Enums"]["driver_status"]
+          submitted_at?: string | null
           total_rides?: number
           updated_at?: string
           vehicle_color?: string | null
+          vehicle_country?: string | null
           vehicle_doc_path?: string | null
           vehicle_make?: string | null
           vehicle_model?: string | null
@@ -150,40 +219,61 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           date_of_birth: string | null
+          first_name: string | null
           full_name: string | null
           gender: string | null
           id: string
           iin: string | null
+          last_name: string | null
+          live_photo_url: string | null
+          patronymic: string | null
           phone: string | null
           selfie_path: string | null
           updated_at: string
+          verification_comment: string | null
           verification_status: Database["public"]["Enums"]["verify_status"]
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           date_of_birth?: string | null
+          first_name?: string | null
           full_name?: string | null
           gender?: string | null
           id: string
           iin?: string | null
+          last_name?: string | null
+          live_photo_url?: string | null
+          patronymic?: string | null
           phone?: string | null
           selfie_path?: string | null
           updated_at?: string
+          verification_comment?: string | null
           verification_status?: Database["public"]["Enums"]["verify_status"]
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           date_of_birth?: string | null
+          first_name?: string | null
           full_name?: string | null
           gender?: string | null
           id?: string
           iin?: string | null
+          last_name?: string | null
+          live_photo_url?: string | null
+          patronymic?: string | null
           phone?: string | null
           selfie_path?: string | null
           updated_at?: string
+          verification_comment?: string | null
           verification_status?: Database["public"]["Enums"]["verify_status"]
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: []
       }
@@ -531,6 +621,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _upsert_driver_doc: {
+        Args: {
+          _kind: Database["public"]["Enums"]["driver_doc_kind"]
+          _mime: string
+          _path: string
+          _user: string
+        }
+        Returns: undefined
+      }
       accept_ride_offer: {
         Args: { _offer_id: string }
         Returns: {
@@ -562,6 +661,27 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "rides"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_review_document: {
+        Args: { _comment: string; _decision: string; _doc_id: string }
+        Returns: {
+          comment: string | null
+          driver_id: string
+          file_path: string
+          id: string
+          kind: Database["public"]["Enums"]["driver_doc_kind"]
+          mime_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["driver_doc_status"]
+          uploaded_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "driver_documents"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -710,6 +830,84 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      reupload_driver_document: {
+        Args: {
+          _kind: Database["public"]["Enums"]["driver_doc_kind"]
+          _mime: string
+          _path: string
+        }
+        Returns: {
+          comment: string | null
+          driver_id: string
+          file_path: string
+          id: string
+          kind: Database["public"]["Enums"]["driver_doc_kind"]
+          mime_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["driver_doc_status"]
+          uploaded_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "driver_documents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      submit_driver_application: {
+        Args: {
+          _child_seat: boolean
+          _first_name: string
+          _identity_mime: string
+          _identity_path: string
+          _last_name: string
+          _license_mime: string
+          _license_path: string
+          _patronymic: string
+          _vehicle_country: string
+          _vehicle_documents_mime: string
+          _vehicle_documents_path: string
+          _vehicle_plate: string
+          _vehicle_registration_mime: string
+          _vehicle_registration_path: string
+        }
+        Returns: {
+          admin_comment: string | null
+          application_status: Database["public"]["Enums"]["driver_app_status"]
+          child_seat: boolean
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          last_seen_at: string | null
+          license_number: string | null
+          license_photo_path: string | null
+          patronymic: string | null
+          rating: number
+          review_comment: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          selfie_path: string | null
+          status: Database["public"]["Enums"]["driver_status"]
+          submitted_at: string | null
+          total_rides: number
+          updated_at: string
+          vehicle_color: string | null
+          vehicle_country: string | null
+          vehicle_doc_path: string | null
+          vehicle_make: string | null
+          vehicle_model: string | null
+          vehicle_plate: string | null
+          verification: Database["public"]["Enums"]["driver_verification"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "drivers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       submit_driver_verification: {
         Args: {
           _ai_confidence: number
@@ -808,6 +1006,13 @@ export type Database = {
     }
     Enums: {
       app_role: "passenger" | "driver" | "admin"
+      driver_app_status: "pending" | "needs_reupload" | "approved" | "rejected"
+      driver_doc_kind:
+        | "identity"
+        | "license"
+        | "vehicle_registration"
+        | "vehicle_documents"
+      driver_doc_status: "pending" | "approved" | "rejected"
       driver_status: "offline" | "online" | "on_ride"
       driver_verification: "pending" | "approved" | "rejected"
       payment_method: "cash" | "wallet" | "card_demo"
@@ -972,6 +1177,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["passenger", "driver", "admin"],
+      driver_app_status: ["pending", "needs_reupload", "approved", "rejected"],
+      driver_doc_kind: [
+        "identity",
+        "license",
+        "vehicle_registration",
+        "vehicle_documents",
+      ],
+      driver_doc_status: ["pending", "approved", "rejected"],
       driver_status: ["offline", "online", "on_ride"],
       driver_verification: ["pending", "approved", "rejected"],
       payment_method: ["cash", "wallet", "card_demo"],
