@@ -63,25 +63,93 @@ function RideView() {
   }, [rideId]);
 
   useEffect(() => {
-    if (!ride?.driver_id) { setDriver(null); setDriverProfile(null); return; }
+    if (!ride?.driver_id) { setDriver(null); setDriverProfile(null); setDriverLoc(null); setLocError(null); return; }
+    const driverId = ride.driver_id;
     let mounted = true;
-    (async () => {
-      const [{ data: loc }, { data: d }, { data: p }] = await Promise.all([
-        supabase.from("driver_locations").select("*").eq("driver_id", ride.driver_id!).maybeSingle(),
-        supabase.from("drivers").select("*").eq("id", ride.driver_id!).maybeSingle(),
-        supabase.from("profiles").select("*").eq("id", ride.driver_id!).maybeSingle(),
-      ]);
-      if (!mounted) return;
-      setDriverLoc(loc); setDriver(d); setDriverProfile(p);
-    })();
-    const ch = supabase
-      .channel(`driver-loc-${ride.driver_id}`)
-      .on("postgres_changes",
-        { event: "*", schema: "public", table: "driver_locations", filter: `driver_id=eq.${ride.driver_id}` },
-        (p) => setDriverLoc(p.new as Loc))
-      .subscribe();
-    return () => { mounted = false; supabase.removeChannel(ch); };
+    let attempt = 0;
+    let retryTimer: number | undefined;
+    let pollTimer: number | undefined;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    async function fetchLoc(): Promise<Loc | null> {
+      const { data, error } = await supabase
+        .from("driver_locations")
+        .select("*")
+        .eq("driver_id", driverId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    async function loadAll() {
+      try {
+        const [loc, { data: d }, { data: p }] = await Promise.all([
+          fetchLoc(),
+          supabase.from("drivers").select("*").eq("id", driverId).maybeSingle(),
+          supabase.from("profiles").select("*").eq("id", driverId).maybeSingle(),
+        ]);
+        if (!mounted) return;
+        setDriverLoc(loc);
+        setDriver(d);
+        setDriverProfile(p);
+        setLocError(null);
+        attempt = 0;
+      } catch (err) {
+        if (!mounted) return;
+        setLocError(err instanceof Error ? err.message : "Не удалось получить координаты");
+        // Backoff: 1.5s, 3s, 6s, 12s, cap 20s
+        const delay = Math.min(20_000, 1500 * 2 ** attempt);
+        attempt += 1;
+        retryTimer = window.setTimeout(loadAll, delay);
+      }
+    }
+
+    async function refetchLoc() {
+      try {
+        const loc = await fetchLoc();
+        if (!mounted) return;
+        setDriverLoc(loc);
+        setLocError(null);
+      } catch (err) {
+        if (!mounted) return;
+        setLocError(err instanceof Error ? err.message : "Связь с водителем нестабильна");
+      }
+    }
+
+    function subscribe() {
+      channel = supabase
+        .channel(`driver-loc-${driverId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "driver_locations", filter: `driver_id=eq.${driverId}` },
+          (payload) => {
+            setDriverLoc(payload.new as Loc);
+            setLocError(null);
+          },
+        )
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            setLocError("Переподключение к обновлениям…");
+            if (channel) supabase.removeChannel(channel);
+            channel = null;
+            window.setTimeout(() => { if (mounted) subscribe(); }, 2500);
+          }
+        });
+    }
+
+    void loadAll();
+    subscribe();
+    // Polling fallback (in case realtime drops silently)
+    pollTimer = window.setInterval(() => { void refetchLoc(); }, 8000);
+
+    return () => {
+      mounted = false;
+      if (channel) supabase.removeChannel(channel);
+      if (retryTimer) window.clearTimeout(retryTimer);
+      if (pollTimer) window.clearInterval(pollTimer);
+    };
   }, [ride?.driver_id]);
+
 
   const [rating, setRating] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
