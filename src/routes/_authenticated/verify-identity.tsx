@@ -69,9 +69,19 @@ function VerifyIdentity() {
     return () => { cancelled = true; };
   }, [user]);
 
+  function resetForRetry() {
+    setIinRejection(null);
+    setPriorStatus(null);
+    setPriorReason(null);
+    setSelfie1(null);
+    setResultStatus(null);
+    setStep("form");
+  }
+
   function submitForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIinRejection(null);
+    setPriorStatus(null);
     try {
       const v = Schema.parse({ full_name: fullName, iin });
       const parsed = parseIin(v.iin);
@@ -166,8 +176,15 @@ function VerifyIdentity() {
             <AlertTitle>
               {priorStatus === "rejected" ? "Заявка отклонена" : "Требуется повторная отправка"}
             </AlertTitle>
-            <AlertDescription>
-              {priorReason || "Данные не прошли проверку. Сервис доступен только женщинам 18+. Отправьте заявку повторно с корректными данными."}
+            <AlertDescription className="space-y-2">
+              <p>{priorReason || "Данные не прошли проверку. Сервис доступен только женщинам 18+. Отправьте заявку повторно с корректными данными."}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => { setIin(""); setFullName(""); resetForRetry(); }}
+              >
+                Очистить и начать заново
+              </Button>
             </AlertDescription>
           </Alert>
         )}
@@ -241,9 +258,16 @@ function VerifyIdentity() {
                 ? "Личность подтверждена. Можно пользоваться сервисом."
                 : "Администратор проверит заявку и пришлёт уведомление. Полная активация — после одобрения."}
             </p>
-            <Button className="w-full" onClick={() => void navigate({ to: "/home" })}>
-              На главную
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button className="w-full" onClick={() => void navigate({ to: "/home" })}>
+                На главную
+              </Button>
+              {resultStatus !== "auto_approved" && (
+                <Button variant="outline" className="w-full" onClick={() => { setIin(""); setFullName(""); resetForRetry(); }}>
+                  Отправить повторно
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </Card>
