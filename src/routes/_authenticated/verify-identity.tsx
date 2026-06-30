@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,8 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Loader2, ShieldCheck, ArrowLeft, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/verify-identity")({
   component: VerifyIdentity,
@@ -36,6 +37,36 @@ function VerifyIdentity() {
   const [selfie1, setSelfie1] = useState<string | null>(null);
   const [resultStatus, setResultStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [priorStatus, setPriorStatus] = useState<string | null>(null);
+  const [priorReason, setPriorReason] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("verification_status")
+        .eq("id", user.id)
+        .maybeSingle();
+      const status = profile?.verification_status ?? null;
+      if (cancelled) return;
+      if (status === "rejected" || status === "reupload_requested") {
+        setPriorStatus(status);
+        const { data: req } = await supabase
+          .from("verification_requests")
+          .select("reviewer_comment, ai_reason")
+          .eq("user_id", user.id)
+          .eq("kind", "passenger")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (cancelled) return;
+        setPriorReason(req?.reviewer_comment || req?.ai_reason || null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   function submitForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -121,6 +152,18 @@ function VerifyIdentity() {
             <p className="text-xs text-muted-foreground">Сервис только для женщин 18+. ИИН + живое селфи.</p>
           </div>
         </div>
+
+        {priorStatus && step === "form" && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>
+              {priorStatus === "rejected" ? "Заявка отклонена" : "Требуется повторная отправка"}
+            </AlertTitle>
+            <AlertDescription>
+              {priorReason || "Данные не прошли проверку. Сервис доступен только женщинам 18+. Отправьте заявку повторно с корректными данными."}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {step === "form" && (
           <form onSubmit={submitForm} className="mt-5 space-y-4">
