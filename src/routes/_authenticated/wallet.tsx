@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, ArrowDownToLine, Wallet as WalletIcon } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type Wallet = Database["public"]["Tables"]["wallets"]["Row"];
@@ -33,65 +33,231 @@ const TX_STATUS: Record<string, string> = {
   cancelled: "Отменено",
 };
 
+const QUICK_AMOUNTS = [1000, 2500, 5000, 10000];
+
+function fmt(n: number) {
+  return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(n);
+}
+
 function WalletPage() {
   const { user, isDriver } = useAuth();
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"topup" | "withdraw">("topup");
   const [submitting, setSubmitting] = useState(false);
+  const [amount, setAmount] = useState<string>("");
+  const [card, setCard] = useState<string>("");
+  const [holder, setHolder] = useState<string>("");
 
   async function refresh() {
     if (!user) return;
     const [{ data: w }, { data: t }] = await Promise.all([
       supabase.from("wallets").select("*").eq("user_id", user.id).maybeSingle(),
-      supabase.from("transactions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
+      supabase.from("transactions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
     ]);
-    setWallet(w); setTxs(t ?? []); setLoading(false);
+    setWallet(w);
+    setTxs(t ?? []);
+    setLoading(false);
   }
-  useEffect(() => { void refresh(); /* eslint-disable-next-line */ }, [user]);
+  useEffect(() => {
+    void refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
-  async function withdraw(e: React.FormEvent<HTMLFormElement>) {
+  const last4 = card.replace(/\D/g, "").slice(-4);
+  const amt = Number(amount);
+
+  async function handleTopup(e: React.FormEvent) {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const amount = Number(fd.get("amount"));
-    const card_last4 = String(fd.get("card_last4") ?? "").slice(0, 4);
-    const card_holder = String(fd.get("card_holder") ?? "").slice(0, 100);
-    if (!Number.isFinite(amount) || amount < 10) return toast.error("Минимум 10");
-    if (!/^\d{4}$/.test(card_last4)) return toast.error("Введите 4 цифры карты");
+    if (!Number.isFinite(amt) || amt < 100) return toast.error("Минимум 100 ₸");
+    if (!/^\d{4}$/.test(last4)) return toast.error("Введите номер карты");
     try {
       setSubmitting(true);
-      const { error } = await supabase.rpc("request_withdrawal", { _amount: amount, _card_last4: card_last4, _card_holder: card_holder });
+      const { error } = await supabase.rpc("topup_wallet", { _amount: amt, _card_last4: last4 });
+      if (error) throw error;
+      toast.success(`Зачислено ${fmt(amt)} ₸`);
+      setAmount("");
+      setCard("");
+      void refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Не удалось пополнить");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleWithdraw(e: React.FormEvent) {
+    e.preventDefault();
+    if (!Number.isFinite(amt) || amt < 500) return toast.error("Минимум 500 ₸");
+    if (!/^\d{4}$/.test(last4)) return toast.error("Введите номер карты");
+    if (holder.trim().length < 2) return toast.error("Укажите владельца карты");
+    try {
+      setSubmitting(true);
+      const { error } = await supabase.rpc("request_withdrawal", {
+        _amount: amt,
+        _card_last4: last4,
+        _card_holder: holder.trim(),
+      });
       if (error) throw error;
       toast.success("Заявка на вывод отправлена");
-      (e.target as HTMLFormElement).reset();
+      setAmount("");
+      setCard("");
+      setHolder("");
       void refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось");
-    } finally { setSubmitting(false); }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  if (loading) return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  function formatCard(v: string) {
+    const digits = v.replace(/\D/g, "").slice(0, 16);
+    return digits.replace(/(.{4})/g, "$1 ").trim();
+  }
+
+  if (loading) {
+    return (
+      <div className="grid h-64 place-items-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const balance = Number(wallet?.balance ?? 0);
+  const pending = Number(wallet?.pending_balance ?? 0);
 
   return (
     <div className="space-y-4">
-      <Card className="p-5">
-        <div className="text-sm text-muted-foreground">Доступный баланс</div>
-        <div className="mt-1 text-3xl font-bold">{Number(wallet?.balance ?? 0).toFixed(2)} {wallet?.currency ?? "USD"}</div>
-        <div className="mt-1 text-xs text-muted-foreground">В ожидании: {Number(wallet?.pending_balance ?? 0).toFixed(2)}</div>
+      {/* Balance card */}
+      <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/70 p-5 text-primary-foreground shadow-lg">
+        <div className="flex items-center gap-2 text-sm opacity-90">
+          <WalletIcon className="h-4 w-4" /> Баланс кошелька
+        </div>
+        <div className="mt-2 text-4xl font-bold tracking-tight">{fmt(balance)} ₸</div>
+        {pending > 0 && (
+          <div className="mt-1 text-xs opacity-90">В ожидании вывода: {fmt(pending)} ₸</div>
+        )}
       </Card>
 
-      {isDriver && (
+      {/* Tabs */}
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          variant={tab === "topup" ? "default" : "outline"}
+          size="lg"
+          onClick={() => setTab("topup")}
+          className="h-12"
+        >
+          <Plus className="mr-2 h-4 w-4" /> Пополнить
+        </Button>
+        <Button
+          variant={tab === "withdraw" ? "default" : "outline"}
+          size="lg"
+          onClick={() => setTab("withdraw")}
+          disabled={!isDriver}
+          className="h-12"
+        >
+          <ArrowDownToLine className="mr-2 h-4 w-4" /> Вывод
+        </Button>
+      </div>
+
+      {tab === "topup" && (
         <Card className="p-5">
-          <h2 className="font-semibold">Вывод на карту (демо)</h2>
-          <form onSubmit={withdraw} className="mt-3 space-y-3">
-            <div className="space-y-1"><Label>Сумма</Label><Input name="amount" type="number" inputMode="decimal" min={10} step="0.01" required /></div>
-            <div className="space-y-1"><Label>Владелец карты</Label><Input name="card_holder" required maxLength={100} /></div>
-            <div className="space-y-1"><Label>Последние 4 цифры карты</Label><Input name="card_last4" inputMode="numeric" pattern="\d{4}" maxLength={4} required /></div>
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Запросить вывод
+          <h2 className="font-semibold">Пополнение картой</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Демо-режим. Реальные деньги не списываются.</p>
+          <form onSubmit={handleTopup} className="mt-4 space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {QUICK_AMOUNTS.map((v) => (
+                <Button
+                  key={v}
+                  type="button"
+                  variant={amt === v ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setAmount(String(v))}
+                >
+                  {fmt(v)} ₸
+                </Button>
+              ))}
+            </div>
+            <div className="space-y-1">
+              <Label>Сумма, ₸</Label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={100}
+                step={100}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="1000"
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Номер карты</Label>
+              <Input
+                inputMode="numeric"
+                value={formatCard(card)}
+                onChange={(e) => setCard(e.target.value)}
+                placeholder="0000 0000 0000 0000"
+                maxLength={19}
+                required
+              />
+            </div>
+            <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Пополнить
             </Button>
-            <p className="text-xs text-muted-foreground">Минимум 10. Демо — реальные деньги не переводятся.</p>
           </form>
+        </Card>
+      )}
+
+      {tab === "withdraw" && (
+        <Card className="p-5">
+          {!isDriver ? (
+            <p className="text-sm text-muted-foreground">
+              Вывод средств доступен только водителям. Станьте водителем в профиле.
+            </p>
+          ) : (
+            <>
+              <h2 className="font-semibold">Вывод на карту</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Минимум 500 ₸. Демо — деньги не переводятся.</p>
+              <form onSubmit={handleWithdraw} className="mt-4 space-y-3">
+                <div className="space-y-1">
+                  <Label>Сумма, ₸</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    min={500}
+                    step={100}
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Владелец карты</Label>
+                  <Input value={holder} onChange={(e) => setHolder(e.target.value)} maxLength={100} placeholder="IVAN IVANOV" required />
+                </div>
+                <div className="space-y-1">
+                  <Label>Номер карты</Label>
+                  <Input
+                    inputMode="numeric"
+                    value={formatCard(card)}
+                    onChange={(e) => setCard(e.target.value)}
+                    placeholder="0000 0000 0000 0000"
+                    maxLength={19}
+                    required
+                  />
+                </div>
+                <Button type="submit" size="lg" className="w-full" disabled={submitting || balance < 500}>
+                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Запросить вывод
+                </Button>
+                {balance < 500 && (
+                  <p className="text-xs text-muted-foreground">Недостаточно средств на балансе.</p>
+                )}
+              </form>
+            </>
+          )}
         </Card>
       )}
 
@@ -101,20 +267,24 @@ function WalletPage() {
           <p className="mt-3 text-sm text-muted-foreground">Транзакций пока нет.</p>
         ) : (
           <ul className="mt-3 divide-y divide-border">
-            {txs.map((t) => (
-              <li key={t.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                <div className="min-w-0">
-                  <div className="truncate font-medium">{t.description ?? TX_TYPE[t.type] ?? t.type}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                    <span>{new Date(t.created_at).toLocaleString("ru-RU")}</span>
-                    <Badge variant="outline">{TX_STATUS[t.status] ?? t.status}</Badge>
+            {txs.map((t) => {
+              const v = Number(t.amount);
+              return (
+                <li key={t.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{t.description ?? TX_TYPE[t.type] ?? t.type}</div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                      <span>{new Date(t.created_at).toLocaleString("ru-RU")}</span>
+                      <Badge variant="outline">{TX_STATUS[t.status] ?? t.status}</Badge>
+                    </div>
                   </div>
-                </div>
-                <div className={`shrink-0 font-semibold ${Number(t.amount) < 0 ? "text-destructive" : "text-success"}`}>
-                  {Number(t.amount) > 0 ? "+" : ""}{Number(t.amount).toFixed(2)}
-                </div>
-              </li>
-            ))}
+                  <div className={`shrink-0 font-semibold ${v < 0 ? "text-destructive" : "text-success"}`}>
+                    {v > 0 ? "+" : ""}
+                    {fmt(v)} ₸
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </Card>
