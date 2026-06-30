@@ -1141,7 +1141,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "no_drivers"
-      ride_tariff: "standard" | "kids"
+      ride_tariff: "standard" | "kids" | "delivery" | "cargo"
       tx_status: "pending" | "completed" | "failed" | "cancelled"
       tx_type:
         | "ride_earning"
@@ -1316,7 +1316,7 @@ export const Constants = {
         "cancelled",
         "no_drivers",
       ],
-      ride_tariff: ["standard", "kids"],
+      ride_tariff: ["standard", "kids", "delivery", "cargo"],
       tx_status: ["pending", "completed", "failed", "cancelled"],
       tx_type: [
         "ride_earning",

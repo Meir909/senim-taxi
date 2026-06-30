@@ -1,4 +1,4 @@
-export type Tariff = "standard" | "kids";
+export type Tariff = "standard" | "kids" | "delivery" | "cargo";
 
 export const TARIFFS: Record<Tariff, {
   id: Tariff;
@@ -23,6 +23,22 @@ export const TARIFFS: Record<Tariff, {
     base: 700,
     perKm: 130,
     perMin: 25,
+  },
+  delivery: {
+    id: "delivery",
+    name: "Доставка",
+    description: "Курьер — небольшие посылки",
+    base: 400,
+    perKm: 80,
+    perMin: 12,
+  },
+  cargo: {
+    id: "cargo",
+    name: "Грузовая",
+    description: "Доставка крупных грузов",
+    base: 1200,
+    perKm: 180,
+    perMin: 30,
   },
 };
 

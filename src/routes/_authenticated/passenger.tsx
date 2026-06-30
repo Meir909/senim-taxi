@@ -15,6 +15,15 @@ import { geocode2gis, reverseGeocode2gis, getRoute2gis } from "@/lib/maps.functi
 import { TARIFFS, calcFare, fmtKzt, type Tariff } from "@/lib/fare";
 import tariffStandardImg from "@/assets/tariff-standard.jpg";
 import tariffKidsImg from "@/assets/tariff-kids.jpg";
+import tariffDeliveryImg from "@/assets/tariff-delivery.jpg";
+import tariffCargoImg from "@/assets/tariff-cargo.jpg";
+
+const TARIFF_IMAGES: Record<Tariff, string> = {
+  standard: tariffStandardImg,
+  kids: tariffKidsImg,
+  delivery: tariffDeliveryImg,
+  cargo: tariffCargoImg,
+};
 
 
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
@@ -225,9 +234,9 @@ function PassengerHome() {
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {(["standard", "kids"] as const).map((id) => {
+                {(["standard", "kids", "delivery", "cargo"] as const).map((id) => {
                   const t = TARIFFS[id];
-                  const img = id === "standard" ? tariffStandardImg : tariffKidsImg;
+                  const img = TARIFF_IMAGES[id];
                   const price = route ? calcFare(id, route.distance_m, route.duration_s) : null;
                   const active = tariff === id;
                   return (
