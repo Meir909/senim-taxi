@@ -13,12 +13,15 @@ import { toast } from "sonner";
 import { Loader2, Navigation, X } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { MapGL, type MapMarker } from "@/components/MapGL";
+import { UserBadgeCard } from "@/components/UserBadgeCard";
+import { StarRating } from "@/components/StarRating";
 
 type Driver = Database["public"]["Tables"]["drivers"]["Row"];
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Offer = Database["public"]["Tables"]["ride_offers"]["Row"] & {
-  rides?: Pick<Ride, "pickup_address" | "dropoff_address" | "pickup_lat" | "pickup_lng">;
+  rides?: Pick<Ride, "pickup_address" | "dropoff_address" | "pickup_lat" | "pickup_lng" | "passenger_id">;
 };
+type PassengerInfo = { id: string; name: string; rating: number | null };
 
 export const Route = createFileRoute("/_authenticated/driver")({
   component: DriverHome,
