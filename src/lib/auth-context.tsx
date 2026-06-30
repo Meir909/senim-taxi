@@ -11,12 +11,11 @@ type AuthCtx = {
   session: Session | null;
   roles: AppRole[];
   loading: boolean;
-  /** Driver role granted AND verification approved. Use this to gate driver-only UI. */
   isDriver: boolean;
-  /** A driver application/profile row exists (regardless of approval state). */
   hasDriverApplication: boolean;
-  /** Current driver verification status, or null if no application. */
   driverVerification: DriverVerification | null;
+  isBlocked: boolean;
+  blockedReason: string | null;
   refreshDriver: () => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -28,20 +27,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [driverVerification, setDriverVerification] = useState<DriverVerification | null>(null);
   const [hasDriverApplication, setHasDriverApplication] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockedReason, setBlockedReason] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
     async function loadAccount(uid: string) {
-      const [{ data: roleRows }, { data: driverRow }] = await Promise.all([
+      const [{ data: roleRows }, { data: driverRow }, { data: profileRow }] = await Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", uid),
         supabase.from("drivers").select("verification").eq("id", uid).maybeSingle(),
+        supabase.from("profiles").select("blocked_at, blocked_reason").eq("id", uid).maybeSingle(),
       ]);
       if (!mounted) return;
       setRoles((roleRows ?? []).map((r) => r.role));
       setHasDriverApplication(Boolean(driverRow));
       setDriverVerification(driverRow?.verification ?? null);
+      setIsBlocked(Boolean(profileRow?.blocked_at));
+      setBlockedReason(profileRow?.blocked_reason ?? null);
     }
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
@@ -53,6 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles([]);
         setDriverVerification(null);
         setHasDriverApplication(false);
+        setIsBlocked(false);
+        setBlockedReason(null);
       }
     });
 
@@ -78,13 +84,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function refreshDriver() {
     const uid = session?.user?.id;
     if (!uid) return;
-    const [{ data: roleRows }, { data: driverRow }] = await Promise.all([
+    const [{ data: roleRows }, { data: driverRow }, { data: profileRow }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
       supabase.from("drivers").select("verification").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("blocked_at, blocked_reason").eq("id", uid).maybeSingle(),
     ]);
     setRoles((roleRows ?? []).map((r) => r.role));
     setHasDriverApplication(Boolean(driverRow));
     setDriverVerification(driverRow?.verification ?? null);
+    setIsBlocked(Boolean(profileRow?.blocked_at));
+    setBlockedReason(profileRow?.blocked_reason ?? null);
   }
 
   return (
@@ -97,6 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isDriver,
         hasDriverApplication,
         driverVerification,
+        isBlocked,
+        blockedReason,
         refreshDriver,
         signOut: async () => {
           await supabase.auth.signOut();
