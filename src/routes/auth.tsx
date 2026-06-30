@@ -1,17 +1,20 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/lib/auth-context";
 import { parseIin } from "@/lib/iin";
+import { compareFaces } from "@/lib/verification.functions";
+import { CameraCapture } from "@/components/CameraCapture";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Car, Loader2, Info, AlertTriangle } from "lucide-react";
+import { Car, Loader2, Info, AlertTriangle, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Вход — Senim" }] }),
@@ -23,10 +26,16 @@ const passwordSchema = z.string().min(6, "Минимум 6 символов").ma
 const nameSchema = z.string().trim().min(1, "Обязательное поле").max(60);
 const phoneSchema = z.string().trim().regex(/^\+?[0-9\s\-()]{7,20}$/, "Неверный телефон");
 
+type SignupStep = "form" | "selfie1" | "selfie2" | "submitting";
+
 function AuthPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const compare = useServerFn(compareFaces);
   const [busy, setBusy] = useState(false);
+  const [signupStep, setSignupStep] = useState<SignupStep>("form");
+  const [createdUserId, setCreatedUserId] = useState<string | null>(null);
+  const [selfie1, setSelfie1] = useState<string | null>(null);
   const blockedNotice = useMemo(() => {
     if (typeof window === "undefined") return null;
     const p = new URLSearchParams(window.location.search).get("blocked");
@@ -34,10 +43,9 @@ function AuthPage() {
   }, []);
 
   useEffect(() => {
-    if (!loading && user) void navigate({ to: "/home", replace: true });
-  }, [user, loading, navigate]);
+    if (!loading && user && signupStep === "form") void navigate({ to: "/home", replace: true });
+  }, [user, loading, navigate, signupStep]);
 
-  // Signup form state for live IIN-derived fields
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [patronymic, setPatronymic] = useState("");
@@ -88,7 +96,7 @@ function AuthPage() {
       const { data, error } = await supabase.auth.signUp({
         email: em, password: pw,
         options: {
-          emailRedirectTo: `${window.location.origin}/verify-identity`,
+          emailRedirectTo: `${window.location.origin}/home`,
           data: {
             full_name: fullName,
             first_name: fn,
@@ -107,21 +115,63 @@ function AuthPage() {
         }
         throw error;
       }
-      if (data.session) {
-        toast.success("Аккаунт создан. Подтвердите личность.");
-        void navigate({ to: "/verify-identity", replace: true });
-        return;
+      let uid = data.user?.id ?? null;
+      if (!data.session) {
+        const signIn = await supabase.auth.signInWithPassword({ email: em, password: pw });
+        if (!signIn.data.session) {
+          toast.success("Аккаунт создан. Проверьте почту, затем войдите для подтверждения личности.");
+          setBusy(false);
+          return;
+        }
+        uid = signIn.data.session.user.id;
       }
-      const signIn = await supabase.auth.signInWithPassword({ email: em, password: pw });
-      if (signIn.data.session) {
-        toast.success("Аккаунт создан. Подтвердите личность.");
-        void navigate({ to: "/verify-identity", replace: true });
-      } else {
-        toast.success("Аккаунт создан. Проверьте почту, затем войдите.");
-      }
+      setCreatedUserId(uid);
+      setSignupStep("selfie1");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось зарегистрироваться");
     } finally { setBusy(false); }
+  }
+
+  async function uploadDataUrl(uid: string, dataUrl: string, name: string): Promise<string> {
+    const blob = await (await fetch(dataUrl)).blob();
+    const path = `${uid}/${name}-${Date.now()}.jpg`;
+    const { error } = await supabase.storage.from("verification").upload(path, blob, {
+      contentType: "image/jpeg", upsert: true,
+    });
+    if (error) throw error;
+    return path;
+  }
+
+  async function onSelfie2Capture(dataUrl: string) {
+    if (!selfie1 || !createdUserId) return;
+    setSignupStep("submitting");
+    setBusy(true);
+    try {
+      const info = parseIin(iin)!;
+      const result = await compare({
+        data: { selfie: dataUrl, reference: selfie1, context: "passenger_selfie_only" },
+      });
+      const confidence = result.liveness_ok ? result.confidence : Math.min(result.confidence, 0.5);
+      const path = await uploadDataUrl(createdUserId, dataUrl, "selfie");
+      await uploadDataUrl(createdUserId, selfie1, "selfie-ref");
+      const { error } = await supabase.rpc("submit_passenger_verification", {
+        _full_name: [lastName, firstName, patronymic.trim()].filter(Boolean).join(" "),
+        _iin: iin,
+        _dob: info.dob,
+        _gender: info.gender,
+        _selfie_path: path,
+        _ai_confidence: confidence,
+        _ai_reason: result.reason ?? "",
+      });
+      if (error) throw error;
+      toast.success("Заявка отправлена. Ожидайте подтверждения.");
+      void navigate({ to: "/home", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Не удалось завершить регистрацию");
+      setSignupStep("selfie2");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleGoogle() {
@@ -134,6 +184,52 @@ function AuthPage() {
       toast.error(err instanceof Error ? err.message : "Ошибка входа через Google");
       setBusy(false);
     }
+  }
+
+  if (signupStep !== "form") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8 sm:py-12">
+        <div className="w-full max-w-md">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold">Подтверждение личности</h1>
+                <p className="text-xs text-muted-foreground">Сделайте два живых селфи для завершения регистрации.</p>
+              </div>
+            </div>
+
+            {signupStep === "selfie1" && (
+              <div className="mt-5">
+                <CameraCapture
+                  label="Шаг 1 из 2 — посмотрите прямо в камеру"
+                  facing="user"
+                  onCapture={(d) => { setSelfie1(d); setSignupStep("selfie2"); }}
+                />
+              </div>
+            )}
+            {signupStep === "selfie2" && (
+              <div className="mt-5">
+                <CameraCapture
+                  label="Шаг 2 из 2 — слегка поверните голову"
+                  facing="user"
+                  onCapture={onSelfie2Capture}
+                  busy={busy}
+                />
+              </div>
+            )}
+            {signupStep === "submitting" && (
+              <div className="mt-8 grid place-items-center gap-3 py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Сверяем фото и сохраняем…</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -219,11 +315,11 @@ function AuthPage() {
                 <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
                   <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <p>
-                    Сначала вы регистрируетесь как <span className="font-medium text-foreground">пассажир</span>. После создания аккаунта потребуется живое селфи и подтверждение администратора. Стать водителем можно позже в профиле.
+                    Сразу после нажатия кнопки нужно сделать <span className="font-medium text-foreground">два живых селфи</span> для подтверждения личности. Стать водителем можно позже в профиле.
                   </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={busy || (iinInfo?.gender !== undefined && iinInfo.gender !== "female")}>
-                  {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Создать аккаунт
+                  {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Продолжить
                 </Button>
               </form>
             </TabsContent>
