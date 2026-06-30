@@ -258,9 +258,16 @@ function VerifyIdentity() {
                 ? "Личность подтверждена. Можно пользоваться сервисом."
                 : "Администратор проверит заявку и пришлёт уведомление. Полная активация — после одобрения."}
             </p>
-            <Button className="w-full" onClick={() => void navigate({ to: "/home" })}>
-              На главную
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button className="w-full" onClick={() => void navigate({ to: "/home" })}>
+                На главную
+              </Button>
+              {resultStatus !== "auto_approved" && (
+                <Button variant="outline" className="w-full" onClick={() => { setIin(""); setFullName(""); resetForRetry(); }}>
+                  Отправить повторно
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </Card>
