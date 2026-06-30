@@ -258,10 +258,65 @@ function DriverHome() {
         open={completeOpen}
         onOpenChange={setCompleteOpen}
         ride={activeRide}
+        pos={pos}
         startedAt={activeRide?.started_at ?? null}
-        onDone={() => setCompleteOpen(false)}
+        onDone={(completed) => {
+          setCompleteOpen(false);
+          if (completed) setRideToRate(completed);
+        }}
       />
     </div>
+  );
+}
+
+function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371000;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
+function OfferPassengerBadge({ passengerId }: { passengerId: string }) {
+  const [info, setInfo] = useState<{ name: string; rating: number | null } | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    void supabase.from("profiles").select("first_name, last_name, full_name, rating").eq("id", passengerId).maybeSingle()
+      .then(({ data }) => {
+        if (!mounted || !data) return;
+        const name = [data.last_name, data.first_name].filter(Boolean).join(" ") || data.full_name || "Пассажир";
+        setInfo({ name, rating: data.rating != null ? Number(data.rating) : null });
+      });
+    return () => { mounted = false; };
+  }, [passengerId]);
+  return <UserBadgeCard userId={passengerId} name={info?.name} rating={info?.rating ?? null} size="sm" />;
+}
+
+function RatePassengerCard({ ride, onDone }: { ride: Ride; onDone: () => void }) {
+  const [rating, setRating] = useState(0);
+  const [busy, setBusy] = useState(false);
+  async function submit() {
+    if (rating < 1) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("rate_ride", { _ride_id: ride.id, _rating: rating });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Спасибо за оценку!");
+    onDone();
+  }
+  return (
+    <Card className="p-5">
+      <h3 className="text-center font-semibold">Оцените пассажира</h3>
+      <p className="mt-1 text-center text-sm text-muted-foreground">Это поможет другим водителям.</p>
+      <div className="mt-4 flex justify-center">
+        <StarRating value={rating} onChange={setRating} size={40} />
+      </div>
+      <Button className="mt-4 w-full" size="lg" disabled={rating < 1 || busy} onClick={submit}>
+        {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Отправить
+      </Button>
+      <Button variant="ghost" className="mt-2 w-full" onClick={onDone}>Пропустить</Button>
+    </Card>
   );
 }
 
