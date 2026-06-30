@@ -553,8 +553,24 @@ function AwaitingDriverScreen({
               </div>
             </div>
           </div>
+
+          <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] opacity-90">
+            <span
+              className={`inline-block h-1.5 w-1.5 rounded-full ${
+                locError ? "bg-destructive animate-pulse" : stale ? "bg-warning" : "bg-emerald-300 animate-pulse"
+              }`}
+            />
+            <span>
+              {locError
+                ? locError
+                : driverLoc
+                  ? `Координаты обновлены ${freshness}`
+                  : "Ожидаем координаты водителя…"}
+            </span>
+          </div>
         </div>
       </Card>
+
 
       {(driver || driverProfile) && (
         <Card className="p-4">
