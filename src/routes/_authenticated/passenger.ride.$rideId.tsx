@@ -43,6 +43,7 @@ function RideView() {
   const [driverLoc, setDriverLoc] = useState<Loc | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
   const [driverProfile, setDriverProfile] = useState<Profile | null>(null);
+  const [locError, setLocError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
