@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { user, loading, isDriver, signOut } = useAuth();
+  const { user, loading, isDriver, isBlocked, blockedReason, signOut } = useAuth();
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { permission, requestPermission } = useRealtimeNotifications();
@@ -19,6 +19,16 @@ function AuthLayout() {
   useEffect(() => {
     if (!loading && !user) void navigate({ to: "/auth", replace: true });
   }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (!loading && user && isBlocked) {
+      void (async () => {
+        await signOut();
+        const reason = encodeURIComponent(blockedReason ?? "Аккаунт заблокирован администратором");
+        void navigate({ to: "/auth", search: { blocked: reason } as never, replace: true });
+      })();
+    }
+  }, [loading, user, isBlocked, blockedReason, navigate, signOut]);
 
   if (loading || !user) {
     return (
