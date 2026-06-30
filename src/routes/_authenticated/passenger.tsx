@@ -33,6 +33,27 @@ function PassengerHome() {
   const [tapField, setTapField] = useState<Field | null>(null);
   const [center, setCenter] = useState<{ lat: number; lng: number } | undefined>(undefined);
   const reverse = useServerFn(reverseGeocode2gis);
+  const fetchRoute = useServerFn(getRoute2gis);
+  const [route, setRoute] = useState<{ coords: Array<[number, number]>; distance_m: number; duration_s: number } | null>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+
+  useEffect(() => {
+    if (!pickup || !dropoff) { setRoute(null); return; }
+    let cancelled = false;
+    setRouteLoading(true);
+    void fetchRoute({ data: { pickup: { lat: pickup.lat, lng: pickup.lng }, dropoff: { lat: dropoff.lat, lng: dropoff.lng } } })
+      .then((r) => {
+        if (cancelled) return;
+        if (r.coordinates.length >= 2) {
+          setRoute({ coords: r.coordinates as Array<[number, number]>, distance_m: r.distance_m, duration_s: r.duration_s });
+        } else {
+          setRoute(null);
+        }
+      })
+      .catch(() => { if (!cancelled) setRoute(null); })
+      .finally(() => { if (!cancelled) setRouteLoading(false); });
+    return () => { cancelled = true; };
+  }, [pickup?.lat, pickup?.lng, dropoff?.lat, dropoff?.lng, fetchRoute]);
 
   useEffect(() => {
     if (!user) return;
