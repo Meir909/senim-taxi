@@ -10,6 +10,10 @@ import { toast } from "sonner";
 import { Loader2, X, ArrowLeft } from "lucide-react";
 import { MapGL, type MapMarker } from "@/components/MapGL";
 import { StarRating } from "@/components/StarRating";
+import { UserBadgeCard } from "@/components/UserBadgeCard";
+
+type Driver = Database["public"]["Tables"]["drivers"]["Row"];
+type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Loc = Database["public"]["Tables"]["driver_locations"]["Row"];
