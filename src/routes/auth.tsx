@@ -106,8 +106,15 @@ function AuthPage() {
                 <Field label="Полное имя" name="full_name" required autoComplete="name" />
                 <Field label="Email" name="email" type="email" required autoComplete="email" />
                 <Field label="Пароль" name="password" type="password" required autoComplete="new-password" />
+                <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <p>
+                    Сначала вы регистрируетесь как <span className="font-medium text-foreground">пассажир</span>.
+                    Стать водителем можно позже в профиле — после подтверждения личности и добавления данных авто.
+                  </p>
+                </div>
                 <Button type="submit" className="w-full" disabled={busy}>
-                  {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Создать аккаунт
+                  {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Создать аккаунт пассажира
                 </Button>
               </form>
             </TabsContent>
