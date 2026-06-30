@@ -401,6 +401,9 @@ function ActiveRideCard({
     ride.status === "in_progress" ? onComplete :
     ride.status === "driver_arrived" ? onStart : onArrived;
 
+  const distToDropoff = pos ? distanceMeters(pos, { lat: ride.dropoff_lat, lng: ride.dropoff_lng }) : null;
+  const tooFar = ride.status === "in_progress" && (distToDropoff == null || distToDropoff > 200);
+
   const target = ride.status === "in_progress"
     ? { lat: ride.dropoff_lat, lng: ride.dropoff_lng, label: "Б" as const }
     : { lat: ride.pickup_lat, lng: ride.pickup_lng, label: "А" as const };
