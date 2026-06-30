@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Card } from "@/components/ui/card";
@@ -13,6 +14,27 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Driver = Database["public"]["Tables"]["drivers"]["Row"];
+
+const ProfileSchema = z.object({
+  full_name: z.string().trim().min(2, "Минимум 2 символа").max(100),
+  phone: z
+    .string()
+    .trim()
+    .max(20)
+    .regex(/^\+?[0-9 ()\-]{6,20}$/, "Некорректный номер телефона"),
+});
+
+const VehicleSchema = z.object({
+  vehicle_make: z.string().trim().min(2, "Укажите марку").max(40),
+  vehicle_model: z.string().trim().min(1, "Укажите модель").max(40),
+  vehicle_color: z.string().trim().min(2, "Укажите цвет").max(30),
+  vehicle_plate: z
+    .string()
+    .trim()
+    .min(3, "Укажите номер")
+    .max(15)
+    .regex(/^[A-Za-zА-Яа-я0-9 \-]+$/, "Недопустимые символы"),
+});
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
