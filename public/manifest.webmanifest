@@ -1,0 +1,16 @@
+{
+  "name": "Senim",
+  "short_name": "Senim",
+  "description": "Закажите поездку или станьте водителем",
+  "start_url": "/home",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#b91c4a",
+  "orientation": "portrait",
+  "lang": "ru",
+  "icons": [
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
