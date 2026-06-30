@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Star, Car, MapPin, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
+import { Loader2, Star, MapPin, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -46,12 +46,14 @@ function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
   const [rideCount, setRideCount] = useState<number>(0);
+  const [driverRatingsCount, setDriverRatingsCount] = useState<number>(0);
+  const [passengerRatingsCount, setPassengerRatingsCount] = useState<number>(0);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     void (async () => {
-      const [{ data: p }, { data: d }, { count }] = await Promise.all([
+      const [{ data: p }, { data: d }, { count }, { count: drvRatings }, { count: paxRatings }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
         hasDriverApplication
           ? supabase.from("drivers").select("*").eq("id", user.id).maybeSingle()
@@ -61,10 +63,22 @@ function ProfilePage() {
           .select("id", { count: "exact", head: true })
           .eq(isDriver ? "driver_id" : "passenger_id", user.id)
           .eq("status", "completed"),
+        supabase
+          .from("rides")
+          .select("id", { count: "exact", head: true })
+          .eq("driver_id", user.id)
+          .not("driver_rating", "is", null),
+        supabase
+          .from("rides")
+          .select("id", { count: "exact", head: true })
+          .eq("passenger_id", user.id)
+          .not("passenger_rating", "is", null),
       ]);
       setProfile(p);
       setDriver(d);
       setRideCount(count ?? 0);
+      setDriverRatingsCount(drvRatings ?? 0);
+      setPassengerRatingsCount(paxRatings ?? 0);
     })();
   }, [user, isDriver, hasDriverApplication]);
 
@@ -130,11 +144,28 @@ function ProfilePage() {
         <div className="mt-4 grid grid-cols-2 gap-2">
           <StatBox icon={<MapPin className="h-4 w-4" />} label="Поездок" value={String(rideCount)} />
           {isDriver ? (
-            <StatBox icon={<Star className="h-4 w-4 fill-warning text-warning" />} label="Рейтинг" value={Number(driver?.rating ?? 5).toFixed(2)} />
+            <StatBox
+              icon={<Star className="h-4 w-4 fill-warning text-warning" />}
+              label={`Рейтинг водителя (${driverRatingsCount})`}
+              value={Number(driver?.rating ?? 5).toFixed(2)}
+            />
           ) : (
-            <StatBox icon={<Car className="h-4 w-4" />} label="Статус" value="Активен" />
+            <StatBox
+              icon={<Star className="h-4 w-4 fill-warning text-warning" />}
+              label={`Рейтинг пассажира (${passengerRatingsCount})`}
+              value={Number(profile.rating ?? 5).toFixed(2)}
+            />
           )}
         </div>
+        {isDriver && (
+          <div className="mt-2">
+            <StatBox
+              icon={<Star className="h-4 w-4 fill-warning text-warning" />}
+              label={`Рейтинг пассажира (${passengerRatingsCount})`}
+              value={Number(profile.rating ?? 5).toFixed(2)}
+            />
+          </div>
+        )}
       </Card>
 
       <VerificationCard status={profile.verification_status} />
