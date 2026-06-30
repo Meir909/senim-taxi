@@ -71,10 +71,10 @@ function PassengerHome() {
         .select()
         .single();
       if (error) throw error;
-      toast.success("Looking for a driver…");
+      toast.success("Ищем водителя…");
       void navigate({ to: "/passenger/ride/$rideId", params: { rideId: data.id } });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not create ride");
+      toast.error(err instanceof Error ? err.message : "Не удалось создать заказ");
     } finally {
       setSubmitting(false);
     }
@@ -91,16 +91,16 @@ function PassengerHome() {
 
   const ready = pickup && dropoff && !submitting;
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Where to?</h1>
-        <p className="text-sm text-muted-foreground">Search or tap the map to set pickup and drop-off.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Куда едем?</h1>
+        <p className="text-sm text-muted-foreground">Найдите адрес или коснитесь карты, чтобы указать точки.</p>
       </div>
-      <Card className="space-y-5 p-5">
-        <AddressPicker label="Pickup" color="#16a34a" onChange={setPickup} initialPoint={pickup} showMyLocation />
-        <AddressPicker label="Drop-off" color="#2563eb" onChange={setDropoff} initialPoint={dropoff} />
+      <Card className="space-y-5 p-4 sm:p-5">
+        <AddressPicker label="Откуда" color="#16a34a" onChange={setPickup} initialPoint={pickup} showMyLocation />
+        <AddressPicker label="Куда" color="#2563eb" onChange={setDropoff} initialPoint={dropoff} />
         <Button onClick={handleRequest} disabled={!ready} size="lg" className="w-full">
-          {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Request ride
+          {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Заказать поездку
         </Button>
       </Card>
     </div>

@@ -88,7 +88,7 @@ export function AddressPicker({ label, color = "#2563eb", initialPoint, onChange
             }
           }}
           onFocus={() => results.length > 0 && setOpen(true)}
-          placeholder="Search address or place"
+          placeholder="Поиск адреса или места"
           className="pl-9 pr-9"
           maxLength={250}
         />
@@ -124,27 +124,27 @@ export function AddressPicker({ label, color = "#2563eb", initialPoint, onChange
           </div>
         )}
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" size="sm" onClick={() => setMapOpen((v) => !v)}>
-          {mapOpen ? "Hide map" : "Pick on map"}
+          {mapOpen ? "Скрыть карту" : "Выбрать на карте"}
         </Button>
         {showMyLocation && (
           <Button type="button" variant="outline" size="sm" onClick={useMyLocation}>
-            Use my location
+            Моё местоположение
           </Button>
         )}
       </div>
       {mapOpen && (
         <div className="overflow-hidden rounded-lg border">
           <MapGL
-            className="h-64 w-full"
+            className="h-56 w-full sm:h-64"
             center={point ?? undefined}
             zoom={point ? 15 : 11}
             markers={point ? [{ id: "pick", lat: point.lat, lng: point.lng, color, label }] : []}
             onClick={pickFromMap}
             fitMarkers={false}
           />
-          <p className="px-3 py-2 text-xs text-muted-foreground">Tap the map to set the location.</p>
+          <p className="px-3 py-2 text-xs text-muted-foreground">Коснитесь карты, чтобы выбрать точку.</p>
         </div>
       )}
     </div>

@@ -1,9 +1,8 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { Car, Wallet, User as UserIcon, LogOut, Loader2 } from "lucide-react";
+import { Car, Wallet, User as UserIcon, LogOut, Loader2, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Bell } from "lucide-react";
 import { useRealtimeNotifications } from "@/lib/notifications";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -30,31 +29,33 @@ function AuthLayout() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link to="/home" className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground"><Car className="h-4 w-4" /></div>
-            <span className="font-semibold">Senim</span>
+    <div className="flex min-h-[100dvh] flex-col bg-background">
+      <header className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
+          <Link to="/home" className="flex min-w-0 items-center gap-2">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><Car className="h-4 w-4" /></div>
+            <span className="truncate font-semibold">Senim</span>
           </Link>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             {permission !== "granted" && (
-              <Button variant="ghost" size="sm" onClick={() => void requestPermission()} title="Enable notifications">
+              <Button variant="ghost" size="icon" onClick={() => void requestPermission()} aria-label="Включить уведомления">
                 <Bell className="h-4 w-4" />
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={async () => { await signOut(); void navigate({ to: "/auth", replace: true }); }}>
-              <LogOut className="mr-1.5 h-4 w-4" /> Sign out
+              <LogOut className="mr-1.5 h-4 w-4" /> Выйти
             </Button>
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6"><Outlet /></main>
-      <nav className="sticky bottom-0 border-t border-border bg-card">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-4 pb-24 sm:py-6">
+        <Outlet />
+      </main>
+      <nav className="sticky bottom-0 z-10 border-t border-border bg-card" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="mx-auto grid max-w-5xl grid-cols-3">
-          <NavTab to={isDriver ? "/driver" : "/passenger"} active={path.startsWith("/passenger") || path.startsWith("/driver") || path === "/home"} icon={<Car className="h-5 w-5" />} label={isDriver ? "Drive" : "Ride"} />
-          <NavTab to="/wallet" active={path.startsWith("/wallet")} icon={<Wallet className="h-5 w-5" />} label="Wallet" />
-          <NavTab to="/profile" active={path.startsWith("/profile") || path.startsWith("/become-driver")} icon={<UserIcon className="h-5 w-5" />} label="Profile" />
+          <NavTab to={isDriver ? "/driver" : "/passenger"} active={path.startsWith("/passenger") || path.startsWith("/driver") || path === "/home"} icon={<Car className="h-5 w-5" />} label={isDriver ? "Поездки" : "Заказать"} />
+          <NavTab to="/wallet" active={path.startsWith("/wallet")} icon={<Wallet className="h-5 w-5" />} label="Кошелёк" />
+          <NavTab to="/profile" active={path.startsWith("/profile") || path.startsWith("/become-driver")} icon={<UserIcon className="h-5 w-5" />} label="Профиль" />
         </div>
       </nav>
     </div>
@@ -63,7 +64,7 @@ function AuthLayout() {
 
 function NavTab({ to, active, icon, label }: { to: string; active: boolean; icon: React.ReactNode; label: string }) {
   return (
-    <Link to={to} className={`flex flex-col items-center gap-1 py-3 text-xs transition-colors ${active ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+    <Link to={to} className={`flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-xs transition-colors ${active ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
       {icon}<span>{label}</span>
     </Link>
   );

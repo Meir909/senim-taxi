@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/become-driver")({
   component: BecomeDriver,
 });
 
-const txt = (max = 60) => z.string().trim().min(1, "Required").max(max);
+const txt = (max = 60) => z.string().trim().min(1, "Обязательное поле").max(max);
 
 function BecomeDriver() {
   const { user } = useAuth();
@@ -34,36 +34,33 @@ function BecomeDriver() {
         license_number: txt(30).parse(fd.get("license_number")),
       };
       setBusy(true);
-      // 1. grant driver role (idempotent via unique constraint)
       const { error: roleErr } = await supabase.from("user_roles").insert({ user_id: user.id, role: "driver" });
       if (roleErr && !/duplicate/i.test(roleErr.message)) throw roleErr;
-      // 2. upsert drivers row
       const { error } = await supabase.from("drivers").upsert({
         id: user.id, ...payload, status: "offline",
       });
       if (error) throw error;
-      toast.success("Application submitted. Awaiting approval.");
-      // refresh roles by full reload (simplest)
+      toast.success("Заявка отправлена. Ожидайте подтверждения.");
       window.location.assign("/driver");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : "Не удалось отправить");
     } finally { setBusy(false); }
   }
 
   return (
-    <Card className="p-6">
-      <h1 className="text-xl font-semibold">Driver application</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Submit your vehicle details. Approval happens manually in MVP.</p>
+    <Card className="p-5 sm:p-6">
+      <h1 className="text-xl font-semibold">Заявка водителя</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Укажите данные авто. В MVP подтверждение вручную.</p>
       <form onSubmit={submit} className="mt-5 space-y-4">
-        <Row label="Make" name="vehicle_make" placeholder="Toyota" />
-        <Row label="Model" name="vehicle_model" placeholder="Camry" />
-        <Row label="Plate" name="vehicle_plate" placeholder="A123 BC" />
-        <Row label="Color" name="vehicle_color" placeholder="White" />
-        <Row label="License #" name="license_number" placeholder="DL-99887766" />
+        <Row label="Марка" name="vehicle_make" placeholder="Toyota" />
+        <Row label="Модель" name="vehicle_model" placeholder="Camry" />
+        <Row label="Госномер" name="vehicle_plate" placeholder="A 123 BC" />
+        <Row label="Цвет" name="vehicle_color" placeholder="Белый" />
+        <Row label="Номер ВУ" name="license_number" placeholder="DL-99887766" />
         <Button type="submit" className="w-full" disabled={busy}>
-          {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Submit
+          {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Отправить
         </Button>
-        <Button type="button" variant="ghost" className="w-full" onClick={() => void navigate({ to: "/home" })}>Cancel</Button>
+        <Button type="button" variant="ghost" className="w-full" onClick={() => void navigate({ to: "/home" })}>Отмена</Button>
       </form>
     </Card>
   );
