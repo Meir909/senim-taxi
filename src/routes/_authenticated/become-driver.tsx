@@ -23,7 +23,7 @@ const txt = (max = 60) => z.string().trim().min(1, "Обязательное п�
 type Step = "vehicle" | "selfie" | "license" | "vehicle_doc" | "submitting" | "done";
 
 function BecomeDriver() {
-  const { user } = useAuth();
+  const { user, hasDriverApplication, driverVerification, refreshDriver } = useAuth();
   const navigate = useNavigate();
   const compare = useServerFn(compareFaces);
 
