@@ -164,6 +164,25 @@ function DriverHome() {
   if (loading) return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
   if (!isDriver || !driver) {
+    if (hasDriverApplication && driverVerification === "pending") {
+      return (
+        <Card className="p-6 text-center">
+          <h2 className="text-lg font-semibold">Заявка на проверке</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Раздел водителя откроется после одобрения администратором.
+          </p>
+        </Card>
+      );
+    }
+    if (hasDriverApplication && driverVerification === "rejected") {
+      return (
+        <Card className="p-6 text-center">
+          <h2 className="text-lg font-semibold">Заявка отклонена</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Обновите данные и подайте повторно.</p>
+          <Button asChild className="mt-4"><Link to="/become-driver">Подать заново</Link></Button>
+        </Card>
+      );
+    }
     return (
       <Card className="p-6 text-center">
         <h2 className="text-lg font-semibold">Стать водителем</h2>
