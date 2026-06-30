@@ -43,6 +43,15 @@ function VerifyIdentity() {
       const v = Schema.parse({ full_name: fullName, iin });
       const parsed = parseIin(v.iin);
       if (!parsed) throw new Error("ИИН не прошёл проверку контрольной суммы");
+      if (parsed.gender !== "female") {
+        throw new Error("Сервис доступен только женщинам");
+      }
+      const dob = new Date(parsed.dob);
+      const eighteen = new Date();
+      eighteen.setFullYear(eighteen.getFullYear() - 18);
+      if (dob > eighteen) {
+        throw new Error("Возраст должен быть не менее 18 лет");
+      }
       setStep("selfie1");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Проверьте данные");
@@ -109,7 +118,7 @@ function VerifyIdentity() {
           </div>
           <div>
             <h1 className="text-lg font-semibold">Подтверждение личности</h1>
-            <p className="text-xs text-muted-foreground">ИИН + живое селфи. Только живая камера.</p>
+            <p className="text-xs text-muted-foreground">Сервис только для женщин 18+. ИИН + живое селфи.</p>
           </div>
         </div>
 
