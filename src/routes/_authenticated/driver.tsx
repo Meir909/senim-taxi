@@ -401,15 +401,16 @@ function ActiveRideCard({
     ride.status === "in_progress" ? onComplete :
     ride.status === "driver_arrived" ? onStart : onArrived;
 
-  const distToDropoff = pos ? distanceMeters(pos, { lat: ride.dropoff_lat, lng: ride.dropoff_lng }) : null;
-  const tooFar = ride.status === "in_progress" && (distToDropoff == null || distToDropoff > 200);
+  const target = ride.status === "in_progress"
+    ? { lat: ride.dropoff_lat, lng: ride.dropoff_lng, label: "Б" as const }
+    : { lat: ride.pickup_lat, lng: ride.pickup_lng, label: "А" as const };
 
-  const openInMaps = () => {
-    const target = ride.status === "in_progress"
-      ? { lat: ride.dropoff_lat, lng: ride.dropoff_lng }
-      : { lat: ride.pickup_lat, lng: ride.pickup_lng };
-    window.open(`https://2gis.com/directions/points/|${target.lng},${target.lat}|`, "_blank", "noopener");
+  const navUrls = {
+    twogis: `https://2gis.com/directions/points/${pos ? `${pos.lng},${pos.lat}|` : "|"}${target.lng},${target.lat}`,
+    google: `https://www.google.com/maps/dir/?api=1&destination=${target.lat},${target.lng}&travelmode=driving`,
+    yandex: `https://yandex.ru/maps/?rtext=${pos ? `${pos.lat}%2C${pos.lng}~` : ""}${target.lat}%2C${target.lng}&rtt=auto`,
   };
+  const openNav = (url: string) => window.open(url, "_blank", "noopener");
 
   return (
     <Card className="space-y-3 p-5">
@@ -433,7 +434,19 @@ function ActiveRideCard({
             {nextLabel}
           </Button>
         )}
-        <Button variant="outline" onClick={openInMaps}><Navigation className="mr-1.5 h-4 w-4" />Маршрут</Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <Navigation className="mr-1.5 h-4 w-4" />
+              Навигация до {target.label}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => openNav(navUrls.twogis)}>2ГИС</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openNav(navUrls.google)}>Google Maps</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openNav(navUrls.yandex)}>Яндекс.Карты</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         {ride.status !== "in_progress" && (
           <Button variant="ghost" onClick={onCancel}><X className="mr-1.5 h-4 w-4" />Отменить</Button>
         )}
