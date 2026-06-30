@@ -121,6 +121,11 @@ function RideView() {
   if (loading) return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   if (!ride) return <div className="text-center text-muted-foreground">Поездка не найдена.</div>;
 
+  if (ride.status === "searching" || ride.status === "requested") {
+    return <SearchingScreen ride={ride} onCancel={cancel} />;
+  }
+
+
   const canCancel = ["requested", "searching", "accepted", "driver_arriving"].includes(ride.status);
 
   const markers: MapMarker[] = [
