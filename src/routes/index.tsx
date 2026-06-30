@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "RideNow — Book a ride in seconds" },
+      { title: "Senim — Book a ride in seconds" },
       { name: "description", content: "Request a ride or sign up to drive. Real-time tracking, fair fares, instant dispatch." },
     ],
   }),
@@ -23,7 +23,7 @@ function Landing() {
             <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
               <Car className="h-5 w-5" />
             </div>
-            <span className="text-lg font-semibold tracking-tight">RideNow</span>
+            <span className="text-lg font-semibold tracking-tight">Senim</span>
           </div>
           {!loading && (
             user ? (

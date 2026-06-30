@@ -68,8 +68,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "RideNow — Book a ride" },
-      { name: "description", content: "Book a ride or drive with RideNow. Real-time tracking, fair fares." },
+      { title: "Senim — Book a ride" },
+      { name: "description", content: "Book a ride or drive with Senim. Real-time tracking, fair fares." },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
