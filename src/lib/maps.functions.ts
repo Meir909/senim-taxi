@@ -62,3 +62,74 @@ export const reverseGeocode2gis = createServerFn({ method: "POST" })
       return { address: null };
     }
   });
+
+const routeSchema = z.object({
+  pickup: z.object({ lat: z.number(), lng: z.number() }),
+  dropoff: z.object({ lat: z.number(), lng: z.number() }),
+});
+
+type RoutePoint = [number, number]; // [lng, lat]
+
+/** Parses a WKT "LINESTRING(lon lat, lon lat, ...)" into [lng,lat] pairs. */
+function parseLineString(wkt: string): RoutePoint[] {
+  const m = wkt.match(/LINESTRING\s*\(([^)]+)\)/i);
+  if (!m) return [];
+  return m[1]
+    .split(",")
+    .map((pair) => pair.trim().split(/\s+/).map(Number))
+    .filter((p) => p.length === 2 && Number.isFinite(p[0]) && Number.isFinite(p[1]))
+    .map((p) => [p[0], p[1]] as RoutePoint);
+}
+
+/** Optimal driving route between two points via 2GIS Routing API. */
+export const getRoute2gis = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => routeSchema.parse(d))
+  .handler(async ({ data }) => {
+    const key = process.env.TWOGIS_MAPGL_API_KEY;
+    if (!key) return { coordinates: [] as RoutePoint[], distance_m: 0, duration_s: 0 };
+    try {
+      const res = await fetch(`https://routing.api.2gis.com/routing/7.0.0/global?key=${encodeURIComponent(key)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          points: [
+            { type: "stop", lat: data.pickup.lat, lon: data.pickup.lng },
+            { type: "stop", lat: data.dropoff.lat, lon: data.dropoff.lng },
+          ],
+          transport: "driving",
+          route_mode: "fastest",
+          traffic_mode: "jam",
+          output: "detailed",
+        }),
+      });
+      if (!res.ok) return { coordinates: [], distance_m: 0, duration_s: 0 };
+      const json = (await res.json()) as {
+        result?: Array<{
+          total_distance?: number;
+          total_duration?: number;
+          maneuvers?: Array<{ outcoming_path?: { geometry?: Array<{ selection?: string }> } }>;
+        }>;
+      };
+      const r = json.result?.[0];
+      if (!r) return { coordinates: [], distance_m: 0, duration_s: 0 };
+      const coords: RoutePoint[] = [];
+      for (const mv of r.maneuvers ?? []) {
+        for (const g of mv.outcoming_path?.geometry ?? []) {
+          if (g.selection) {
+            const pts = parseLineString(g.selection);
+            // avoid duplicating join points
+            const start = coords.length && pts.length && coords[coords.length - 1][0] === pts[0][0] && coords[coords.length - 1][1] === pts[0][1] ? 1 : 0;
+            for (let i = start; i < pts.length; i++) coords.push(pts[i]);
+          }
+        }
+      }
+      return {
+        coordinates: coords,
+        distance_m: r.total_distance ?? 0,
+        duration_s: r.total_duration ?? 0,
+      };
+    } catch {
+      return { coordinates: [], distance_m: 0, duration_s: 0 };
+    }
+  });
+
