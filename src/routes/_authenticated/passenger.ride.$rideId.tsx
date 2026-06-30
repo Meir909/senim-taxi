@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, ArrowLeft } from "lucide-react";
 import { MapGL, type MapMarker } from "@/components/MapGL";
+import { StarRating } from "@/components/StarRating";
 
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Loc = Database["public"]["Tables"]["driver_locations"]["Row"];
@@ -69,12 +70,30 @@ function RideView() {
     return () => { mounted = false; supabase.removeChannel(ch); };
   }, [ride?.driver_id]);
 
+  const [rating, setRating] = useState(0);
+  const [submittingRating, setSubmittingRating] = useState(false);
+
   useEffect(() => {
-    if (ride && (ride.status === "completed" || ride.status === "cancelled" || ride.status === "no_drivers")) {
+    if (ride && (ride.status === "cancelled" || ride.status === "no_drivers")) {
       const t = setTimeout(() => void navigate({ to: "/passenger", replace: true }), 4000);
       return () => clearTimeout(t);
     }
   }, [ride?.status, navigate, ride]);
+
+  async function submitRating() {
+    if (!ride || rating < 1) return;
+    setSubmittingRating(true);
+    try {
+      const { error } = await supabase.rpc("rate_ride", { _ride_id: ride.id, _rating: rating });
+      if (error) throw error;
+      toast.success("Спасибо за оценку!");
+      void navigate({ to: "/passenger", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Не удалось");
+    } finally {
+      setSubmittingRating(false);
+    }
+  }
 
   async function cancel() {
     if (!ride || !user) return;
@@ -121,6 +140,34 @@ function RideView() {
       {canCancel && (
         <Button variant="outline" className="w-full" onClick={cancel}>
           <X className="mr-2 h-4 w-4" /> Отменить поездку
+        </Button>
+      )}
+    </div>
+  );
+}
+
+      {canCancel && (
+        <Button variant="outline" className="w-full" onClick={cancel}>
+          <X className="mr-2 h-4 w-4" /> Отменить поездку
+        </Button>
+      )}
+
+      {ride.status === "completed" && user?.id === ride.passenger_id && ride.driver_rating == null && (
+        <Card className="p-5">
+          <h3 className="text-center font-semibold">Оцените водителя</h3>
+          <p className="mt-1 text-center text-sm text-muted-foreground">Ваш отзыв поможет другим пассажирам.</p>
+          <div className="mt-4 flex justify-center">
+            <StarRating value={rating} onChange={setRating} size={40} />
+          </div>
+          <Button className="mt-4 w-full" size="lg" disabled={rating < 1 || submittingRating} onClick={submitRating}>
+            {submittingRating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Отправить оценку
+          </Button>
+        </Card>
+      )}
+
+      {ride.status === "completed" && (
+        <Button variant="ghost" className="w-full" onClick={() => void navigate({ to: "/passenger", replace: true })}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> На главную
         </Button>
       )}
     </div>

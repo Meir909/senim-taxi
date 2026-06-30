@@ -16,6 +16,7 @@ import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedPassengerRouteImport } from './routes/_authenticated/passenger'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDriverRouteImport } from './routes/_authenticated/driver'
 import { Route as AuthenticatedBecomeDriverRouteImport } from './routes/_authenticated/become-driver'
 import { Route as AuthenticatedPassengerRideRideIdRouteImport } from './routes/_authenticated/passenger.ride.$rideId'
@@ -54,6 +55,11 @@ const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDriverRoute = AuthenticatedDriverRouteImport.update({
   id: '/driver',
   path: '/driver',
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/become-driver': typeof AuthenticatedBecomeDriverRoute
   '/driver': typeof AuthenticatedDriverRoute
+  '/history': typeof AuthenticatedHistoryRoute
   '/home': typeof AuthenticatedHomeRoute
   '/passenger': typeof AuthenticatedPassengerRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/become-driver': typeof AuthenticatedBecomeDriverRoute
   '/driver': typeof AuthenticatedDriverRoute
+  '/history': typeof AuthenticatedHistoryRoute
   '/home': typeof AuthenticatedHomeRoute
   '/passenger': typeof AuthenticatedPassengerRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/become-driver': typeof AuthenticatedBecomeDriverRoute
   '/_authenticated/driver': typeof AuthenticatedDriverRoute
+  '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/passenger': typeof AuthenticatedPassengerRouteWithChildren
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/become-driver'
     | '/driver'
+    | '/history'
     | '/home'
     | '/passenger'
     | '/profile'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/become-driver'
     | '/driver'
+    | '/history'
     | '/home'
     | '/passenger'
     | '/profile'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/become-driver'
     | '/_authenticated/driver'
+    | '/_authenticated/history'
     | '/_authenticated/home'
     | '/_authenticated/passenger'
     | '/_authenticated/profile'
@@ -201,6 +213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHomeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/history': {
+      id: '/_authenticated/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/driver': {
       id: '/_authenticated/driver'
       path: '/driver'
@@ -243,6 +262,7 @@ const AuthenticatedPassengerRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBecomeDriverRoute: typeof AuthenticatedBecomeDriverRoute
   AuthenticatedDriverRoute: typeof AuthenticatedDriverRoute
+  AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedPassengerRoute: typeof AuthenticatedPassengerRouteWithChildren
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
@@ -252,6 +272,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBecomeDriverRoute: AuthenticatedBecomeDriverRoute,
   AuthenticatedDriverRoute: AuthenticatedDriverRoute,
+  AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedPassengerRoute: AuthenticatedPassengerRouteWithChildren,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
