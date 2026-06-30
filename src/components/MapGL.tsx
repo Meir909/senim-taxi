@@ -142,6 +142,43 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
     }
   }, [ready, markers, fitMarkers]);
 
+  // sync polyline (route)
+  useEffect(() => {
+    if (!ready || !mapRef.current || !window.mapgl) return;
+    const mapgl = window.mapgl;
+    if (polylineRef.current) {
+      try { polylineRef.current.destroy(); } catch { /* noop */ }
+      polylineRef.current = null;
+    }
+    if (polyline && polyline.length >= 2) {
+      try {
+        polylineRef.current = new mapgl.Polyline(mapRef.current, {
+          coordinates: polyline,
+          width: 5,
+          color: polylineColor,
+          color2: "#ffffff",
+          width2: 7,
+        });
+      } catch {
+        /* noop */
+      }
+      if (fitMarkers) {
+        const lngs = polyline.map((p) => p[0]);
+        const lats = polyline.map((p) => p[1]);
+        try {
+          mapRef.current.fitBounds(
+            {
+              southWest: [Math.min(...lngs), Math.min(...lats)],
+              northEast: [Math.max(...lngs), Math.max(...lats)],
+            },
+            { padding: { top: 60, right: 60, bottom: 200, left: 60 } },
+          );
+        } catch { /* noop */ }
+      }
+    }
+  }, [ready, polyline, polylineColor, fitMarkers]);
+
+
   if (keyLoading) {
     return (
       <div className={`grid place-items-center bg-muted ${className ?? ""}`}>
