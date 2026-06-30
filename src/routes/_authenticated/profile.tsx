@@ -19,7 +19,8 @@ export const Route = createFileRoute("/_authenticated/profile")({
 });
 
 function ProfilePage() {
-  const { user, isDriver, signOut } = useAuth();
+  const { user, isDriver, roles, signOut } = useAuth();
+  const isAdmin = roles.includes("admin");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
   const [rideCount, setRideCount] = useState<number>(0);
