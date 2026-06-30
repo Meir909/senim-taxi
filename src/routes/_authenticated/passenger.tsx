@@ -40,6 +40,8 @@ function PassengerHome() {
   const fetchRoute = useServerFn(getRoute2gis);
   const [route, setRoute] = useState<{ coords: Array<[number, number]>; distance_m: number; duration_s: number } | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
+  const [tariff, setTariff] = useState<Tariff>("standard");
+
 
   useEffect(() => {
     if (!pickup || !dropoff) { setRoute(null); return; }
