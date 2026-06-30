@@ -399,10 +399,11 @@ function ActiveRideCard({
 }
 
 function CompleteDialog({
-  open, onOpenChange, ride, startedAt, onDone,
+  open, onOpenChange, ride, pos, startedAt, onDone,
 }: {
   open: boolean; onOpenChange: (v: boolean) => void;
-  ride: Ride | null; startedAt: string | null; onDone: () => void;
+  ride: Ride | null; pos: { lat: number; lng: number } | null;
+  startedAt: string | null; onDone: (completed: Ride | null) => void;
 }) {
   const [fare, setFare] = useState("");
   const [distance, setDistance] = useState("");
@@ -418,20 +419,29 @@ function CompleteDialog({
     ? Math.max(1, Math.round((Date.now() - new Date(startedAt).getTime()) / 60000))
     : 1;
 
+  const distToDropoff = pos ? distanceMeters(pos, { lat: ride.dropoff_lat, lng: ride.dropoff_lng }) : null;
+  const tooFar = distToDropoff == null || distToDropoff > 200;
+
   async function submit() {
     const fareNum = Number(fare);
     const distNum = Number(distance);
     if (!ride) return;
+    if (!pos) { toast.error("Не удалось определить местоположение"); return; }
+    if (tooFar) {
+      toast.error(`Подъезжайте к точке назначения${distToDropoff != null ? ` (${Math.round(distToDropoff)} м)` : ""}`);
+      return;
+    }
     if (!fareNum || fareNum <= 0) { toast.error("Укажите стоимость"); return; }
     if (!distNum || distNum <= 0) { toast.error("Укажите расстояние"); return; }
     setBusy(true);
-    const { error } = await supabase.rpc("complete_ride", {
+    const { data, error } = await supabase.rpc("complete_ride", {
       _ride_id: ride.id, _fare: fareNum, _distance: distNum, _duration: durationMin,
+      _lat: pos.lat, _lng: pos.lng,
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success(`Зачислено: ${(fareNum * 0.8).toFixed(2)}`);
-    onDone();
+    onDone((data as Ride | null) ?? ride);
   }
 
   return (
@@ -439,6 +449,12 @@ function CompleteDialog({
       <DialogContent>
         <DialogHeader><DialogTitle>Завершить поездку</DialogTitle></DialogHeader>
         <div className="space-y-3">
+          {tooFar && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+              Завершить можно только в радиусе 200 м от точки назначения
+              {distToDropoff != null && ` (сейчас ${Math.round(distToDropoff)} м)`}.
+            </div>
+          )}
           <div>
             <Label htmlFor="fare">Стоимость (₸)</Label>
             <Input id="fare" inputMode="decimal" value={fare} onChange={(e) => setFare(e.target.value)} placeholder="напр. 1500" />
@@ -451,7 +467,7 @@ function CompleteDialog({
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>Отмена</Button>
-          <Button onClick={submit} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Завершить"}</Button>
+          <Button onClick={submit} disabled={busy || tooFar}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Завершить"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
