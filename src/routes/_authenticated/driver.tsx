@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,10 +10,12 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Loader2, Navigation, X } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { MapGL, type MapMarker } from "@/components/MapGL";
+import { getRoute2gis } from "@/lib/maps.functions";
 import { UserBadgeCard } from "@/components/UserBadgeCard";
 import { StarRating } from "@/components/StarRating";
 
@@ -321,6 +324,31 @@ function RatePassengerCard({ ride, onDone }: { ride: Ride; onDone: () => void })
 }
 
 function DriverMap({ activeRide, pos }: { activeRide: Ride | null; pos: { lat: number; lng: number } | null }) {
+  const fetchRoute = useServerFn(getRoute2gis);
+  const [route, setRoute] = useState<{ coords: Array<[number, number]>; distance_m: number; duration_s: number } | null>(null);
+
+  const target = useMemo(() => {
+    if (!activeRide) return null;
+    return activeRide.status === "in_progress"
+      ? { lat: activeRide.dropoff_lat, lng: activeRide.dropoff_lng, kind: "B" as const }
+      : { lat: activeRide.pickup_lat, lng: activeRide.pickup_lng, kind: "A" as const };
+  }, [activeRide?.id, activeRide?.status, activeRide?.pickup_lat, activeRide?.pickup_lng, activeRide?.dropoff_lat, activeRide?.dropoff_lng]);
+
+  // Refresh navigation route every 20s while driving
+  useEffect(() => {
+    if (!pos || !target) { setRoute(null); return; }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const r = await fetchRoute({ data: { pickup: { lat: pos.lat, lng: pos.lng }, dropoff: { lat: target.lat, lng: target.lng } } });
+        if (!cancelled) setRoute({ coords: r.coordinates as Array<[number, number]>, distance_m: r.distance_m, duration_s: r.duration_s });
+      } catch { /* noop */ }
+    };
+    void load();
+    const id = window.setInterval(load, 20000);
+    return () => { cancelled = true; window.clearInterval(id); };
+  }, [fetchRoute, target?.kind, target?.lat, target?.lng, pos?.lat, pos?.lng]);
+
   const markers = useMemo<MapMarker[]>(() => {
     const m: MapMarker[] = [];
     if (pos) m.push({ id: "me", lat: pos.lat, lng: pos.lng, color: "#f59e0b", label: "🚗" });
@@ -331,9 +359,25 @@ function DriverMap({ activeRide, pos }: { activeRide: Ride | null; pos: { lat: n
     return m;
   }, [activeRide, pos]);
 
+  const polylineColor = target?.kind === "B" ? "#2563eb" : "#16a34a";
+
   return (
-    <div className="overflow-hidden rounded-xl border">
-      <MapGL className="h-64 w-full sm:h-72" markers={markers} center={pos ?? undefined} zoom={13} />
+    <div className="relative overflow-hidden rounded-xl border">
+      <MapGL
+        className="h-64 w-full sm:h-72"
+        markers={markers}
+        center={pos ?? undefined}
+        zoom={13}
+        polyline={route?.coords && route.coords.length >= 2 ? route.coords : undefined}
+        polylineColor={polylineColor}
+        fitMarkers={!!route?.coords?.length}
+      />
+      {target && route && route.distance_m > 0 && (
+        <div className="pointer-events-none absolute left-2 top-2 rounded-md bg-background/90 px-2.5 py-1.5 text-xs font-medium shadow">
+          До точки {target.kind}: {route.distance_m < 1000 ? `${Math.round(route.distance_m)} м` : `${(route.distance_m / 1000).toFixed(1)} км`}
+          {" · "}≈ {Math.max(1, Math.round(route.duration_s / 60))} мин
+        </div>
+      )}
     </div>
   );
 }
@@ -360,12 +404,16 @@ function ActiveRideCard({
   const distToDropoff = pos ? distanceMeters(pos, { lat: ride.dropoff_lat, lng: ride.dropoff_lng }) : null;
   const tooFar = ride.status === "in_progress" && (distToDropoff == null || distToDropoff > 200);
 
-  const openInMaps = () => {
-    const target = ride.status === "in_progress"
-      ? { lat: ride.dropoff_lat, lng: ride.dropoff_lng }
-      : { lat: ride.pickup_lat, lng: ride.pickup_lng };
-    window.open(`https://2gis.com/directions/points/|${target.lng},${target.lat}|`, "_blank", "noopener");
+  const target = ride.status === "in_progress"
+    ? { lat: ride.dropoff_lat, lng: ride.dropoff_lng, label: "Б" as const }
+    : { lat: ride.pickup_lat, lng: ride.pickup_lng, label: "А" as const };
+
+  const navUrls = {
+    twogis: `https://2gis.com/directions/points/${pos ? `${pos.lng},${pos.lat}|` : "|"}${target.lng},${target.lat}`,
+    google: `https://www.google.com/maps/dir/?api=1&destination=${target.lat},${target.lng}&travelmode=driving`,
+    yandex: `https://yandex.ru/maps/?rtext=${pos ? `${pos.lat}%2C${pos.lng}~` : ""}${target.lat}%2C${target.lng}&rtt=auto`,
   };
+  const openNav = (url: string) => window.open(url, "_blank", "noopener");
 
   return (
     <Card className="space-y-3 p-5">
@@ -389,7 +437,19 @@ function ActiveRideCard({
             {nextLabel}
           </Button>
         )}
-        <Button variant="outline" onClick={openInMaps}><Navigation className="mr-1.5 h-4 w-4" />Маршрут</Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <Navigation className="mr-1.5 h-4 w-4" />
+              Навигация до {target.label}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => openNav(navUrls.twogis)}>2ГИС</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openNav(navUrls.google)}>Google Maps</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openNav(navUrls.yandex)}>Яндекс.Карты</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         {ride.status !== "in_progress" && (
           <Button variant="ghost" onClick={onCancel}><X className="mr-1.5 h-4 w-4" />Отменить</Button>
         )}
