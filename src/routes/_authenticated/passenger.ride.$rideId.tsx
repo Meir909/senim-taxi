@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, X, ArrowLeft } from "lucide-react";
+import { Loader2, X, ArrowLeft, MapPin, Clock, Route as RouteIcon } from "lucide-react";
 import { MapGL, type MapMarker } from "@/components/MapGL";
 import { StarRating } from "@/components/StarRating";
 import { UserBadgeCard } from "@/components/UserBadgeCard";
+import { TARIFFS, fmtKzt } from "@/lib/fare";
 
 type Driver = Database["public"]["Tables"]["drivers"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
