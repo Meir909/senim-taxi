@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,8 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Loader2, ShieldCheck, ArrowLeft, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/verify-identity")({
   component: VerifyIdentity,
