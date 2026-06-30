@@ -89,7 +89,7 @@ function RequestCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
     const { error } = await supabase.rpc("admin_review_verification", {
       _request_id: req.id,
       _decision: decision,
-      _comment: comment.trim() || null,
+      _comment: comment.trim() || "",
     });
     setBusy(null);
     if (error) { toast.error(error.message); return; }

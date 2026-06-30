@@ -21,6 +21,7 @@ import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDriverRouteImport } from './routes/_authenticated/driver'
 import { Route as AuthenticatedBecomeDriverRouteImport } from './routes/_authenticated/become-driver'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
 import { Route as AuthenticatedPassengerRideRideIdRouteImport } from './routes/_authenticated/passenger.ride.$rideId'
 
 const AuthRoute = AuthRouteImport.update({
@@ -84,6 +85,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminVerificationsRoute =
+  AuthenticatedAdminVerificationsRouteImport.update({
+    id: '/verifications',
+    path: '/verifications',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedPassengerRideRideIdRoute =
   AuthenticatedPassengerRideRideIdRouteImport.update({
     id: '/ride/$rideId',
@@ -94,7 +101,7 @@ const AuthenticatedPassengerRideRideIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/become-driver': typeof AuthenticatedBecomeDriverRoute
   '/driver': typeof AuthenticatedDriverRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -103,12 +110,13 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/verify-identity': typeof AuthenticatedVerifyIdentityRoute
   '/wallet': typeof AuthenticatedWalletRoute
+  '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/become-driver': typeof AuthenticatedBecomeDriverRoute
   '/driver': typeof AuthenticatedDriverRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -117,6 +125,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/verify-identity': typeof AuthenticatedVerifyIdentityRoute
   '/wallet': typeof AuthenticatedWalletRoute
+  '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRoute
 }
 export interface FileRoutesById {
@@ -124,7 +133,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/become-driver': typeof AuthenticatedBecomeDriverRoute
   '/_authenticated/driver': typeof AuthenticatedDriverRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
@@ -133,6 +142,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/verify-identity': typeof AuthenticatedVerifyIdentityRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
+  '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/_authenticated/passenger/ride/$rideId': typeof AuthenticatedPassengerRideRideIdRoute
 }
 export interface FileRouteTypes {
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/verify-identity'
     | '/wallet'
+    | '/admin/verifications'
     | '/passenger/ride/$rideId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/verify-identity'
     | '/wallet'
+    | '/admin/verifications'
     | '/passenger/ride/$rideId'
   id:
     | '__root__'
@@ -178,6 +190,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/verify-identity'
     | '/_authenticated/wallet'
+    | '/_authenticated/admin/verifications'
     | '/_authenticated/passenger/ride/$rideId'
   fileRoutesById: FileRoutesById
 }
@@ -273,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/verifications': {
+      id: '/_authenticated/admin/verifications'
+      path: '/verifications'
+      fullPath: '/admin/verifications'
+      preLoaderRoute: typeof AuthenticatedAdminVerificationsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/passenger/ride/$rideId': {
       id: '/_authenticated/passenger/ride/$rideId'
       path: '/ride/$rideId'
@@ -282,6 +302,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminVerificationsRoute: typeof AuthenticatedAdminVerificationsRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminVerificationsRoute: AuthenticatedAdminVerificationsRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedPassengerRouteChildren {
   AuthenticatedPassengerRideRideIdRoute: typeof AuthenticatedPassengerRideRideIdRoute
@@ -299,7 +330,7 @@ const AuthenticatedPassengerRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedBecomeDriverRoute: typeof AuthenticatedBecomeDriverRoute
   AuthenticatedDriverRoute: typeof AuthenticatedDriverRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
@@ -311,7 +342,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedBecomeDriverRoute: AuthenticatedBecomeDriverRoute,
   AuthenticatedDriverRoute: AuthenticatedDriverRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
