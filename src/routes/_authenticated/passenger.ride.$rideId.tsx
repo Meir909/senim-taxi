@@ -230,7 +230,7 @@ function fmtElapsed(s: number): string {
   return `${m.toString().padStart(2, "0")}:${r.toString().padStart(2, "0")}`;
 }
 
-function SearchingScreen({ ride, onCancel }: { ride: Ride; onCancel: () => void | Promise<void> }) {
+function SearchingScreen({ ride, onCancel, cancelling }: { ride: Ride; onCancel: () => void | Promise<void>; cancelling?: boolean }) {
   const [elapsed, setElapsed] = useState(0);
   const [msgIdx, setMsgIdx] = useState(0);
   const [confirmCancel, setConfirmCancel] = useState(false);
