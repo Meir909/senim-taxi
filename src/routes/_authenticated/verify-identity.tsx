@@ -118,7 +118,7 @@ function VerifyIdentity() {
           </div>
           <div>
             <h1 className="text-lg font-semibold">Подтверждение личности</h1>
-            <p className="text-xs text-muted-foreground">ИИН + живое селфи. Только живая камера.</p>
+            <p className="text-xs text-muted-foreground">Сервис только для женщин 18+. ИИН + живое селфи.</p>
           </div>
         </div>
 
