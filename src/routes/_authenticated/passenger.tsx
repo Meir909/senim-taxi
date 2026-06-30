@@ -12,6 +12,10 @@ import { Loader2, MapPin, Search, X, Crosshair } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { MapGL, type MapMarker } from "@/components/MapGL";
 import { geocode2gis, reverseGeocode2gis, getRoute2gis } from "@/lib/maps.functions";
+import { TARIFFS, calcFare, fmtKzt, type Tariff } from "@/lib/fare";
+import tariffStandardImg from "@/assets/tariff-standard.jpg";
+import tariffKidsImg from "@/assets/tariff-kids.jpg";
+
 
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Point = { lat: number; lng: number; address: string };
