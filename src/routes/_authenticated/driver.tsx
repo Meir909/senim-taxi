@@ -226,7 +226,10 @@ function DriverHome() {
           ) : (
             <div className="space-y-2">
               {offers.map((o) => (
-                <Card key={o.id} className="p-4">
+                <Card key={o.id} className="p-4 space-y-3">
+                  {o.rides?.passenger_id && (
+                    <OfferPassengerBadge passengerId={o.rides.passenger_id} />
+                  )}
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 text-sm">
                       <div className="truncate font-medium">{o.rides?.pickup_address || `Точка A ${o.rides?.pickup_lat?.toFixed(4)}, ${o.rides?.pickup_lng?.toFixed(4)}`}</div>
