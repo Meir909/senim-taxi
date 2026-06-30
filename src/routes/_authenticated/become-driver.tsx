@@ -191,23 +191,8 @@ function BecomeDriver() {
     return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
-  // Gate 1: must be verified passenger
-  if (profile.verification_status !== "approved") {
-    return (
-      <Card className="p-5 sm:p-6">
-        <div className="flex items-start gap-3">
-          <ShieldAlert className="h-5 w-5 shrink-0 text-warning" />
-          <div>
-            <h1 className="text-lg font-semibold">Сначала подтвердите личность</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Чтобы стать водителем, пройдите верификацию пассажира — после одобрения администратором сюда откроется доступ.
-            </p>
-            <Button asChild className="mt-4"><Link to="/verify-identity">Пройти верификацию</Link></Button>
-          </div>
-        </div>
-      </Card>
-    );
-  }
+  // Verification of identity is done at signup — no extra gate here.
+
 
   // Gate 2: female only (server enforces too)
   if (profile.gender !== "female") {
