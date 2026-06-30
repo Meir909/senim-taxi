@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Loader2, MapPin, Search, X, Crosshair } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { MapGL, type MapMarker } from "@/components/MapGL";
-import { geocode2gis, reverseGeocode2gis } from "@/lib/maps.functions";
+import { geocode2gis, reverseGeocode2gis, getRoute2gis } from "@/lib/maps.functions";
 
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Point = { lat: number; lng: number; address: string };
