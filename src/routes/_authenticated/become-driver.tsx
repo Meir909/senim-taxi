@@ -94,7 +94,7 @@ function BecomeDriver() {
       const { error } = await supabase.rpc("submit_driver_verification", {
         _selfie_path: selfiePath,
         _license_path: licensePath,
-        _vehicle_doc_path: vehicleDocPath,
+        _vehicle_doc_path: vehicleDocPath ?? "",
         _ai_confidence: result.confidence,
         _ai_reason: result.reason ?? "",
       });
