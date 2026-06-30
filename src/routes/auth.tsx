@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Car, Loader2, Info, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Loader2, Info, AlertTriangle, ShieldCheck } from "lucide-react";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Вход — Senim" }] }),
@@ -245,7 +246,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground"><Car className="h-5 w-5" /></div>
+          <img src={logoAsset.url} alt="Senim" className="h-10 w-10 rounded-lg object-cover" />
           <span className="text-xl font-semibold">Senim</span>
         </div>
         {blockedNotice && (

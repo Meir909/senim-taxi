@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Car, Wallet, User as UserIcon, LogOut, Loader2, Bell, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRealtimeNotifications } from "@/lib/notifications";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -43,7 +44,7 @@ function AuthLayout() {
       <header className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
           <Link to="/home" className="flex min-w-0 items-center gap-2">
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><Car className="h-4 w-4" /></div>
+            <img src={logoAsset.url} alt="Senim" className="h-8 w-8 shrink-0 rounded-lg object-cover" />
             <span className="truncate font-semibold">Senim</span>
           </Link>
           <div className="flex shrink-0 items-center gap-1">
