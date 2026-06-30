@@ -143,6 +143,12 @@ function AuthPage() {
           <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground"><Car className="h-5 w-5" /></div>
           <span className="text-xl font-semibold">Senim</span>
         </div>
+        {blockedNotice && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{blockedNotice}</AlertDescription>
+          </Alert>
+        )}
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
           <Tabs defaultValue="signin">
             <TabsList className="grid w-full grid-cols-2">
