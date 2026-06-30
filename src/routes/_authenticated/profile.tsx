@@ -72,15 +72,22 @@ function ProfilePage() {
     e.preventDefault();
     if (!user) return;
     const fd = new FormData(e.currentTarget);
-    const full_name = String(fd.get("full_name") ?? "").trim().slice(0, 100);
-    const phone = String(fd.get("phone") ?? "").trim().slice(0, 20);
     try {
+      const v = ProfileSchema.parse({
+        full_name: String(fd.get("full_name") ?? ""),
+        phone: String(fd.get("phone") ?? ""),
+      });
       setBusy(true);
-      const { error } = await supabase.from("profiles").update({ full_name, phone }).eq("id", user.id);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: v.full_name, phone: v.phone })
+        .eq("id", user.id);
       if (error) throw error;
-      toast.success("Сохранено");
+      setProfile((p) => (p ? { ...p, full_name: v.full_name, phone: v.phone } : p));
+      toast.success("Профиль сохранён");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Не удалось сохранить");
+      if (err instanceof z.ZodError) toast.error(err.issues[0]?.message ?? "Проверьте данные");
+      else toast.error(err instanceof Error ? err.message : "Не удалось сохранить");
     } finally {
       setBusy(false);
     }
