@@ -84,9 +84,10 @@ function RideView() {
 
   const [rating, setRating] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
-    if (ride && (ride.status === "cancelled" || ride.status === "no_drivers")) {
+    if (ride && ride.status === "no_drivers") {
       const t = setTimeout(() => void navigate({ to: "/passenger", replace: true }), 4000);
       return () => clearTimeout(t);
     }
@@ -108,21 +109,30 @@ function RideView() {
   }
 
   async function cancel() {
-    if (!ride || !user) return;
-    const { error } = await supabase
-      .from("rides")
-      .update({ status: "cancelled", cancelled_at: new Date().toISOString(), cancellation_reason: "passenger_cancelled" })
-      .eq("id", ride.id)
-      .eq("passenger_id", user.id);
-    if (error) toast.error(error.message);
-    else toast.info("Поездка отменена");
+    if (!ride || !user || cancelling) return;
+    setCancelling(true);
+    try {
+      const { error } = await supabase
+        .from("rides")
+        .update({ status: "cancelled", cancelled_at: new Date().toISOString(), cancellation_reason: "passenger_cancelled" })
+        .eq("id", ride.id)
+        .eq("passenger_id", user.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.info("Поездка отменена");
+      void navigate({ to: "/passenger", replace: true });
+    } finally {
+      setCancelling(false);
+    }
   }
 
   if (loading) return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   if (!ride) return <div className="text-center text-muted-foreground">Поездка не найдена.</div>;
 
   if (ride.status === "searching" || ride.status === "requested") {
-    return <SearchingScreen ride={ride} onCancel={cancel} />;
+    return <SearchingScreen ride={ride} onCancel={cancel} cancelling={cancelling} />;
   }
 
 
