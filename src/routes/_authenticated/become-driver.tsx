@@ -10,24 +10,23 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Loader2, ShieldAlert, FileText, CheckCircle2, XCircle, Clock, Upload } from "lucide-react";
+import { Loader2, ShieldAlert, FileText, CheckCircle2, XCircle, Clock, Upload, Image as ImageIcon } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/become-driver")({
   component: BecomeDriver,
 });
 
-type DocKind = Database["public"]["Enums"]["driver_doc_kind"];
+type DocKind = "identity" | "license" | "vehicle_documents";
 type DocStatus = Database["public"]["Enums"]["driver_doc_status"];
 type AppStatus = Database["public"]["Enums"]["driver_app_status"];
 
 const DOC_LABELS: Record<DocKind, string> = {
   identity: "Удостоверение личности",
   license: "Водительское удостоверение",
-  vehicle_registration: "Свидетельство о регистрации ТС",
   vehicle_documents: "Документы на автомобиль",
 };
-const DOC_ORDER: DocKind[] = ["identity", "license", "vehicle_registration", "vehicle_documents"];
+const DOC_ORDER: DocKind[] = ["identity", "license", "vehicle_documents"];
 const ACCEPT = "application/pdf,image/jpeg,image/png";
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIME = new Set(["application/pdf", "image/jpeg", "image/png"]);
@@ -56,9 +55,6 @@ type DriverRow = {
   vehicle_plate: string | null;
   vehicle_country: string | null;
   child_seat: boolean;
-  first_name: string | null;
-  last_name: string | null;
-  patronymic: string | null;
   review_comment: string | null;
 };
 
@@ -71,10 +67,6 @@ function BecomeDriver() {
   const [docs, setDocs] = useState<DocRow[]>([]);
   const [loadingState, setLoadingState] = useState(true);
 
-  // form state (initial submission)
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [patronymic, setPatronymic] = useState("");
   const [plate, setPlate] = useState("");
   const [country, setCountry] = useState("Казахстан");
   const [childSeat, setChildSeat] = useState<"yes" | "no" | "">("");
@@ -89,25 +81,21 @@ function BecomeDriver() {
         .select("iin,date_of_birth,gender,first_name,last_name,patronymic,verification_status")
         .eq("id", user.id).maybeSingle(),
       supabase.from("drivers")
-        .select("application_status,vehicle_plate,vehicle_country,child_seat,first_name,last_name,patronymic,review_comment")
+        .select("application_status,vehicle_plate,vehicle_country,child_seat,review_comment")
         .eq("id", user.id).maybeSingle(),
       supabase.from("driver_documents")
         .select("id,kind,file_path,mime_type,status,comment")
-        .eq("driver_id", user.id),
+        .eq("driver_id", user.id)
+        .in("kind", DOC_ORDER),
     ]);
-    if (p.data) {
-      setProfile(p.data as Profile);
-      setFirstName(p.data.first_name ?? "");
-      setLastName(p.data.last_name ?? "");
-      setPatronymic(p.data.patronymic ?? "");
-    }
+    if (p.data) setProfile(p.data as Profile);
     if (d.data) {
       setDriver(d.data as DriverRow);
       setPlate(d.data.vehicle_plate ?? "");
       setCountry(d.data.vehicle_country ?? "Казахстан");
       setChildSeat(d.data.child_seat ? "yes" : "no");
     }
-    setDocs((dd.data as DocRow[] | null) ?? []);
+    setDocs(((dd.data as DocRow[] | null) ?? []).filter((x) => DOC_ORDER.includes(x.kind)));
     setLoadingState(false);
   }
 
@@ -147,9 +135,6 @@ function BecomeDriver() {
         uploaded[k] = await uploadFile(files[k]!, k);
       }
       const { error } = await supabase.rpc("submit_driver_application", {
-        _first_name: firstName.trim(),
-        _last_name: lastName.trim(),
-        _patronymic: patronymic.trim(),
         _vehicle_plate: plate.trim(),
         _vehicle_country: country.trim(),
         _child_seat: childSeat === "yes",
@@ -157,11 +142,10 @@ function BecomeDriver() {
         _identity_mime: uploaded.identity.mime,
         _license_path: uploaded.license.path,
         _license_mime: uploaded.license.mime,
-        _vehicle_registration_path: uploaded.vehicle_registration.path,
-        _vehicle_registration_mime: uploaded.vehicle_registration.mime,
         _vehicle_documents_path: uploaded.vehicle_documents.path,
         _vehicle_documents_mime: uploaded.vehicle_documents.mime,
-      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
       if (error) throw error;
       toast.success("Заявка отправлена на проверку");
       await refreshDriver();
@@ -191,10 +175,6 @@ function BecomeDriver() {
     return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
-  // Verification of identity is done at signup — no extra gate here.
-
-
-  // Gate 2: female only (server enforces too)
   if (profile.gender !== "female") {
     return (
       <Card className="p-5 sm:p-6">
@@ -213,7 +193,6 @@ function BecomeDriver() {
   const hasApplication = driver !== null;
   const status = driver?.application_status;
 
-  // Approved
   if (status === "approved") {
     return (
       <Card className="p-5 sm:p-6">
@@ -224,7 +203,6 @@ function BecomeDriver() {
     );
   }
 
-  // Re-upload mode
   if (hasApplication && (status === "pending" || status === "needs_reupload")) {
     return (
       <Card className="p-5 sm:p-6 space-y-4">
@@ -241,8 +219,6 @@ function BecomeDriver() {
           </Alert>
         )}
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <Info label="ИИН" value={profile.iin} />
-          <Info label="Дата рождения" value={profile.date_of_birth} />
           <Info label="Госномер" value={driver?.vehicle_plate} />
           <Info label="Страна авто" value={driver?.vehicle_country} />
           <Info label="Детское кресло" value={driver?.child_seat ? "Да" : "Нет"} />
@@ -258,12 +234,11 @@ function BecomeDriver() {
     );
   }
 
-  // Rejected (final) — allow resubmit
   return (
     <Card className="p-5 sm:p-6 space-y-4">
       <div>
         <h1 className="text-xl font-semibold">Заявка водителя</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Данные авто и 4 документа. После отправки администратор проверит каждый файл.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Данные авто и 3 документа. Личность уже подтверждена при регистрации.</p>
       </div>
       {status === "rejected" && (
         <Alert variant="destructive">
@@ -272,18 +247,6 @@ function BecomeDriver() {
         </Alert>
       )}
       <form onSubmit={submitApplication} className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <ReadOnly label="ИИН" value={profile.iin ?? ""} />
-          <ReadOnly label="Дата рождения" value={profile.date_of_birth ?? ""} />
-          <ReadOnly label="Пол" value="Женский" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Row label="Фамилия" value={lastName} onChange={setLastName} required />
-          <Row label="Имя" value={firstName} onChange={setFirstName} required />
-        </div>
-        <Row label="Отчество (необязательно)" value={patronymic} onChange={setPatronymic} />
-
         <div className="grid grid-cols-2 gap-3">
           <Row label="Госномер" value={plate} onChange={setPlate} placeholder="A 123 BC" required />
           <Row label="Страна авто" value={country} onChange={setCountry} placeholder="Казахстан" required />
@@ -298,8 +261,8 @@ function BecomeDriver() {
         </div>
 
         <div className="space-y-2 pt-2">
-          <h2 className="text-sm font-semibold">Документы</h2>
-          <p className="text-xs text-muted-foreground">По одному файлу на каждый пункт. PDF, JPG, JPEG, PNG до 10 МБ.</p>
+          <h2 className="text-sm font-semibold">Документы (фото)</h2>
+          <p className="text-xs text-muted-foreground">Загрузите чёткие фото или PDF каждого документа. JPG, PNG или PDF до 10 МБ.</p>
           {DOC_ORDER.map((kind) => (
             <DocPickRow key={kind} kind={kind} file={files[kind]} onPick={(f) => setFiles((s) => ({ ...s, [kind]: f }))} />
           ))}
@@ -322,15 +285,6 @@ function Row({ label, value, onChange, required, placeholder }: { label: string;
   );
 }
 
-function ReadOnly({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <Input value={value} readOnly tabIndex={-1} className="bg-muted/40" />
-    </div>
-  );
-}
-
 function Info({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
@@ -341,21 +295,42 @@ function Info({ label, value }: { label: string; value: string | null | undefine
 }
 
 function DocPickRow({ kind, file, onPick }: { kind: DocKind; file?: File; onPick: (f: File) => void }) {
+  const [preview, setPreview] = useState<string | null>(null);
+  useEffect(() => {
+    if (!file || !file.type.startsWith("image/")) { setPreview(null); return; }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
-      <div className="flex min-w-0 items-center gap-2">
-        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <div className="min-w-0">
-          <div className="truncate text-sm font-medium">{DOC_LABELS[kind]}</div>
-          <div className="truncate text-xs text-muted-foreground">{file ? file.name : "Файл не выбран"}</div>
+    <div className="rounded-lg border border-border p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <div className="truncate text-sm font-medium">{DOC_LABELS[kind]}</div>
+            <div className="truncate text-xs text-muted-foreground">{file ? file.name : "Файл не выбран"}</div>
+          </div>
         </div>
+        <Button asChild variant="outline" size="sm">
+          <label className="cursor-pointer">
+            <Upload className="mr-1 h-4 w-4" /> {file ? "Заменить" : "Выбрать"}
+            <input type="file" className="hidden" accept={ACCEPT} capture="environment"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) onPick(f); }} />
+          </label>
+        </Button>
       </div>
-      <Button asChild variant="outline" size="sm">
-        <label className="cursor-pointer">
-          <Upload className="mr-1 h-4 w-4" /> {file ? "Заменить" : "Выбрать"}
-          <input type="file" className="hidden" accept={ACCEPT} onChange={(e) => { const f = e.target.files?.[0]; if (f) onPick(f); }} />
-        </label>
-      </Button>
+      {preview && (
+        <div className="mt-3">
+          <img src={preview} alt={DOC_LABELS[kind]} className="max-h-48 w-full rounded-md border border-border object-contain" />
+        </div>
+      )}
+      {file && !preview && (
+        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <ImageIcon className="h-4 w-4" /> PDF-файл выбран — превью недоступно
+        </div>
+      )}
     </div>
   );
 }
@@ -381,7 +356,7 @@ function DocReuploadRow({ kind, doc, disabled, onPick }: { kind: DocKind; doc?: 
           <Button asChild variant="outline" size="sm" disabled={disabled}>
             <label className="cursor-pointer">
               <Upload className="mr-1 h-4 w-4" /> Загрузить
-              <input type="file" className="hidden" accept={ACCEPT} disabled={disabled}
+              <input type="file" className="hidden" accept={ACCEPT} capture="environment" disabled={disabled}
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) onPick(f); }} />
             </label>
           </Button>
