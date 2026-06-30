@@ -160,14 +160,10 @@ function ProfilePage() {
       </Card>
 
       {isDriver && driver && (
-        <Card className="p-5">
-          <h2 className="font-semibold">Автомобиль</h2>
-          <div className="mt-3 space-y-2 text-sm">
-            <Row label="Марка / модель" value={[driver.vehicle_make, driver.vehicle_model].filter(Boolean).join(" ") || "—"} />
-            <Row label="Цвет" value={driver.vehicle_color || "—"} />
-            <Row label="Номер" value={driver.vehicle_plate || "—"} />
-          </div>
-        </Card>
+        <VehicleCard
+          driver={driver}
+          onSaved={(d) => setDriver(d)}
+        />
       )}
 
       {!isDriver && (
