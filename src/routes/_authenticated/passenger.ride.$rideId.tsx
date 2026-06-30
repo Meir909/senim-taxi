@@ -40,6 +40,8 @@ function RideView() {
   const navigate = useNavigate();
   const [ride, setRide] = useState<Ride | null>(null);
   const [driverLoc, setDriverLoc] = useState<Loc | null>(null);
+  const [driver, setDriver] = useState<Driver | null>(null);
+  const [driverProfile, setDriverProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
