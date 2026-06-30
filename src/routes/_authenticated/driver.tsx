@@ -132,7 +132,6 @@ function DriverHome() {
   async function setRideStatus(status: Ride["status"]) {
     if (!activeRide) return;
     const patch: Partial<Ride> = { status };
-    if (status === "driver_arrived") patch.arrived_at = new Date().toISOString();
     if (status === "in_progress") patch.started_at = new Date().toISOString();
     const { error } = await supabase.from("rides").update(patch).eq("id", activeRide.id);
     if (error) toast.error(error.message);
