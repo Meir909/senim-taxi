@@ -69,9 +69,19 @@ function VerifyIdentity() {
     return () => { cancelled = true; };
   }, [user]);
 
+  function resetForRetry() {
+    setIinRejection(null);
+    setPriorStatus(null);
+    setPriorReason(null);
+    setSelfie1(null);
+    setResultStatus(null);
+    setStep("form");
+  }
+
   function submitForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIinRejection(null);
+    setPriorStatus(null);
     try {
       const v = Schema.parse({ full_name: fullName, iin });
       const parsed = parseIin(v.iin);
