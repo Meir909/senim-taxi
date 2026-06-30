@@ -36,9 +36,9 @@ function ProfilePage() {
       setBusy(true);
       const { error } = await supabase.from("profiles").update({ full_name, phone }).eq("id", user.id);
       if (error) throw error;
-      toast.success("Saved");
+      toast.success("Сохранено");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : "Не удалось сохранить");
     } finally { setBusy(false); }
   }
 
@@ -47,20 +47,20 @@ function ProfilePage() {
   return (
     <div className="space-y-4">
       <Card className="p-5">
-        <h1 className="text-lg font-semibold">Profile</h1>
+        <h1 className="text-lg font-semibold">Профиль</h1>
         <form onSubmit={save} className="mt-4 space-y-3">
           <div className="space-y-1"><Label>Email</Label><Input value={user?.email ?? ""} disabled /></div>
-          <div className="space-y-1"><Label htmlFor="full_name">Full name</Label><Input id="full_name" name="full_name" defaultValue={profile.full_name ?? ""} maxLength={100} /></div>
-          <div className="space-y-1"><Label htmlFor="phone">Phone</Label><Input id="phone" name="phone" defaultValue={profile.phone ?? ""} maxLength={20} /></div>
-          <Button type="submit" disabled={busy}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save</Button>
+          <div className="space-y-1"><Label htmlFor="full_name">Полное имя</Label><Input id="full_name" name="full_name" defaultValue={profile.full_name ?? ""} maxLength={100} /></div>
+          <div className="space-y-1"><Label htmlFor="phone">Телефон</Label><Input id="phone" name="phone" type="tel" inputMode="tel" defaultValue={profile.phone ?? ""} maxLength={20} /></div>
+          <Button type="submit" className="w-full sm:w-auto" disabled={busy}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Сохранить</Button>
         </form>
       </Card>
 
       {!isDriver && (
         <Card className="p-5">
-          <h2 className="font-semibold">Want to drive?</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Add vehicle details and start earning.</p>
-          <Button asChild className="mt-3"><Link to="/become-driver">Apply as driver</Link></Button>
+          <h2 className="font-semibold">Хотите водить?</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Добавьте данные авто и начните зарабатывать.</p>
+          <Button asChild className="mt-3 w-full sm:w-auto"><Link to="/become-driver">Стать водителем</Link></Button>
         </Card>
       )}
     </div>

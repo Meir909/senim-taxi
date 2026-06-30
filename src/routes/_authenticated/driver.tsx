@@ -26,6 +26,23 @@ export const Route = createFileRoute("/_authenticated/driver")({
 
 const ACTIVE_STATUSES: Ride["status"][] = ["accepted", "driver_arriving", "driver_arrived", "in_progress"];
 
+const DRIVER_STATUS: Record<string, string> = {
+  online: "На линии",
+  offline: "Не на линии",
+  on_ride: "В поездке",
+};
+const VERIFICATION: Record<string, string> = {
+  pending: "Ожидает",
+  approved: "Подтверждён",
+  rejected: "Отклонён",
+};
+const RIDE_STATUS_RU: Partial<Record<Ride["status"], string>> = {
+  accepted: "Принято",
+  driver_arriving: "В пути к клиенту",
+  driver_arrived: "На месте",
+  in_progress: "В поездке",
+};
+
 function DriverHome() {
   const { user, isDriver } = useAuth();
   const [driver, setDriver] = useState<Driver | null>(null);
@@ -35,7 +52,6 @@ function DriverHome() {
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
   const [completeOpen, setCompleteOpen] = useState(false);
 
-  // load driver
   useEffect(() => {
     if (!user || !isDriver) { setLoading(false); return; }
     let mounted = true;
@@ -46,7 +62,6 @@ function DriverHome() {
     return () => { mounted = false; };
   }, [user, isDriver]);
 
-  // pending offers
   useEffect(() => {
     if (!user || !isDriver) return;
     let mounted = true;
@@ -66,7 +81,6 @@ function DriverHome() {
     return () => { mounted = false; supabase.removeChannel(ch); };
   }, [user, isDriver]);
 
-  // active ride
   useEffect(() => {
     if (!user || !isDriver) return;
     let mounted = true;
@@ -89,12 +103,11 @@ function DriverHome() {
     return () => { mounted = false; supabase.removeChannel(ch); };
   }, [user, isDriver]);
 
-  // location heartbeat while online or on ride
   useEffect(() => {
     if (!user) return;
     const active = driver?.status === "online" || driver?.status === "on_ride";
     if (!active) return;
-    if (!navigator.geolocation) { toast.error("Geolocation not available"); return; }
+    if (!navigator.geolocation) { toast.error("Геолокация недоступна"); return; }
     let cancelled = false;
     const push = (p: GeolocationPosition) => {
       if (cancelled) return;
@@ -113,7 +126,7 @@ function DriverHome() {
 
   async function toggleOnline(next: boolean) {
     if (!user || !driver) return;
-    if (driver.verification !== "approved") { toast.error("Account not approved yet"); return; }
+    if (driver.verification !== "approved") { toast.error("Аккаунт ещё не подтверждён"); return; }
     const { data, error } = await supabase.from("drivers")
       .update({ status: next ? "online" : "offline", last_seen_at: new Date().toISOString() })
       .eq("id", user.id).select().single();
@@ -122,7 +135,7 @@ function DriverHome() {
 
   async function accept(offerId: string) {
     const { error } = await supabase.rpc("accept_ride_offer", { _offer_id: offerId });
-    if (error) toast.error(error.message); else toast.success("Ride accepted");
+    if (error) toast.error(error.message); else toast.success("Заказ принят");
   }
   async function reject(offerId: string) {
     const { error } = await supabase.rpc("reject_ride_offer", { _offer_id: offerId });
@@ -153,20 +166,22 @@ function DriverHome() {
   if (!isDriver || !driver) {
     return (
       <Card className="p-6 text-center">
-        <h2 className="text-lg font-semibold">Become a driver</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Add your vehicle to start accepting rides.</p>
-        <Button asChild className="mt-4"><Link to="/become-driver">Get started</Link></Button>
+        <h2 className="text-lg font-semibold">Стать водителем</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Добавьте автомобиль, чтобы принимать заказы.</p>
+        <Button asChild className="mt-4"><Link to="/become-driver">Начать</Link></Button>
       </Card>
     );
   }
 
   return (
     <div className="space-y-4">
-      <Card className="flex items-center justify-between p-5">
-        <div>
-          <div className="text-sm text-muted-foreground">Status</div>
-          <div className="text-lg font-semibold">{driver.status === "online" ? "Online" : driver.status === "on_ride" ? "On a ride" : "Offline"}</div>
-          <div className="mt-1 text-xs text-muted-foreground">Verification: <Badge variant={driver.verification === "approved" ? "default" : "secondary"}>{driver.verification}</Badge></div>
+      <Card className="flex items-center justify-between gap-3 p-5">
+        <div className="min-w-0">
+          <div className="text-sm text-muted-foreground">Статус</div>
+          <div className="truncate text-lg font-semibold">{DRIVER_STATUS[driver.status] ?? driver.status}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+            Подтверждение: <Badge variant={driver.verification === "approved" ? "default" : "secondary"}>{VERIFICATION[driver.verification] ?? driver.verification}</Badge>
+          </div>
         </div>
         <Switch checked={driver.status !== "offline"} onCheckedChange={toggleOnline} disabled={!!activeRide} />
       </Card>
@@ -183,22 +198,24 @@ function DriverHome() {
         />
       ) : (
         <div>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Incoming offers</h2>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Входящие заказы</h2>
           {offers.length === 0 ? (
-            <Card className="p-6 text-center text-sm text-muted-foreground">No offers right now. Stay online.</Card>
+            <Card className="p-6 text-center text-sm text-muted-foreground">Заказов пока нет. Оставайтесь на линии.</Card>
           ) : (
             <div className="space-y-2">
               {offers.map((o) => (
                 <Card key={o.id} className="p-4">
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 text-sm">
-                      <div className="truncate font-medium">{o.rides?.pickup_address || `Pickup ${o.rides?.pickup_lat?.toFixed(4)}, ${o.rides?.pickup_lng?.toFixed(4)}`}</div>
-                      <div className="truncate text-muted-foreground">→ {o.rides?.dropoff_address || "Drop-off"}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">{o.distance_km ? `${Number(o.distance_km).toFixed(2)} km away` : ""} · expires {new Date(o.expires_at).toLocaleTimeString()}</div>
+                      <div className="truncate font-medium">{o.rides?.pickup_address || `Точка A ${o.rides?.pickup_lat?.toFixed(4)}, ${o.rides?.pickup_lng?.toFixed(4)}`}</div>
+                      <div className="truncate text-muted-foreground">→ {o.rides?.dropoff_address || "Точка B"}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {o.distance_km ? `${Number(o.distance_km).toFixed(2)} км` : ""} · истекает {new Date(o.expires_at).toLocaleTimeString("ru-RU")}
+                      </div>
                     </div>
                     <div className="flex shrink-0 gap-2">
-                      <Button size="sm" variant="outline" onClick={() => reject(o.id)}>Skip</Button>
-                      <Button size="sm" onClick={() => accept(o.id)}>Accept</Button>
+                      <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => reject(o.id)}>Пропустить</Button>
+                      <Button size="sm" className="flex-1 sm:flex-none" onClick={() => accept(o.id)}>Принять</Button>
                     </div>
                   </div>
                 </Card>
@@ -224,24 +241,24 @@ function DriverMap({ activeRide, pos }: { activeRide: Ride | null; pos: { lat: n
     const m: MapMarker[] = [];
     if (pos) m.push({ id: "me", lat: pos.lat, lng: pos.lng, color: "#f59e0b", label: "🚗" });
     if (activeRide) {
-      m.push({ id: "pickup", lat: activeRide.pickup_lat, lng: activeRide.pickup_lng, color: "#16a34a", label: "P" });
-      m.push({ id: "dropoff", lat: activeRide.dropoff_lat, lng: activeRide.dropoff_lng, color: "#2563eb", label: "D" });
+      m.push({ id: "pickup", lat: activeRide.pickup_lat, lng: activeRide.pickup_lng, color: "#16a34a", label: "A" });
+      m.push({ id: "dropoff", lat: activeRide.dropoff_lat, lng: activeRide.dropoff_lng, color: "#2563eb", label: "B" });
     }
     return m;
   }, [activeRide, pos]);
 
   return (
     <div className="overflow-hidden rounded-xl border">
-      <MapGL className="h-72 w-full" markers={markers} center={pos ?? undefined} zoom={13} />
+      <MapGL className="h-64 w-full sm:h-72" markers={markers} center={pos ?? undefined} zoom={13} />
     </div>
   );
 }
 
 const STATUS_NEXT_LABEL: Partial<Record<Ride["status"], string>> = {
-  accepted: "I've arrived",
-  driver_arriving: "I've arrived",
-  driver_arrived: "Start trip",
-  in_progress: "Complete",
+  accepted: "Я на месте",
+  driver_arriving: "Я на месте",
+  driver_arrived: "Начать поездку",
+  in_progress: "Завершить",
 };
 
 function ActiveRideCard({
@@ -264,19 +281,19 @@ function ActiveRideCard({
 
   return (
     <Card className="space-y-3 p-5">
-      <div className="flex items-center justify-between">
-        <Badge>{ride.status.replace(/_/g, " ")}</Badge>
-        <span className="text-xs text-muted-foreground">#{ride.id.slice(0, 8)}</span>
+      <div className="flex items-center justify-between gap-2">
+        <Badge>{RIDE_STATUS_RU[ride.status] ?? ride.status}</Badge>
+        <span className="shrink-0 text-xs text-muted-foreground">#{ride.id.slice(0, 8)}</span>
       </div>
       <div className="space-y-1 text-sm">
-        <div><span className="text-muted-foreground">Pickup:</span> {ride.pickup_address || `${ride.pickup_lat.toFixed(5)}, ${ride.pickup_lng.toFixed(5)}`}</div>
-        <div><span className="text-muted-foreground">Drop-off:</span> {ride.dropoff_address || `${ride.dropoff_lat.toFixed(5)}, ${ride.dropoff_lng.toFixed(5)}`}</div>
+        <div><span className="text-muted-foreground">Откуда:</span> {ride.pickup_address || `${ride.pickup_lat.toFixed(5)}, ${ride.pickup_lng.toFixed(5)}`}</div>
+        <div><span className="text-muted-foreground">Куда:</span> {ride.dropoff_address || `${ride.dropoff_lat.toFixed(5)}, ${ride.dropoff_lng.toFixed(5)}`}</div>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
         {nextLabel && <Button onClick={handleNext}>{nextLabel}</Button>}
-        <Button variant="outline" onClick={openInMaps}><Navigation className="mr-1.5 h-4 w-4" />Navigate</Button>
+        <Button variant="outline" onClick={openInMaps}><Navigation className="mr-1.5 h-4 w-4" />Маршрут</Button>
         {ride.status !== "in_progress" && (
-          <Button variant="ghost" onClick={onCancel}><X className="mr-1.5 h-4 w-4" />Cancel</Button>
+          <Button variant="ghost" onClick={onCancel}><X className="mr-1.5 h-4 w-4" />Отменить</Button>
         )}
       </div>
     </Card>
@@ -307,36 +324,36 @@ function CompleteDialog({
     const fareNum = Number(fare);
     const distNum = Number(distance);
     if (!ride) return;
-    if (!fareNum || fareNum <= 0) { toast.error("Enter a valid fare"); return; }
-    if (!distNum || distNum <= 0) { toast.error("Enter a valid distance"); return; }
+    if (!fareNum || fareNum <= 0) { toast.error("Укажите стоимость"); return; }
+    if (!distNum || distNum <= 0) { toast.error("Укажите расстояние"); return; }
     setBusy(true);
     const { error } = await supabase.rpc("complete_ride", {
       _ride_id: ride.id, _fare: fareNum, _distance: distNum, _duration: durationMin,
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success(`Earnings added (${(fareNum * 0.8).toFixed(2)})`);
+    toast.success(`Зачислено: ${(fareNum * 0.8).toFixed(2)}`);
     onDone();
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Complete ride</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Завершить поездку</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label htmlFor="fare">Fare (USD)</Label>
-            <Input id="fare" inputMode="decimal" value={fare} onChange={(e) => setFare(e.target.value)} placeholder="e.g. 12.50" />
+            <Label htmlFor="fare">Стоимость (₸)</Label>
+            <Input id="fare" inputMode="decimal" value={fare} onChange={(e) => setFare(e.target.value)} placeholder="напр. 1500" />
           </div>
           <div>
-            <Label htmlFor="dist">Distance (km)</Label>
-            <Input id="dist" inputMode="decimal" value={distance} onChange={(e) => setDistance(e.target.value)} placeholder="e.g. 4.3" />
+            <Label htmlFor="dist">Расстояние (км)</Label>
+            <Input id="dist" inputMode="decimal" value={distance} onChange={(e) => setDistance(e.target.value)} placeholder="напр. 4.3" />
           </div>
-          <p className="text-xs text-muted-foreground">Duration: {durationMin} min · Platform fee: 20%</p>
+          <p className="text-xs text-muted-foreground">Длительность: {durationMin} мин · Комиссия платформы: 20%</p>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>
-          <Button onClick={submit} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Complete"}</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>Отмена</Button>
+          <Button onClick={submit} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Завершить"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

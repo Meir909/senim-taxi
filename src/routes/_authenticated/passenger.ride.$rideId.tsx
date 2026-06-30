@@ -18,15 +18,15 @@ export const Route = createFileRoute("/_authenticated/passenger/ride/$rideId")({
 });
 
 const STATUS_LABEL: Record<Ride["status"], string> = {
-  requested: "Requesting…",
-  searching: "Looking for a driver…",
-  accepted: "Driver assigned",
-  driver_arriving: "Driver on the way",
-  driver_arrived: "Driver has arrived",
-  in_progress: "In progress",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  no_drivers: "No drivers nearby",
+  requested: "Создаём заказ…",
+  searching: "Ищем водителя…",
+  accepted: "Водитель назначен",
+  driver_arriving: "Водитель в пути",
+  driver_arrived: "Водитель прибыл",
+  in_progress: "В пути",
+  completed: "Завершено",
+  cancelled: "Отменено",
+  no_drivers: "Нет свободных водителей",
 };
 
 function RideView() {
@@ -37,7 +37,6 @@ function RideView() {
   const [driverLoc, setDriverLoc] = useState<Loc | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // load + subscribe to ride
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -54,7 +53,6 @@ function RideView() {
     return () => { mounted = false; supabase.removeChannel(ch); };
   }, [rideId]);
 
-  // subscribe to driver location once assigned
   useEffect(() => {
     if (!ride?.driver_id) return;
     let mounted = true;
@@ -71,7 +69,6 @@ function RideView() {
     return () => { mounted = false; supabase.removeChannel(ch); };
   }, [ride?.driver_id]);
 
-  // redirect when finished
   useEffect(() => {
     if (ride && (ride.status === "completed" || ride.status === "cancelled" || ride.status === "no_drivers")) {
       const t = setTimeout(() => void navigate({ to: "/passenger", replace: true }), 4000);
@@ -87,43 +84,43 @@ function RideView() {
       .eq("id", ride.id)
       .eq("passenger_id", user.id);
     if (error) toast.error(error.message);
-    else toast.info("Ride cancelled");
+    else toast.info("Поездка отменена");
   }
 
   if (loading) return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
-  if (!ride) return <div className="text-center text-muted-foreground">Ride not found.</div>;
+  if (!ride) return <div className="text-center text-muted-foreground">Поездка не найдена.</div>;
 
   const canCancel = ["requested", "searching", "accepted", "driver_arriving"].includes(ride.status);
 
   const markers: MapMarker[] = [
-    { id: "pickup", lat: ride.pickup_lat, lng: ride.pickup_lng, color: "#16a34a", label: "P" },
-    { id: "dropoff", lat: ride.dropoff_lat, lng: ride.dropoff_lng, color: "#2563eb", label: "D" },
+    { id: "pickup", lat: ride.pickup_lat, lng: ride.pickup_lng, color: "#16a34a", label: "A" },
+    { id: "dropoff", lat: ride.dropoff_lat, lng: ride.dropoff_lng, color: "#2563eb", label: "B" },
   ];
   if (driverLoc) markers.push({ id: "driver", lat: driverLoc.lat, lng: driverLoc.lng, color: "#f59e0b", label: "🚗" });
 
   return (
     <div className="space-y-4">
       <div className="overflow-hidden rounded-xl border">
-        <MapGL className="h-72 w-full" markers={markers} center={{ lat: ride.pickup_lat, lng: ride.pickup_lng }} zoom={13} />
+        <MapGL className="h-64 w-full sm:h-72" markers={markers} center={{ lat: ride.pickup_lat, lng: ride.pickup_lng }} zoom={13} />
       </div>
       <Card className="p-5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <Badge variant={ride.status === "completed" ? "default" : "secondary"}>{STATUS_LABEL[ride.status]}</Badge>
-          <span className="text-xs text-muted-foreground">#{ride.id.slice(0, 8)}</span>
+          <span className="shrink-0 text-xs text-muted-foreground">#{ride.id.slice(0, 8)}</span>
         </div>
         <div className="mt-4 space-y-2 text-sm">
-          <Row label="Pickup" value={ride.pickup_address || `${ride.pickup_lat.toFixed(5)}, ${ride.pickup_lng.toFixed(5)}`} />
-          <Row label="Drop-off" value={ride.dropoff_address || `${ride.dropoff_lat.toFixed(5)}, ${ride.dropoff_lng.toFixed(5)}`} />
-          {ride.fare_amount != null && <Row label="Fare" value={`${ride.fare_amount} USD`} />}
+          <Row label="Откуда" value={ride.pickup_address || `${ride.pickup_lat.toFixed(5)}, ${ride.pickup_lng.toFixed(5)}`} />
+          <Row label="Куда" value={ride.dropoff_address || `${ride.dropoff_lat.toFixed(5)}, ${ride.dropoff_lng.toFixed(5)}`} />
+          {ride.fare_amount != null && <Row label="Стоимость" value={`${ride.fare_amount} ₸`} />}
           {ride.driver_id && driverLoc && (
-            <Row label="Driver updated" value={new Date(driverLoc.updated_at).toLocaleTimeString()} />
+            <Row label="Обновлено" value={new Date(driverLoc.updated_at).toLocaleTimeString("ru-RU")} />
           )}
         </div>
       </Card>
 
       {canCancel && (
         <Button variant="outline" className="w-full" onClick={cancel}>
-          <X className="mr-2 h-4 w-4" /> Cancel ride
+          <X className="mr-2 h-4 w-4" /> Отменить поездку
         </Button>
       )}
     </div>

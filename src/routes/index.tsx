@@ -6,8 +6,8 @@ import { useAuth } from "@/lib/auth-context";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Senim — Book a ride in seconds" },
-      { name: "description", content: "Request a ride or sign up to drive. Real-time tracking, fair fares, instant dispatch." },
+      { title: "Senim — Поездка за секунды" },
+      { name: "description", content: "Закажите такси или станьте водителем. Отслеживание в реальном времени, честные тарифы, мгновенный заказ." },
     ],
   }),
   component: Landing,
@@ -18,7 +18,7 @@ function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center gap-2">
             <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
               <Car className="h-5 w-5" />
@@ -27,32 +27,32 @@ function Landing() {
           </div>
           {!loading && (
             user ? (
-              <Button asChild><Link to="/home">Open app</Link></Button>
+              <Button asChild><Link to="/home">Открыть</Link></Button>
             ) : (
-              <Button asChild variant="outline"><Link to="/auth">Sign in</Link></Button>
+              <Button asChild variant="outline"><Link to="/auth">Войти</Link></Button>
             )
           )}
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-6 py-16">
-        <section className="grid gap-12 md:grid-cols-2 md:items-center">
+      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
+        <section className="grid gap-10 md:grid-cols-2 md:items-center md:gap-12">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
-              Your ride, on the way.
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+              Ваша поездка уже в пути.
             </h1>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Book a ride in seconds, follow your driver in real time, or earn behind the wheel — all in one app.
+            <p className="mt-4 text-base text-muted-foreground sm:text-lg">
+              Закажите такси за секунды, следите за водителем в реальном времени или зарабатывайте за рулём — всё в одном приложении.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg"><Link to={user ? "/home" : "/auth"}>Get a ride</Link></Button>
-              <Button asChild size="lg" variant="outline"><Link to={user ? "/become-driver" : "/auth"}>Drive with us</Link></Button>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Button asChild size="lg" className="w-full sm:w-auto"><Link to={user ? "/home" : "/auth"}>Заказать поездку</Link></Button>
+              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto"><Link to={user ? "/become-driver" : "/auth"}>Стать водителем</Link></Button>
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Feature icon={<MapPin className="h-5 w-5" />} title="Real-time tracking" desc="See your driver move on the map every few seconds." />
-            <Feature icon={<Car className="h-5 w-5" />} title="Smart dispatch" desc="Closest available driver within 3 km, 30s to accept." />
-            <Feature icon={<Wallet className="h-5 w-5" />} title="Driver wallet" desc="Earnings tracked, instant withdrawals." />
-            <Feature icon={<Car className="h-5 w-5" />} title="Fair fares" desc="Transparent pricing, no surprises." />
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+            <Feature icon={<MapPin className="h-5 w-5" />} title="Слежение онлайн" desc="Видите водителя на карте каждые несколько секунд." />
+            <Feature icon={<Car className="h-5 w-5" />} title="Умный подбор" desc="Ближайший водитель в радиусе 3 км, 30 сек на принятие." />
+            <Feature icon={<Wallet className="h-5 w-5" />} title="Кошелёк водителя" desc="Учёт заработка, мгновенный вывод средств." />
+            <Feature icon={<Car className="h-5 w-5" />} title="Честные тарифы" desc="Прозрачные цены, без сюрпризов." />
           </div>
         </section>
       </main>
