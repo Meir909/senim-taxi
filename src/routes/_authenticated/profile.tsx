@@ -105,6 +105,19 @@ function ProfilePage() {
         </div>
       </Card>
 
+      <VerificationCard status={profile.verification_status} />
+
+      {isAdmin && (
+        <Card className="p-5">
+          <h2 className="font-semibold">Администрирование</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Очередь заявок на верификацию.</p>
+          <Button asChild className="mt-3 w-full" variant="outline">
+            <Link to="/admin/verifications">Открыть админку</Link>
+          </Button>
+        </Card>
+      )}
+
+
       <Card className="p-5">
         <h2 className="font-semibold">Личные данные</h2>
         <form onSubmit={save} className="mt-4 space-y-3">
