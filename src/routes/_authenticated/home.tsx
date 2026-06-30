@@ -24,8 +24,8 @@ function HomeRedirect() {
         .maybeSingle();
       if (cancelled) return;
       const status = data?.verification_status;
-      // Require passenger identity verification before using the app.
-      if (!status || status === "pending" || status === "reupload_requested" || status === "rejected") {
+      // Only re-prompt verification if it was rejected or admin requested re-upload.
+      if (status === "reupload_requested" || status === "rejected") {
         void navigate({ to: "/verify-identity", replace: true });
         return;
       }
