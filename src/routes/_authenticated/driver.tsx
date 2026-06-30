@@ -54,6 +54,7 @@ function DriverHome() {
   const [activeRide, setActiveRide] = useState<Ride | null>(null);
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
   const [completeOpen, setCompleteOpen] = useState(false);
+  const [rideToRate, setRideToRate] = useState<Ride | null>(null);
 
   useEffect(() => {
     if (!user || !isDriver) { setLoading(false); return; }
