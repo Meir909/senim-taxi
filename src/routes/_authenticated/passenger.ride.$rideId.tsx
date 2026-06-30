@@ -142,15 +142,13 @@ function RideView() {
           <X className="mr-2 h-4 w-4" /> Отменить поездку
         </Button>
       )}
-    </div>
-  );
-}
 
       {canCancel && (
         <Button variant="outline" className="w-full" onClick={cancel}>
           <X className="mr-2 h-4 w-4" /> Отменить поездку
         </Button>
       )}
+
 
       {ride.status === "completed" && user?.id === ride.passenger_id && ride.driver_rating == null && (
         <Card className="p-5">
