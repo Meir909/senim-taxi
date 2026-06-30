@@ -53,15 +53,28 @@ function AuthPage() {
       const password = passwordSchema.parse(fd.get("password"));
       const full_name = nameSchema.parse(fd.get("full_name"));
       setBusy(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email, password,
         options: {
-          emailRedirectTo: `${window.location.origin}/home`,
+          emailRedirectTo: `${window.location.origin}/verify-identity`,
           data: { full_name },
         },
       });
       if (error) throw error;
-      toast.success("Аккаунт создан. Войдите и пройдите подтверждение личности.");
+      // If email confirmation is disabled, a session is returned immediately.
+      if (data.session) {
+        toast.success("Аккаунт создан. Подтвердите личность.");
+        void navigate({ to: "/verify-identity", replace: true });
+        return;
+      }
+      // Otherwise try to sign in right away so the user lands on verification.
+      const signIn = await supabase.auth.signInWithPassword({ email, password });
+      if (signIn.data.session) {
+        toast.success("Аккаунт создан. Подтвердите личность.");
+        void navigate({ to: "/verify-identity", replace: true });
+      } else {
+        toast.success("Аккаунт создан. Проверьте почту для подтверждения, затем войдите и пройдите верификацию.");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось зарегистрироваться");
     } finally { setBusy(false); }
