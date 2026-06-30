@@ -41,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 });
 
 function ProfilePage() {
-  const { user, isDriver, roles, signOut } = useAuth();
+  const { user, isDriver, hasDriverApplication, driverVerification, roles, signOut } = useAuth();
   const isAdmin = roles.includes("admin");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
@@ -53,7 +53,7 @@ function ProfilePage() {
     void (async () => {
       const [{ data: p }, { data: d }, { count }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-        isDriver
+        hasDriverApplication
           ? supabase.from("drivers").select("*").eq("id", user.id).maybeSingle()
           : Promise.resolve({ data: null as Driver | null }),
         supabase
@@ -66,7 +66,7 @@ function ProfilePage() {
       setDriver(d);
       setRideCount(count ?? 0);
     })();
-  }, [user, isDriver]);
+  }, [user, isDriver, hasDriverApplication]);
 
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -114,12 +114,15 @@ function ProfilePage() {
             <div className="truncate text-lg font-semibold">{profile.full_name || "Без имени"}</div>
             <div className="truncate text-sm text-muted-foreground">{user?.email}</div>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              <Badge variant={isDriver ? "default" : "secondary"}>{isDriver ? "Водитель" : "Пассажир"}</Badge>
-              {isDriver && driver?.verification && (
-                <Badge variant="outline">
-                  {driver.verification === "approved" ? "Подтверждён" : driver.verification === "pending" ? "На проверке" : "Отклонён"}
-                </Badge>
-              )}
+              <Badge variant={isDriver ? "default" : "secondary"}>
+                {isDriver
+                  ? "Водитель"
+                  : driverVerification === "pending"
+                    ? "Пассажир · заявка водителя на проверке"
+                    : driverVerification === "rejected"
+                      ? "Пассажир · заявка отклонена"
+                      : "Пассажир"}
+              </Badge>
             </div>
           </div>
         </div>
@@ -159,18 +162,31 @@ function ProfilePage() {
         </form>
       </Card>
 
-      {isDriver && driver && (
-        <VehicleCard
-          driver={driver}
-          onSaved={(d) => setDriver(d)}
-        />
+      {hasDriverApplication && driver && (
+        <VehicleCard driver={driver} onSaved={(d) => setDriver(d)} />
       )}
 
-      {!isDriver && (
+      {!hasDriverApplication && (
         <Card className="p-5">
           <h2 className="font-semibold">Хотите водить?</h2>
           <p className="mt-1 text-sm text-muted-foreground">Добавьте данные авто и начните зарабатывать.</p>
           <Button asChild className="mt-3 w-full"><Link to="/become-driver">Стать водителем</Link></Button>
+        </Card>
+      )}
+
+      {hasDriverApplication && !isDriver && (
+        <Card className="p-5">
+          <h2 className="font-semibold">Заявка водителя</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {driverVerification === "pending"
+              ? "Документы на проверке у администратора. Доступ к разделу водителя откроется после одобрения."
+              : "Заявка отклонена. Обновите данные и подайте повторно."}
+          </p>
+          {driverVerification === "rejected" && (
+            <Button asChild className="mt-3 w-full" variant="outline">
+              <Link to="/become-driver">Подать заново</Link>
+            </Button>
+          )}
         </Card>
       )}
 

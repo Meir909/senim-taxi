@@ -4,13 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
+type DriverVerification = Database["public"]["Enums"]["driver_verification"];
 
 type AuthCtx = {
   user: User | null;
   session: Session | null;
   roles: AppRole[];
   loading: boolean;
+  /** Driver role granted AND verification approved. Use this to gate driver-only UI. */
   isDriver: boolean;
+  /** A driver application/profile row exists (regardless of approval state). */
+  hasDriverApplication: boolean;
+  /** Current driver verification status, or null if no application. */
+  driverVerification: DriverVerification | null;
+  refreshDriver: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -19,18 +26,33 @@ const AuthContext = createContext<AuthCtx | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [driverVerification, setDriverVerification] = useState<DriverVerification | null>(null);
+  const [hasDriverApplication, setHasDriverApplication] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
+
+    async function loadAccount(uid: string) {
+      const [{ data: roleRows }, { data: driverRow }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", uid),
+        supabase.from("drivers").select("verification").eq("id", uid).maybeSingle(),
+      ]);
+      if (!mounted) return;
+      setRoles((roleRows ?? []).map((r) => r.role));
+      setHasDriverApplication(Boolean(driverRow));
+      setDriverVerification(driverRow?.verification ?? null);
+    }
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       if (!mounted) return;
       setSession(s);
       if (s?.user) {
-        // defer to avoid recursive supabase calls inside the callback
-        setTimeout(() => loadRoles(s.user.id), 0);
+        setTimeout(() => void loadAccount(s.user.id), 0);
       } else {
         setRoles([]);
+        setDriverVerification(null);
+        setHasDriverApplication(false);
       }
     });
 
@@ -38,23 +60,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
       setSession(data.session);
       if (data.session?.user) {
-        loadRoles(data.session.user.id).finally(() => mounted && setLoading(false));
+        loadAccount(data.session.user.id).finally(() => mounted && setLoading(false));
       } else {
         setLoading(false);
       }
     });
-
-    async function loadRoles(uid: string) {
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
-      if (!mounted) return;
-      setRoles((data ?? []).map((r) => r.role));
-    }
 
     return () => {
       mounted = false;
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  const hasDriverRole = roles.includes("driver");
+  const isDriver = hasDriverRole && driverVerification === "approved";
+
+  async function refreshDriver() {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    const [{ data: roleRows }, { data: driverRow }] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", uid),
+      supabase.from("drivers").select("verification").eq("id", uid).maybeSingle(),
+    ]);
+    setRoles((roleRows ?? []).map((r) => r.role));
+    setHasDriverApplication(Boolean(driverRow));
+    setDriverVerification(driverRow?.verification ?? null);
+  }
 
   return (
     <AuthContext.Provider
@@ -63,7 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         roles,
         loading,
-        isDriver: roles.includes("driver"),
+        isDriver,
+        hasDriverApplication,
+        driverVerification,
+        refreshDriver,
         signOut: async () => {
           await supabase.auth.signOut();
         },

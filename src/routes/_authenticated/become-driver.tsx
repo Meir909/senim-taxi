@@ -23,7 +23,7 @@ const txt = (max = 60) => z.string().trim().min(1, "Обязательное п�
 type Step = "vehicle" | "selfie" | "license" | "vehicle_doc" | "submitting" | "done";
 
 function BecomeDriver() {
-  const { user } = useAuth();
+  const { user, hasDriverApplication, driverVerification, refreshDriver } = useAuth();
   const navigate = useNavigate();
   const compare = useServerFn(compareFaces);
 
@@ -99,6 +99,7 @@ function BecomeDriver() {
         _ai_reason: result.reason ?? "",
       });
       if (error) throw error;
+      await refreshDriver();
       setStep("done");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось отправить");
@@ -125,6 +126,24 @@ function BecomeDriver() {
             <Button asChild className="mt-4"><Link to="/verify-identity">Пройти верификацию</Link></Button>
           </div>
         </div>
+      </Card>
+    );
+  }
+
+  if (hasDriverApplication && driverVerification !== "rejected" && step !== "done") {
+    return (
+      <Card className="p-5 sm:p-6">
+        <h1 className="text-lg font-semibold">
+          {driverVerification === "approved" ? "Вы уже водитель" : "Заявка отправлена"}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {driverVerification === "approved"
+            ? "Раздел водителя доступен."
+            : "Заявка на проверке. Подождите решения администратора — повторно подавать не нужно."}
+        </p>
+        <Button className="mt-4 w-full" onClick={() => void navigate({ to: driverVerification === "approved" ? "/driver" : "/profile" })}>
+          {driverVerification === "approved" ? "В раздел водителя" : "В профиль"}
+        </Button>
       </Card>
     );
   }
