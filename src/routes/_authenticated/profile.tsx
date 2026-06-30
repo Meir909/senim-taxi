@@ -114,12 +114,15 @@ function ProfilePage() {
             <div className="truncate text-lg font-semibold">{profile.full_name || "Без имени"}</div>
             <div className="truncate text-sm text-muted-foreground">{user?.email}</div>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              <Badge variant={isDriver ? "default" : "secondary"}>{isDriver ? "Водитель" : "Пассажир"}</Badge>
-              {isDriver && driver?.verification && (
-                <Badge variant="outline">
-                  {driver.verification === "approved" ? "Подтверждён" : driver.verification === "pending" ? "На проверке" : "Отклонён"}
-                </Badge>
-              )}
+              <Badge variant={isDriver ? "default" : "secondary"}>
+                {isDriver
+                  ? "Водитель"
+                  : driverVerification === "pending"
+                    ? "Пассажир · заявка водителя на проверке"
+                    : driverVerification === "rejected"
+                      ? "Пассажир · заявка отклонена"
+                      : "Пассажир"}
+              </Badge>
             </div>
           </div>
         </div>
