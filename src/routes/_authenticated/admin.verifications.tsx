@@ -1,14 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, RefreshCw, CheckCircle2, XCircle, Clock, FileText, ExternalLink } from "lucide-react";
+import { Loader2, ShieldCheck, RefreshCw, CheckCircle2, XCircle, Clock, FileText, ExternalLink, Ban, Trash2, ShieldOff } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import { deleteUserAdmin } from "@/lib/admin.functions";
 
 type VR = Database["public"]["Tables"]["verification_requests"]["Row"];
 type DocRow = Database["public"]["Tables"]["driver_documents"]["Row"];
@@ -88,6 +94,9 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
   const [signed, setSigned] = useState<Record<string, string>>({});
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [blockReason, setBlockReason] = useState("");
+  const [blocked, setBlocked] = useState<{ at: string | null; reason: string | null } | null>(null);
+  const deleteFn = useServerFn(deleteUserAdmin);
 
   useEffect(() => {
     const paths = [req.selfie_path].filter(Boolean) as string[];
@@ -98,6 +107,11 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
       setSigned(map);
     });
   }, [req.id, req.selfie_path]);
+
+  useEffect(() => {
+    void supabase.from("profiles").select("blocked_at, blocked_reason").eq("id", req.user_id).maybeSingle()
+      .then(({ data }) => setBlocked({ at: data?.blocked_at ?? null, reason: data?.blocked_reason ?? null }));
+  }, [req.user_id]);
 
   async function review(decision: "approve" | "reject" | "reupload") {
     if (decision !== "approve" && !comment.trim()) { toast.error("Добавьте комментарий"); return; }
@@ -111,12 +125,43 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
     onChanged();
   }
 
+  async function block() {
+    if (blockReason.trim().length < 2) { toast.error("Укажите причину"); return; }
+    setBusy("block");
+    const { error } = await supabase.rpc("admin_block_user", { _user_id: req.user_id, _reason: blockReason.trim() });
+    setBusy(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Пользователь заблокирован");
+    setBlockReason("");
+    onChanged();
+  }
+  async function unblock() {
+    setBusy("unblock");
+    const { error } = await supabase.rpc("admin_unblock_user", { _user_id: req.user_id });
+    setBusy(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Разблокирован");
+    onChanged();
+  }
+  async function remove() {
+    setBusy("delete");
+    try {
+      await deleteFn({ data: { userId: req.user_id } });
+      toast.success("Пользователь удалён");
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось удалить");
+    } finally { setBusy(null); }
+  }
+
   const isPending = ["pending", "manual_review", "reupload_requested"].includes(req.status);
+  const isBlocked = Boolean(blocked?.at);
   return (
     <Card className="p-4 space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="secondary">Пассажир</Badge>
         <Badge variant="outline">{req.status}</Badge>
+        {isBlocked && <Badge variant="destructive">Заблокирован</Badge>}
         {req.ai_confidence !== null && <Badge variant="outline">AI {Math.round(Number(req.ai_confidence) * 100)}%</Badge>}
         <span className="ml-auto text-xs text-muted-foreground">{new Date(req.created_at).toLocaleString("ru-RU")}</span>
       </div>
@@ -127,7 +172,7 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
         <Field label="Пол" value={req.gender === "male" ? "Мужской" : req.gender === "female" ? "Женский" : null} />
       </div>
       {req.selfie_path && <Photo label="Селфи" url={signed[req.selfie_path]} />}
-      {isPending ? (
+      {isPending && !isBlocked && (
         <>
           <Textarea placeholder="Комментарий (обязателен для отклонения)" value={comment}
             onChange={(e) => setComment(e.target.value)} rows={2} maxLength={500} />
@@ -139,9 +184,51 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
             <Button variant="destructive" onClick={() => review("reject")} disabled={busy !== null}>Отклонить</Button>
           </div>
         </>
-      ) : req.reviewer_comment && (
+      )}
+      {!isPending && req.reviewer_comment && (
         <p className="text-sm text-muted-foreground">Комментарий: {req.reviewer_comment}</p>
       )}
+
+      <div className="border-t border-border pt-3 space-y-2">
+        {isBlocked ? (
+          <div className="space-y-2">
+            {blocked?.reason && <p className="text-xs text-destructive">Причина: {blocked.reason}</p>}
+            <Button size="sm" variant="outline" onClick={unblock} disabled={busy !== null}>
+              <ShieldOff className="mr-1.5 h-4 w-4" /> Разблокировать
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+            <Textarea placeholder="Причина блокировки (например: указан мужской пол)" rows={2} maxLength={300}
+              value={blockReason} onChange={(e) => setBlockReason(e.target.value)} className="sm:flex-1" />
+            <Button size="sm" variant="destructive" onClick={block} disabled={busy !== null}>
+              {busy === "block" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Ban className="mr-1.5 h-4 w-4" />}
+              Заблокировать
+            </Button>
+          </div>
+        )}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" disabled={busy !== null}>
+              <Trash2 className="mr-1.5 h-4 w-4" /> Удалить аккаунт
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Удалить пользователя?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Это действие необратимо. Будут удалены профиль, кошелёк, роли и все связанные документы.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction onClick={remove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Удалить
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </Card>
   );
 }

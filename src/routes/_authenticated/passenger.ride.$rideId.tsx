@@ -10,6 +10,10 @@ import { toast } from "sonner";
 import { Loader2, X, ArrowLeft } from "lucide-react";
 import { MapGL, type MapMarker } from "@/components/MapGL";
 import { StarRating } from "@/components/StarRating";
+import { UserBadgeCard } from "@/components/UserBadgeCard";
+
+type Driver = Database["public"]["Tables"]["drivers"]["Row"];
+type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Loc = Database["public"]["Tables"]["driver_locations"]["Row"];
@@ -36,6 +40,8 @@ function RideView() {
   const navigate = useNavigate();
   const [ride, setRide] = useState<Ride | null>(null);
   const [driverLoc, setDriverLoc] = useState<Loc | null>(null);
+  const [driver, setDriver] = useState<Driver | null>(null);
+  const [driverProfile, setDriverProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,11 +61,16 @@ function RideView() {
   }, [rideId]);
 
   useEffect(() => {
-    if (!ride?.driver_id) return;
+    if (!ride?.driver_id) { setDriver(null); setDriverProfile(null); return; }
     let mounted = true;
     (async () => {
-      const { data } = await supabase.from("driver_locations").select("*").eq("driver_id", ride.driver_id!).maybeSingle();
-      if (mounted) setDriverLoc(data);
+      const [{ data: loc }, { data: d }, { data: p }] = await Promise.all([
+        supabase.from("driver_locations").select("*").eq("driver_id", ride.driver_id!).maybeSingle(),
+        supabase.from("drivers").select("*").eq("id", ride.driver_id!).maybeSingle(),
+        supabase.from("profiles").select("*").eq("id", ride.driver_id!).maybeSingle(),
+      ]);
+      if (!mounted) return;
+      setDriverLoc(loc); setDriver(d); setDriverProfile(p);
     })();
     const ch = supabase
       .channel(`driver-loc-${ride.driver_id}`)
@@ -137,10 +148,17 @@ function RideView() {
         </div>
       </Card>
 
-      {canCancel && (
-        <Button variant="outline" className="w-full" onClick={cancel}>
-          <X className="mr-2 h-4 w-4" /> Отменить поездку
-        </Button>
+      {ride.driver_id && (driver || driverProfile) && (
+        <Card className="p-4">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ваш водитель</div>
+          <UserBadgeCard
+            userId={ride.driver_id}
+            name={[driverProfile?.last_name, driverProfile?.first_name].filter(Boolean).join(" ") || driverProfile?.full_name || "Водитель"}
+            rating={driver?.rating ?? null}
+            subtitle={[driver?.vehicle_make, driver?.vehicle_model, driver?.vehicle_plate].filter(Boolean).join(" · ") || null}
+            size="md"
+          />
+        </Card>
       )}
 
       {canCancel && (
@@ -148,6 +166,7 @@ function RideView() {
           <X className="mr-2 h-4 w-4" /> Отменить поездку
         </Button>
       )}
+
 
 
       {ride.status === "completed" && user?.id === ride.passenger_id && ride.driver_rating == null && (
