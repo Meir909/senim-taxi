@@ -26,6 +26,15 @@ const passwordSchema = z.string().min(6, "Минимум 6 символов").ma
 const nameSchema = z.string().trim().min(1, "Обязательное поле").max(60);
 const phoneSchema = z.string().trim().regex(/^\+?[0-9\s\-()]{7,20}$/, "Неверный телефон");
 
+function formatKzPhone(input: string): string {
+  // Keep only digits; auto-prepend "+" for KZ numbers (starting with 7 or 8→7).
+  let digits = input.replace(/\D/g, "");
+  if (digits.startsWith("8")) digits = "7" + digits.slice(1);
+  if (digits.length === 0) return "";
+  if (digits[0] !== "7") return "+" + digits;
+  return "+" + digits.slice(0, 11);
+}
+
 type SignupStep = "form" | "selfie1" | "selfie2" | "submitting";
 
 function AuthPage() {
