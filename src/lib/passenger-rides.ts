@@ -6,6 +6,8 @@ export type Driver = Database["public"]["Tables"]["drivers"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Loc = Database["public"]["Tables"]["driver_locations"]["Row"];
 
+const passengerRideSnapshots = new Map<string, Ride>();
+
 export const WAITING_STATUSES: ReadonlyArray<Ride["status"]> = [
   "accepted",
   "driver_arriving",
@@ -32,6 +34,23 @@ export function isWaitingStatus(status: Ride["status"]): boolean {
 
 export function isSearchingStatus(status: Ride["status"]): boolean {
   return SEARCHING_STATUSES.includes(status);
+}
+
+export function primePassengerRideSnapshot(ride: Ride | null) {
+  if (!ride) return;
+  passengerRideSnapshots.set(ride.id, ride);
+}
+
+export function getPassengerRideSnapshot(rideId: string): Ride | null {
+  return passengerRideSnapshots.get(rideId) ?? null;
+}
+
+export function clearPassengerRideSnapshot(rideId?: string) {
+  if (rideId) {
+    passengerRideSnapshots.delete(rideId);
+    return;
+  }
+  passengerRideSnapshots.clear();
 }
 
 export function fmtElapsed(seconds: number): string {

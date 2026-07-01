@@ -16,7 +16,7 @@ import { usePassengerChildren } from "@/hooks/usePassengerChildren";
 import { geocode2gis, reverseGeocode2gis, getRoute2gis } from "@/lib/maps.functions";
 import { TARIFFS, calcFare, fmtKzt, type Tariff } from "@/lib/fare";
 import { formatChildMeta } from "@/lib/passenger-children";
-import { isWaitingStatus } from "@/lib/passenger-rides";
+import { isWaitingStatus, primePassengerRideSnapshot } from "@/lib/passenger-rides";
 import { normalizePhone } from "@/lib/phone";
 import tariffStandardImg from "@/assets/tariff-standard.jpg";
 import tariffKidsImg from "@/assets/tariff-kids.jpg";
@@ -132,6 +132,7 @@ function PassengerHome() {
         .limit(1)
         .maybeSingle();
       if (mounted) {
+        primePassengerRideSnapshot(data);
         setActiveRide(data);
         setLoading(false);
       }
@@ -142,37 +143,17 @@ function PassengerHome() {
   }, [user]);
 
   useEffect(() => {
-    if (activeRide) {
-      const hardTarget = isWaitingStatus(activeRide.status)
-        ? `/passenger/ride/${activeRide.id}/waiting`
-        : `/passenger/ride/${activeRide.id}`;
-      const isOnRideRoute = pathname.startsWith(`/passenger/ride/${activeRide.id}`);
-
-      if (isOnRideRoute) {
-        return;
-      }
-
-      void navigate({
-        to: isWaitingStatus(activeRide.status)
-          ? "/passenger/ride/$rideId/waiting"
-          : "/passenger/ride/$rideId",
-        params: { rideId: activeRide.id },
-        replace: true,
-      });
-      window.setTimeout(() => {
-        if (window.location.pathname === "/passenger" || window.location.pathname === "/home") {
-          window.location.assign(hardTarget);
-        }
-      }, 250);
-
-      const intervalId = window.setInterval(() => {
-        if (window.location.pathname === "/passenger" || window.location.pathname === "/home") {
-          window.location.replace(hardTarget);
-        }
-      }, 1200);
-
-      return () => window.clearInterval(intervalId);
-    }
+    if (!activeRide) return;
+    primePassengerRideSnapshot(activeRide);
+    const isOnRideRoute = pathname.startsWith(`/passenger/ride/${activeRide.id}`);
+    if (isOnRideRoute) return;
+    void navigate({
+      to: isWaitingStatus(activeRide.status)
+        ? "/passenger/ride/$rideId/waiting"
+        : "/passenger/ride/$rideId",
+      params: { rideId: activeRide.id },
+      replace: true,
+    });
   }, [activeRide, navigate, pathname]);
 
   useEffect(() => {
@@ -300,21 +281,15 @@ function PassengerHome() {
         .single();
       if (error) throw error;
       toast.success("Ищем водителя…");
-      const hardTarget = isWaitingStatus(data.status)
-        ? `/passenger/ride/${data.id}/waiting`
-        : `/passenger/ride/${data.id}`;
+      primePassengerRideSnapshot(data);
       setActiveRide(data);
       await navigate({
         to: isWaitingStatus(data.status)
           ? "/passenger/ride/$rideId/waiting"
           : "/passenger/ride/$rideId",
         params: { rideId: data.id },
+        replace: true,
       });
-      window.setTimeout(() => {
-        if (!window.location.pathname.includes(`/passenger/ride/${data.id}`)) {
-          window.location.assign(hardTarget);
-        }
-      }, 150);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось создать заказ");
     } finally {
@@ -329,30 +304,6 @@ function PassengerHome() {
       </div>
     );
   }
-  if (activeRide && (pathname === "/passenger" || pathname === "/home")) {
-    const rideTarget = isWaitingStatus(activeRide.status)
-      ? `/passenger/ride/${activeRide.id}/waiting`
-      : `/passenger/ride/${activeRide.id}`;
-
-    return (
-      <Card className="grid min-h-[16rem] place-items-center p-6 text-center">
-        <div>
-          <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
-          <div className="mt-3 text-base font-semibold">Открываем заказ</div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            Перенаправляем на экран поиска или ожидания водителя…
-          </div>
-          <Button className="mt-4" onClick={() => window.location.assign(rideTarget)}>
-            Открыть заказ сейчас
-          </Button>
-          <div className="mt-2 text-xs text-muted-foreground">
-            Текущий путь: {pathname}
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
   if (activeRide) {
     return <Outlet />;
   }

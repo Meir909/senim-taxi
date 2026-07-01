@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Driver, Loc, Profile, Ride } from "@/lib/passenger-rides";
+import {
+  clearPassengerRideSnapshot,
+  getPassengerRideSnapshot,
+  primePassengerRideSnapshot,
+  type Driver,
+  type Loc,
+  type Profile,
+  type Ride,
+} from "@/lib/passenger-rides";
 
 type PassengerRideLiveState = {
   ride: Ride | null;
@@ -12,32 +20,34 @@ type PassengerRideLiveState = {
 };
 
 export function usePassengerRideLive(rideId: string): PassengerRideLiveState {
-  const [ride, setRide] = useState<Ride | null>(null);
+  const [ride, setRide] = useState<Ride | null>(() => getPassengerRideSnapshot(rideId));
   const [driver, setDriver] = useState<Driver | null>(null);
   const [driverProfile, setDriverProfile] = useState<Profile | null>(null);
   const [driverLoc, setDriverLoc] = useState<Loc | null>(null);
   const [locError, setLocError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => getPassengerRideSnapshot(rideId) == null);
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
-    setRide(null);
+    const cachedRide = getPassengerRideSnapshot(rideId);
+    setRide(cachedRide);
+    setLoading(cachedRide == null);
 
     async function loadRide(attempt = 0) {
       const { data, error } = await supabase.from("rides").select("*").eq("id", rideId).maybeSingle();
       if (!mounted) return;
 
       if (data) {
+        primePassengerRideSnapshot(data);
         setRide(data);
         setLoading(false);
         return;
       }
 
-      if (attempt < 5) {
+      if (attempt < 2 && cachedRide == null) {
         window.setTimeout(() => {
           if (mounted) void loadRide(attempt + 1);
-        }, 800);
+        }, 250);
         return;
       }
 
@@ -55,7 +65,13 @@ export function usePassengerRideLive(rideId: string): PassengerRideLiveState {
         "postgres_changes",
         { event: "*", schema: "public", table: "rides", filter: `id=eq.${rideId}` },
         (payload) => {
-          setRide((payload.new as Ride | null) ?? null);
+          const nextRide = (payload.new as Ride | null) ?? null;
+          if (nextRide) {
+            primePassengerRideSnapshot(nextRide);
+          } else {
+            clearPassengerRideSnapshot(rideId);
+          }
+          setRide(nextRide);
           setLoading(false);
         },
       )
