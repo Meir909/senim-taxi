@@ -1,8 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+const FALLBACK_TWOGIS_KEY = "9af03ad6-f0a9-40da-a9f3-2445305076de";
+
+function get2gisKey() {
+  return (
+    process.env.TWOGIS_MAPGL_API_KEY ||
+    process.env.TWOGIS_API_KEY ||
+    process.env.VITE_TWOGIS_MAPGL_API_KEY ||
+    FALLBACK_TWOGIS_KEY
+  );
+}
+
 export const getMap2gisKey = createServerFn({ method: "GET" }).handler(async () => {
-  const key = process.env.TWOGIS_MAPGL_API_KEY;
+  const key = get2gisKey();
   if (!key) return { key: null as string | null };
   return { key };
 });
@@ -12,7 +23,7 @@ const geocodeSchema = z.object({ q: z.string().min(2).max(200) });
 export const geocode2gis = createServerFn({ method: "POST" })
   .validator((d: unknown) => geocodeSchema.parse(d))
   .handler(async ({ data }) => {
-    const key = process.env.TWOGIS_MAPGL_API_KEY;
+    const key = get2gisKey();
     if (!key)
       return { items: [] as Array<{ name: string; address: string; lat: number; lng: number }> };
     const url = new URL("https://catalog.api.2gis.com/3.0/items/geocode");
@@ -50,7 +61,7 @@ export const geocode2gis = createServerFn({ method: "POST" })
 export const reverseGeocode2gis = createServerFn({ method: "POST" })
   .validator((d: unknown) => z.object({ lat: z.number(), lng: z.number() }).parse(d))
   .handler(async ({ data }) => {
-    const key = process.env.TWOGIS_MAPGL_API_KEY;
+    const key = get2gisKey();
     if (!key) return { address: null as string | null };
     const url = new URL("https://catalog.api.2gis.com/3.0/items/geocode");
     url.searchParams.set("lat", String(data.lat));
@@ -90,7 +101,7 @@ function parseLineString(wkt: string): RoutePoint[] {
 export const getRoute2gis = createServerFn({ method: "POST" })
   .validator((d: unknown) => routeSchema.parse(d))
   .handler(async ({ data }) => {
-    const key = process.env.TWOGIS_MAPGL_API_KEY;
+    const key = get2gisKey();
     if (!key) return { coordinates: [] as RoutePoint[], distance_m: 0, duration_s: 0 };
     try {
       const res = await fetch(

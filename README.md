@@ -38,6 +38,7 @@ Required environment variables should be added in Vercel Project Settings:
 - `VITE_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `TWOGIS_MAPGL_API_KEY`
+- `TWOGIS_API_KEY`
 - `OPENAI_API_KEY`
 
 Optional:
