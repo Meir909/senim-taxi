@@ -1,13 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   Car,
   CheckCircle2,
-  Clock,
+  Clock3,
   Loader2,
-  MapPin,
+  Navigation,
   Route as RouteIcon,
+  Shield,
+  UserRound,
   X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +17,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DriverCallButton } from "@/components/DriverCallButton";
 import { MapGL, type MapMarker } from "@/components/MapGL";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { TripSafetyCard } from "@/components/TripSafetyPanel";
 import { UserBadgeCard } from "@/components/UserBadgeCard";
 import { TARIFFS, fmtKzt } from "@/lib/fare";
@@ -56,7 +66,6 @@ export function PassengerWaitingPage({
   const [confirmCancel, setConfirmCancel] = useState(false);
 
   useEffect(() => {
-    setNow(Date.now());
     const timerId = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timerId);
   }, []);
@@ -78,19 +87,22 @@ export function PassengerWaitingPage({
     ? Math.max(0, Math.floor((now - new Date(driverLoc.updated_at).getTime()) / 1000))
     : null;
   const stale = locAgeSec != null && locAgeSec > 20;
-  const freshness =
-    locAgeSec == null
-      ? "ожидаем координаты…"
+
+  const freshnessText =
+    locError ??
+    (locAgeSec == null
+      ? "Ожидаем координаты водителя"
       : locAgeSec < 5
-        ? "только что"
+        ? "Координаты обновлены только что"
         : locAgeSec < 60
-          ? `${locAgeSec} сек назад`
-          : `${Math.floor(locAgeSec / 60)} мин назад`;
+          ? `Координаты обновлены ${locAgeSec} сек назад`
+          : `Координаты обновлены ${Math.floor(locAgeSec / 60)} мин назад`);
 
   const markers: MapMarker[] = [
-    { id: "pickup", lat: ride.pickup_lat, lng: ride.pickup_lng, color: "#16a34a", label: "A" },
-    { id: "dropoff", lat: ride.dropoff_lat, lng: ride.dropoff_lng, color: "#2563eb", label: "B" },
+    { id: "pickup", lat: ride.pickup_lat, lng: ride.pickup_lng, color: "#22c55e", label: "A" },
+    { id: "dropoff", lat: ride.dropoff_lat, lng: ride.dropoff_lng, color: "#3b82f6", label: "B" },
   ];
+
   if (driverLoc) {
     markers.push({
       id: "driver",
@@ -106,24 +118,26 @@ export function PassengerWaitingPage({
     [driverProfile?.last_name, driverProfile?.first_name].filter(Boolean).join(" ") ||
     driverProfile?.full_name ||
     "Водитель";
-  const car = [driver?.vehicle_make, driver?.vehicle_model].filter(Boolean).join(" ");
+  const carTitle = [driver?.vehicle_make, driver?.vehicle_model].filter(Boolean).join(" ");
+  const carSubtitle = [driver?.vehicle_plate, driver?.vehicle_color].filter(Boolean).join(" · ");
+
   const headline =
     ride.status === "driver_arrived"
-      ? "Водитель ждёт вас"
+      ? "Водитель уже на месте"
       : ride.status === "driver_arriving"
-        ? "Водитель в пути к вам"
-        : "Водитель принял заказ";
+        ? "Водитель едет к точке подачи"
+        : "Заказ принят водителем";
   const subline =
     ride.status === "driver_arrived"
-      ? "Подойдите к машине — водитель уже на месте подачи."
+      ? "Подойдите к машине в точке A."
       : ride.status === "driver_arriving"
-        ? "Машина едет к точке подачи. Пожалуйста, будьте готовы."
-        : "Водитель назначен и скоро отправится к вам.";
-  const Icon = ride.status === "driver_arrived" ? CheckCircle2 : Car;
+        ? "Следите за движением машины на карте."
+        : "Сейчас водитель подтвердил поездку и выезжает к вам.";
+  const StatusIcon = ride.status === "driver_arrived" ? CheckCircle2 : Car;
   const canCancel = ride.status !== "driver_arrived";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-4">
       <div className="flex items-center justify-between gap-3">
         {backToRide ? (
           <Link
@@ -131,7 +145,7 @@ export function PassengerWaitingPage({
             params={{ rideId: ride.id }}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="mr-1 h-4 w-4" /> К заказу
+            <ArrowLeft className="mr-1 h-4 w-4" /> К поездке
           </Link>
         ) : (
           <div className="text-sm text-muted-foreground">Ожидание водителя</div>
@@ -139,9 +153,50 @@ export function PassengerWaitingPage({
         <Badge variant="outline">#{ride.id.slice(0, 8)}</Badge>
       </div>
 
-      <div className="overflow-hidden rounded-xl border">
+      <Card className="overflow-hidden border-0 bg-gradient-to-br from-foreground to-foreground/85 p-5 text-background shadow-lg">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-sm text-background/80">
+              <StatusIcon className="h-4 w-4" />
+              <span>{headline}</span>
+            </div>
+            <h1 className="mt-2 text-2xl font-bold">{etaMin != null ? `~${etaMin} мин` : "—"}</h1>
+            <p className="mt-1 text-sm text-background/80">{subline}</p>
+          </div>
+          <div className="rounded-2xl bg-background/10 px-3 py-2 text-right">
+            <div className="text-[10px] uppercase tracking-wide text-background/70">Ожидание</div>
+            <div className="mt-1 text-lg font-semibold tabular-nums">{fmtElapsed(elapsed)}</div>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <MetricCard label="До вас" value={distanceKm != null ? `${distanceKm.toFixed(1)} км` : "—"} />
+          <MetricCard label="Тариф" value={tariff.name} />
+          <MetricCard
+            label="Цена"
+            value={
+              ride.estimated_fare != null
+                ? fmtKzt(Number(ride.estimated_fare))
+                : ride.fare_amount != null
+                  ? `${ride.fare_amount} ₸`
+                  : "—"
+            }
+          />
+        </div>
+
+        <div className="mt-4 flex items-center gap-2 text-xs text-background/80">
+          <span
+            className={`inline-block h-2 w-2 rounded-full ${
+              locError ? "bg-red-300" : stale ? "bg-yellow-300" : "bg-emerald-300"
+            }`}
+          />
+          <span>{freshnessText}</span>
+        </div>
+      </Card>
+
+      <div className="overflow-hidden rounded-2xl border shadow-sm">
         <MapGL
-          className="h-56 w-full sm:h-72"
+          className="h-64 w-full sm:h-80"
           markers={markers}
           center={
             driverLoc
@@ -153,177 +208,265 @@ export function PassengerWaitingPage({
         />
       </div>
 
-      <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/70 p-6 text-primary-foreground shadow-lg">
-        <div className="flex flex-col items-center text-center">
-          <div className="relative grid h-20 w-20 place-items-center">
-            {ride.status !== "driver_arrived" && (
-              <>
-                <span className="absolute inset-0 animate-ping rounded-full bg-primary-foreground/30" />
-                <span className="absolute inset-2 animate-pulse rounded-full bg-primary-foreground/20" />
-              </>
-            )}
-            <Icon className="relative h-10 w-10" />
-          </div>
-          <div className="mt-4 text-xl font-bold">{headline}</div>
-          <div className="mt-1 text-sm opacity-95">{subline}</div>
-          <div className="mt-3 text-3xl font-bold tabular-nums">{fmtElapsed(elapsed)}</div>
-          <div className="text-[11px] uppercase tracking-wide opacity-80">с момента назначения</div>
-
-          <div className="mt-4 grid w-full grid-cols-2 gap-2">
-            <InfoTile
-              label="До вас"
-              value={distanceKm != null ? `~${distanceKm.toFixed(1)} км` : "—"}
-            />
-            <InfoTile
-              label="ETA подачи"
-              value={
-                ride.status === "driver_arrived"
-                  ? "на месте"
-                  : etaMin != null
-                    ? `~${etaMin} мин`
-                    : "—"
-              }
-            />
-          </div>
-
-          <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] opacity-90">
-            <span
-              className={`inline-block h-1.5 w-1.5 rounded-full ${
-                locError
-                  ? "bg-destructive animate-pulse"
-                  : stale
-                    ? "bg-warning"
-                    : "bg-emerald-300 animate-pulse"
-              }`}
-            />
-            <span>
-              {locError
-                ? locError
-                : driverLoc
-                  ? `Координаты обновлены ${freshness}`
-                  : "Ожидаем координаты водителя…"}
-            </span>
-          </div>
+      <Card className="p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <RouteIcon className="h-4 w-4 text-primary" />
+          <h2 className="font-semibold">Маршрут поездки</h2>
         </div>
+        <div className="space-y-4">
+          <RouteStop
+            badge="A"
+            title="Точка подачи"
+            value={
+              ride.pickup_address || `${ride.pickup_lat.toFixed(5)}, ${ride.pickup_lng.toFixed(5)}`
+            }
+            accent="bg-emerald-500"
+          />
+          <div className="ml-5 border-l border-dashed border-border pl-5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock3 className="h-3.5 w-3.5" />
+              <span>
+                {ride.duration_min != null ? `${ride.duration_min} мин в пути` : "Время уточняется"}
+              </span>
+              <span className="text-border">•</span>
+              <span>
+                {ride.distance_km != null ? `${ride.distance_km} км` : "Дистанция уточняется"}
+              </span>
+            </div>
+          </div>
+          <RouteStop
+            badge="B"
+            title="Точка назначения"
+            value={
+              ride.dropoff_address ||
+              `${ride.dropoff_lat.toFixed(5)}, ${ride.dropoff_lng.toFixed(5)}`
+            }
+            accent="bg-blue-500"
+          />
+        </div>
+        <Drawer>
+          <DrawerTrigger asChild>
+            <Button variant="outline" className="mt-4 w-full">
+              Полные детали заказа
+            </Button>
+          </DrawerTrigger>
+          <DrawerContent className="max-h-[88dvh]">
+            <DrawerHeader className="text-left">
+              <DrawerTitle>Детали заказа от А до Я</DrawerTitle>
+              <DrawerDescription>
+                Вся информация по поездке, адресам, водителю и особым условиям.
+              </DrawerDescription>
+            </DrawerHeader>
+            <div className="space-y-4 overflow-y-auto px-4 pb-6">
+              <Card className="p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Статус заказа
+                    </div>
+                    <div className="mt-1 text-lg font-semibold">{headline}</div>
+                  </div>
+                  <Badge variant="outline">#{ride.id.slice(0, 8)}</Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <DetailStat label="Тариф" value={tariff.name} />
+                  <DetailStat label="Ожидание" value={fmtElapsed(elapsed)} />
+                  <DetailStat
+                    label="До подачи"
+                    value={etaMin != null ? `~${etaMin} мин` : "—"}
+                  />
+                  <DetailStat
+                    label="Стоимость"
+                    value={
+                      ride.estimated_fare != null
+                        ? fmtKzt(Number(ride.estimated_fare))
+                        : ride.fare_amount != null
+                          ? `${ride.fare_amount} ₸`
+                          : "—"
+                    }
+                  />
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="mb-3 text-sm font-semibold">Адреса поездки</div>
+                <div className="space-y-4">
+                  <RouteStop
+                    badge="A"
+                    title="Полный адрес подачи"
+                    value={
+                      ride.pickup_address ||
+                      `${ride.pickup_lat.toFixed(5)}, ${ride.pickup_lng.toFixed(5)}`
+                    }
+                    accent="bg-emerald-500"
+                  />
+                  <div className="ml-5 border-l border-dashed border-border pl-5">
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      <div>Координаты A: {ride.pickup_lat.toFixed(6)}, {ride.pickup_lng.toFixed(6)}</div>
+                      <div>
+                        Маршрут: {ride.distance_km != null ? `${ride.distance_km} км` : "—"} ·{" "}
+                        {ride.duration_min != null ? `${ride.duration_min} мин` : "—"}
+                      </div>
+                    </div>
+                  </div>
+                  <RouteStop
+                    badge="B"
+                    title="Полный адрес назначения"
+                    value={
+                      ride.dropoff_address ||
+                      `${ride.dropoff_lat.toFixed(5)}, ${ride.dropoff_lng.toFixed(5)}`
+                    }
+                    accent="bg-blue-500"
+                  />
+                  <div className="ml-11 text-xs text-muted-foreground">
+                    Координаты B: {ride.dropoff_lat.toFixed(6)}, {ride.dropoff_lng.toFixed(6)}
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="mb-3 text-sm font-semibold">Водитель и машина</div>
+                <div className="space-y-3">
+                  <InfoLine
+                    icon={<UserRound className="h-4 w-4" />}
+                    label="Водитель"
+                    value={driverName}
+                  />
+                  <InfoLine
+                    icon={<Car className="h-4 w-4" />}
+                    label="Автомобиль"
+                    value={carTitle || "Данные обновляются"}
+                  />
+                  <InfoLine
+                    icon={<Navigation className="h-4 w-4" />}
+                    label="Номер и цвет"
+                    value={carSubtitle || "Данные обновляются"}
+                  />
+                  <InfoLine
+                    icon={<Clock3 className="h-4 w-4" />}
+                    label="Обновление геопозиции"
+                    value={freshnessText}
+                  />
+                  {driverProfile?.phone && (
+                    <InfoLine
+                      icon={<Phone className="h-4 w-4" />}
+                      label="Телефон"
+                      value={driverProfile.phone}
+                    />
+                  )}
+                </div>
+              </Card>
+
+              {ride.tariff === "kids" && (
+                <Card className="p-4">
+                  <div className="mb-3 text-sm font-semibold">Особые условия детской поездки</div>
+                  <div className="space-y-3">
+                    <InfoLine
+                      icon={<Shield className="h-4 w-4" />}
+                      label="Ребёнок"
+                      value={ride.child_name || "Не указан"}
+                    />
+                    <InfoLine
+                      icon={<UserRound className="h-4 w-4" />}
+                      label="Получатель"
+                      value={ride.recipient_full_name || "Не указан"}
+                    />
+                    <InfoLine
+                      icon={<Phone className="h-4 w-4" />}
+                      label="Телефон получателя"
+                      value={ride.recipient_phone || "Не указан"}
+                    />
+                    <InfoLine
+                      icon={<Shield className="h-4 w-4" />}
+                      label="Кем приходится"
+                      value={ride.recipient_relation || "Не указано"}
+                    />
+                  </div>
+                  {pickupPin && (
+                    <PinCard
+                      title="PIN для посадки"
+                      code={pickupPin}
+                      desc="Этот код мама называет водителю перед началом поездки."
+                      verifiedAt={ride.pickup_pin_verified_at}
+                    />
+                  )}
+                  {dropoffPin && (
+                    <PinCard
+                      title="PIN для передачи ребёнка"
+                      code={dropoffPin}
+                      desc="Этот код получатель называет водителю в конце поездки."
+                      verifiedAt={ride.dropoff_pin_verified_at}
+                    />
+                  )}
+                </Card>
+              )}
+            </div>
+          </DrawerContent>
+        </Drawer>
       </Card>
 
       {(driver || driverProfile) && (
-        <Card className="p-4">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Ваш водитель
+        <Card className="p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <UserRound className="h-4 w-4 text-primary" />
+            <h2 className="font-semibold">Детали водителя</h2>
           </div>
           <UserBadgeCard
             userId={ride.driver_id!}
             name={driverName}
             rating={driver?.rating ?? null}
-            subtitle={[car, driver?.vehicle_plate].filter(Boolean).join(" · ") || null}
+            subtitle={[carTitle, carSubtitle].filter(Boolean).join(" · ") || null}
             size="md"
           />
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <InfoLine
+              icon={<Car className="h-4 w-4" />}
+              label="Автомобиль"
+              value={carTitle || "Данные обновляются"}
+            />
+            <InfoLine
+              icon={<Navigation className="h-4 w-4" />}
+              label="Госномер"
+              value={driver?.vehicle_plate || "—"}
+            />
+          </div>
           {driverProfile?.phone && (
-            <div className="mt-3">
+            <div className="mt-4">
               <DriverCallButton phone={driverProfile.phone} />
             </div>
           )}
         </Card>
       )}
 
-      <Card className="p-5">
-        <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Детали заказа
-        </div>
-        <div className="space-y-3 text-sm">
-          <AddressRow
-            label="Откуда"
-            value={
-              ride.pickup_address || `${ride.pickup_lat.toFixed(5)}, ${ride.pickup_lng.toFixed(5)}`
-            }
-            color="text-success"
-          />
-          <AddressRow
-            label="Куда"
-            value={
-              ride.dropoff_address ||
-              `${ride.dropoff_lat.toFixed(5)}, ${ride.dropoff_lng.toFixed(5)}`
-            }
-            color="text-primary"
-          />
-          <div className="grid grid-cols-3 gap-2 border-t pt-3">
-            <Stat icon={<RouteIcon className="h-3.5 w-3.5" />} label="Тариф" value={tariff.name} />
-            <Stat
-              icon={<Clock className="h-3.5 w-3.5" />}
-              label="В пути"
-              value={ride.duration_min != null ? `${ride.duration_min} мин` : "—"}
-            />
-            <Stat
-              label="Цена"
-              value={
-                ride.estimated_fare != null
-                  ? fmtKzt(Number(ride.estimated_fare))
-                  : ride.fare_amount != null
-                    ? `${ride.fare_amount} ₸`
-                    : "—"
-              }
-            />
-          </div>
-        </div>
-      </Card>
-
       {ride.tariff === "kids" && (
         <Card className="border-primary/20 bg-primary/5 p-5">
-          <div className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Детский тариф
+          <div className="mb-3 flex items-center gap-2">
+            <Shield className="h-4 w-4 text-primary" />
+            <h2 className="font-semibold">Детская поездка</h2>
           </div>
-          <div className="mt-2 text-lg font-semibold">
-            {ride.child_name || "Поездка для ребёнка"}
-          </div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            Мама должна проводить ребёнка до машины и назвать PIN водителю.
-          </div>
-          <div className="mt-3 rounded-xl border border-primary/20 bg-background p-4 text-sm">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">
-              Получатель в точке B
-            </div>
-            <div className="mt-2 font-semibold">{ride.recipient_full_name || "Не указан"}</div>
-            <div className="mt-1 text-muted-foreground">
-              {[ride.recipient_relation, ride.recipient_phone].filter(Boolean).join(" · ") ||
-                "Данные получателя отсутствуют"}
+          <div className="rounded-xl border border-primary/20 bg-background p-4">
+            <div className="text-sm font-semibold">{ride.child_name || "Поездка для ребёнка"}</div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              {[ride.recipient_full_name, ride.recipient_relation, ride.recipient_phone]
+                .filter(Boolean)
+                .join(" · ") || "Получатель пока не указан"}
             </div>
           </div>
           {pickupPin && (
-            <div className="mt-4 rounded-xl border border-primary/20 bg-background p-4">
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">PIN-код</div>
-              <div className="mt-2 text-3xl font-bold tracking-[0.35em] text-primary">
-                {pickupPin}
-              </div>
-              <div className="mt-2 text-sm text-muted-foreground">
-                Водитель сможет начать поездку только после правильного ввода этого кода.
-              </div>
-              {ride.pickup_pin_verified_at && (
-                <div className="mt-2 text-xs text-emerald-600">
-                  Код уже подтверждён{" "}
-                  {new Date(ride.pickup_pin_verified_at).toLocaleTimeString("ru-RU")}.
-                </div>
-              )}
-            </div>
+            <PinCard
+              title="PIN для посадки"
+              code={pickupPin}
+              desc="Назовите этот PIN водителю у машины."
+              verifiedAt={ride.pickup_pin_verified_at}
+            />
           )}
           {dropoffPin && (
-            <div className="mt-4 rounded-xl border border-primary/20 bg-background p-4">
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                PIN для передачи ребёнка
-              </div>
-              <div className="mt-2 text-3xl font-bold tracking-[0.35em] text-primary">
-                {dropoffPin}
-              </div>
-              <div className="mt-2 text-sm text-muted-foreground">
-                Получатель должен назвать этот код водителю в конце поездки.
-              </div>
-              {ride.dropoff_pin_verified_at && (
-                <div className="mt-2 text-xs text-emerald-600">
-                  Передача уже подтверждена{" "}
-                  {new Date(ride.dropoff_pin_verified_at).toLocaleTimeString("ru-RU")}.
-                </div>
-              )}
-            </div>
+            <PinCard
+              title="PIN для передачи ребёнка"
+              code={dropoffPin}
+              desc="Этот PIN получатель называет водителю в конце поездки."
+              verifiedAt={ride.dropoff_pin_verified_at}
+            />
           )}
         </Card>
       )}
@@ -333,14 +476,14 @@ export function PassengerWaitingPage({
       {canCancel &&
         (confirmCancel ? (
           <Card className="space-y-3 p-4">
-            <p className="text-sm">Отменить заказ? Водитель будет уведомлён.</p>
+            <p className="text-sm">Отменить заказ? Водитель получит уведомление сразу.</p>
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="outline"
                 disabled={cancelling}
                 onClick={() => setConfirmCancel(false)}
               >
-                Нет
+                Вернуться
               </Button>
               <Button variant="destructive" disabled={cancelling} onClick={() => void onCancel()}>
                 {cancelling ? (
@@ -367,34 +510,91 @@ export function PassengerWaitingPage({
   );
 }
 
-function InfoTile({ label, value }: { label: string; value: string }) {
+function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-primary-foreground/15 px-3 py-2 text-left">
-      <div className="text-[10px] uppercase tracking-wide opacity-80">{label}</div>
-      <div className="mt-0.5 text-base font-semibold tabular-nums">{value}</div>
+    <div className="rounded-xl bg-background/10 px-3 py-3">
+      <div className="text-[10px] uppercase tracking-wide text-background/70">{label}</div>
+      <div className="mt-1 truncate text-sm font-semibold">{value}</div>
     </div>
   );
 }
 
-function AddressRow({ label, value, color }: { label: string; value: string; color: string }) {
+function DetailStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border bg-muted/30 px-3 py-3">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-1 text-sm font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function RouteStop({
+  badge,
+  title,
+  value,
+  accent,
+}: {
+  badge: string;
+  title: string;
+  value: string;
+  accent: string;
+}) {
   return (
     <div className="flex items-start gap-3">
-      <MapPin className={`mt-0.5 h-4 w-4 shrink-0 ${color}`} />
+      <div
+        className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-bold text-white ${accent}`}
+      >
+        {badge}
+      </div>
       <div className="min-w-0">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        <div className="truncate font-medium">{value}</div>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground">{title}</div>
+        <div className="mt-1 text-sm font-medium leading-5">{value}</div>
       </div>
     </div>
   );
 }
 
-function Stat({ icon, label, value }: { icon?: React.ReactNode; label: string; value: string }) {
+function InfoLine({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="rounded-md bg-muted/50 px-2 py-2 text-center">
-      <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-        {icon} {label}
+    <div className="rounded-xl border bg-muted/30 px-3 py-3">
+      <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+        {icon}
+        <span>{label}</span>
       </div>
-      <div className="mt-0.5 truncate text-sm font-semibold">{value}</div>
+      <div className="mt-1 text-sm font-medium">{value}</div>
+    </div>
+  );
+}
+
+function PinCard({
+  title,
+  code,
+  desc,
+  verifiedAt,
+}: {
+  title: string;
+  code: string;
+  desc: string;
+  verifiedAt: string | null;
+}) {
+  return (
+    <div className="mt-4 rounded-xl border border-primary/20 bg-background p-4">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{title}</div>
+      <div className="mt-2 text-3xl font-bold tracking-[0.35em] text-primary">{code}</div>
+      <div className="mt-2 text-sm text-muted-foreground">{desc}</div>
+      {verifiedAt && (
+        <div className="mt-2 text-xs text-emerald-600">
+          Подтверждено {new Date(verifiedAt).toLocaleTimeString("ru-RU")}
+        </div>
+      )}
     </div>
   );
 }
