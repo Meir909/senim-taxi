@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const OPENAI_CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions";
+const OPENAI_VISION_MODEL = process.env.OPENAI_VISION_MODEL || "gpt-4o-mini";
 
 const CompareSchema = z.object({
   selfie: z.string().min(20).max(8_000_000), // data URL
@@ -19,16 +20,16 @@ type CompareOutput = {
 
 /**
  * Compares a live selfie with a reference image (another selfie capture for
- * passengers, a driver license photo for drivers). Uses Lovable AI Gemini
- * Vision. Returns a confidence score that the caller stores alongside the
+ * passengers, a driver license photo for drivers). Uses the OpenAI vision
+ * API. Returns a confidence score that the caller stores alongside the
  * verification request — final approval is never based on this score alone.
  */
 export const compareFaces = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => CompareSchema.parse(d))
   .handler(async ({ data }): Promise<CompareOutput> => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("LOVABLE_API_KEY is not configured");
+    const key = process.env.OPENAI_API_KEY;
+    if (!key) throw new Error("OPENAI_API_KEY is not configured");
 
     const system = [
       "You are a strict KYC face-matching assistant.",
@@ -44,7 +45,7 @@ export const compareFaces = createServerFn({ method: "POST" })
         : "Both are selfies captured a moment apart. Same person should match nearly perfectly.";
 
     const body = {
-      model: "google/gemini-2.5-flash",
+      model: OPENAI_VISION_MODEL,
       messages: [
         { role: "system", content: system },
         {
@@ -60,11 +61,11 @@ export const compareFaces = createServerFn({ method: "POST" })
       temperature: 0,
     };
 
-    const res = await fetch(GATEWAY, {
+    const res = await fetch(OPENAI_CHAT_COMPLETIONS_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Lovable-API-Key": key,
+        Authorization: `Bearer ${key}`,
       },
       body: JSON.stringify(body),
     });

@@ -38,6 +38,10 @@ Required environment variables should be added in Vercel Project Settings:
 - `VITE_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `TWOGIS_MAPGL_API_KEY`
-- `LOVABLE_API_KEY`
+- `OPENAI_API_KEY`
+
+Optional:
+
+- `OPENAI_VISION_MODEL`
 
 If you use additional Supabase auth or storage settings locally, mirror them in Vercel before production deploy.
