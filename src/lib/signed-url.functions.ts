@@ -11,11 +11,7 @@ const Input = z.object({ userId: z.string().uuid() });
  */
 export const getUserAvatarUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-<<<<<<< HEAD
   .validator((d: unknown) => Input.parse(d))
-=======
-  .inputValidator((d: unknown) => Input.parse(d))
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   .handler(async ({ data, context }): Promise<{ url: string | null }> => {
     const caller = context.userId;
     const target = data.userId;

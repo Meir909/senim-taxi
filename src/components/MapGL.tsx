@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
-<<<<<<< HEAD
 import {
   loadMapGL,
   type MapGlClickEvent,
@@ -11,20 +10,13 @@ import {
   type MapGlNamespace,
   type MapGlPolyline,
 } from "@/lib/mapgl-loader";
-=======
-import { loadMapGL } from "@/lib/mapgl-loader";
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 import { getMap2gisKey } from "@/lib/maps.functions";
 
 export type MapMarker = {
   id: string;
   lat: number;
   lng: number;
-<<<<<<< HEAD
   color?: string;
-=======
-  color?: string; // hex
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   label?: string;
 };
 
@@ -32,15 +24,10 @@ type Props = {
   center?: { lat: number; lng: number };
   zoom?: number;
   markers?: MapMarker[];
-<<<<<<< HEAD
-=======
-  /** Optional polyline coordinates as [lng, lat] pairs (e.g. driving route). */
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   polyline?: Array<[number, number]>;
   polylineColor?: string;
   className?: string;
   onClick?: (coords: { lat: number; lng: number }) => void;
-<<<<<<< HEAD
   fitMarkers?: boolean;
 };
 
@@ -66,21 +53,6 @@ export function MapGL({
   onClickRef.current = onClick;
   centerRef.current = center;
   zoomRef.current = zoom;
-=======
-  /** Auto-fit bounds to markers when count >= 2. */
-  fitMarkers?: boolean;
-};
-
-const DEFAULT_CENTER = { lat: 55.7558, lng: 37.6173 }; // Moscow fallback
-
-export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor = "#2563eb", className, onClick, fitMarkers = true }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
-  const markersRef = useRef<Map<string, any>>(new Map());
-  const polylineRef = useRef<any>(null);
-  const onClickRef = useRef(onClick);
-  onClickRef.current = onClick;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   const getKey = useServerFn(getMap2gisKey);
   const { data: keyData, isLoading: keyLoading } = useQuery({
@@ -92,7 +64,6 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-<<<<<<< HEAD
   useEffect(() => {
     const key = keyData?.key;
     if (!key || !containerRef.current) return;
@@ -109,24 +80,6 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
         });
         mapRef.current = map;
         const clickHandler = (e: MapGlClickEvent) => {
-=======
-  // init map once key is available
-  useEffect(() => {
-    if (!keyData?.key || !containerRef.current) return;
-    let cancelled = false;
-    let clickHandler: any;
-    loadMapGL()
-      .then((mapgl) => {
-        if (cancelled || !containerRef.current) return;
-        const c = center ?? DEFAULT_CENTER;
-        const map = new mapgl.Map(containerRef.current, {
-          center: [c.lng, c.lat],
-          zoom,
-          key: keyData.key,
-        });
-        mapRef.current = map;
-        clickHandler = (e: any) => {
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           const [lng, lat] = e.lngLat;
           onClickRef.current?.({ lat, lng });
         };
@@ -136,7 +89,6 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
       .catch((e) => setError(e instanceof Error ? e.message : "Map failed to load"));
     return () => {
       cancelled = true;
-<<<<<<< HEAD
       markerStore.forEach((marker) => marker.destroy());
       markerStore.clear();
       if (polylineRef.current) {
@@ -145,29 +97,18 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
         } catch {
           // noop
         }
-=======
-      markersRef.current.forEach((m) => m.destroy());
-      markersRef.current.clear();
-      if (polylineRef.current) {
-        try { polylineRef.current.destroy(); } catch { /* noop */ }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         polylineRef.current = null;
       }
       if (mapRef.current) {
         try {
           mapRef.current.destroy();
         } catch {
-<<<<<<< HEAD
           // noop
-=======
-          /* noop */
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         }
         mapRef.current = null;
       }
       setReady(false);
     };
-<<<<<<< HEAD
   }, [keyData?.key]);
 
   useEffect(() => {
@@ -180,37 +121,17 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
     mapRef.current.setZoom(zoom);
   }, [ready, zoom]);
 
-=======
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keyData?.key]);
-
-  // recenter when center prop changes
-  useEffect(() => {
-    if (!ready || !mapRef.current || !center) return;
-    mapRef.current.setCenter([center.lng, center.lat]);
-  }, [ready, center?.lat, center?.lng]);
-
-  // sync markers
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   useEffect(() => {
     if (!ready || !mapRef.current || !window.mapgl) return;
     const mapgl = window.mapgl;
     const existing = markersRef.current;
     const incomingIds = new Set(markers.map((m) => m.id));
-<<<<<<< HEAD
-=======
-    // remove gone
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     existing.forEach((m, id) => {
       if (!incomingIds.has(id)) {
         m.destroy();
         existing.delete(id);
       }
     });
-<<<<<<< HEAD
-=======
-    // add/update
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     for (const m of markers) {
       const prev = existing.get(m.id);
       if (prev) {
@@ -225,10 +146,6 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
         existing.set(m.id, marker);
       }
     }
-<<<<<<< HEAD
-=======
-    // fit
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     if (fitMarkers && markers.length >= 2) {
       const lats = markers.map((m) => m.lat);
       const lngs = markers.map((m) => m.lng);
@@ -241,32 +158,20 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
           { padding: { top: 60, right: 60, bottom: 60, left: 60 } },
         );
       } catch {
-<<<<<<< HEAD
         // noop
-=======
-        /* noop */
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       }
     }
   }, [ready, markers, fitMarkers]);
 
-<<<<<<< HEAD
-=======
-  // sync polyline (route)
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   useEffect(() => {
     if (!ready || !mapRef.current || !window.mapgl) return;
     const mapgl = window.mapgl;
     if (polylineRef.current) {
-<<<<<<< HEAD
       try {
         polylineRef.current.destroy();
       } catch {
         // noop
       }
-=======
-      try { polylineRef.current.destroy(); } catch { /* noop */ }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       polylineRef.current = null;
     }
     if (polyline && polyline.length >= 2) {
@@ -279,11 +184,7 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
           width2: 7,
         });
       } catch {
-<<<<<<< HEAD
         // noop
-=======
-        /* noop */
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       }
       if (fitMarkers) {
         const lngs = polyline.map((p) => p[0]);
@@ -296,21 +197,13 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
             },
             { padding: { top: 60, right: 60, bottom: 200, left: 60 } },
           );
-<<<<<<< HEAD
         } catch {
           // noop
         }
-=======
-        } catch { /* noop */ }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       }
     }
   }, [ready, polyline, polylineColor, fitMarkers]);
 
-<<<<<<< HEAD
-=======
-
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   if (keyLoading) {
     return (
       <div className={`grid place-items-center bg-muted ${className ?? ""}`}>
@@ -320,26 +213,18 @@ export function MapGL({ center, zoom = 13, markers = [], polyline, polylineColor
   }
   if (!keyData?.key) {
     return (
-<<<<<<< HEAD
       <div
         className={`grid place-items-center bg-muted p-4 text-center text-xs text-muted-foreground ${className ?? ""}`}
       >
-=======
-      <div className={`grid place-items-center bg-muted p-4 text-center text-xs text-muted-foreground ${className ?? ""}`}>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         Map unavailable — 2GIS key not configured.
       </div>
     );
   }
   if (error) {
     return (
-<<<<<<< HEAD
       <div
         className={`grid place-items-center bg-muted p-4 text-center text-xs text-destructive ${className ?? ""}`}
       >
-=======
-      <div className={`grid place-items-center bg-muted p-4 text-center text-xs text-destructive ${className ?? ""}`}>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         {error}
       </div>
     );

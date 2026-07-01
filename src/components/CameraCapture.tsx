@@ -3,29 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Camera, RotateCcw, Check, AlertCircle, SwitchCamera } from "lucide-react";
 
 type Props = {
-<<<<<<< HEAD
   facing?: "user" | "environment";
   label?: string;
   onCapture: (dataUrl: string) => void;
   busy?: boolean;
 };
 
-=======
-  /** "user" = front (selfie), "environment" = back (documents) */
-  facing?: "user" | "environment";
-  label?: string;
-  /** Called when user confirms the captured image. Receives JPEG data URL ~600px. */
-  onCapture: (dataUrl: string) => void;
-  /** Optional disabled state while parent saves. */
-  busy?: boolean;
-};
-
-/**
- * Camera-only capture component. Uses navigator.mediaDevices.getUserMedia.
- * No file input fallback — gallery uploads are explicitly NOT allowed.
- * User can retake before confirming.
- */
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 export function CameraCapture({ facing = "user", label, onCapture, busy }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -39,7 +22,6 @@ export function CameraCapture({ facing = "user", label, onCapture, busy }: Props
     streamRef.current = null;
   }, []);
 
-<<<<<<< HEAD
   const start = useCallback(
     async (mode: "user" | "environment") => {
       setError(null);
@@ -71,36 +53,6 @@ export function CameraCapture({ facing = "user", label, onCapture, busy }: Props
     },
     [stop],
   );
-=======
-  const start = useCallback(async (mode: "user" | "environment") => {
-    setError(null);
-    setReady(false);
-    setSnapshot(null);
-    stop();
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setError("Камера недоступна в этом браузере");
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: mode }, width: { ideal: 1280 }, height: { ideal: 960 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
-        setReady(true);
-      }
-    } catch (e) {
-      setError(
-        e instanceof DOMException && e.name === "NotAllowedError"
-          ? "Нет доступа к камере. Разрешите доступ в настройках браузера."
-          : "Не удалось включить камеру",
-      );
-    }
-  }, [stop]);
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   useEffect(() => {
     void start(activeFacing);
@@ -119,10 +71,6 @@ export function CameraCapture({ facing = "user", label, onCapture, busy }: Props
     canvas.height = h;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-<<<<<<< HEAD
-=======
-    // Mirror the front camera for a natural selfie preview
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     if (activeFacing === "user") {
       ctx.translate(w, 0);
       ctx.scale(-1, 1);
@@ -157,15 +105,11 @@ export function CameraCapture({ facing = "user", label, onCapture, busy }: Props
             </div>
           </div>
         ) : snapshot ? (
-<<<<<<< HEAD
           <img
             src={snapshot}
             alt="Снимок"
             className="absolute inset-0 h-full w-full object-cover"
           />
-=======
-          <img src={snapshot} alt="Снимок" className="absolute inset-0 h-full w-full object-cover" />
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         ) : (
           <>
             <video
@@ -194,7 +138,6 @@ export function CameraCapture({ facing = "user", label, onCapture, busy }: Props
       <div className="flex gap-2">
         {snapshot ? (
           <>
-<<<<<<< HEAD
             <Button
               type="button"
               variant="outline"
@@ -202,9 +145,6 @@ export function CameraCapture({ facing = "user", label, onCapture, busy }: Props
               onClick={retake}
               disabled={busy}
             >
-=======
-            <Button type="button" variant="outline" className="flex-1" onClick={retake} disabled={busy}>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               <RotateCcw className="mr-2 h-4 w-4" /> Переснять
             </Button>
             <Button type="button" className="flex-1" onClick={confirm} disabled={busy}>

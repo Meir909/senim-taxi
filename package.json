@@ -3,7 +3,6 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
-<<<<<<< HEAD
   "packageManager": "bun@1.2.18",
   "scripts": {
     "dev": "vite dev",
@@ -15,15 +14,6 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit"
-=======
-  "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
-    "preview": "vite preview",
-    "lint": "eslint .",
-    "format": "prettier --write ."
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

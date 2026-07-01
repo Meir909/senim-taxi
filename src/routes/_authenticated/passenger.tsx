@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-<<<<<<< HEAD
 import { Baby, Loader2, MapPin, Search, ShieldCheck, X, Crosshair } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { MapGL, type MapMarker } from "@/components/MapGL";
@@ -18,13 +17,6 @@ import { geocode2gis, reverseGeocode2gis, getRoute2gis } from "@/lib/maps.functi
 import { TARIFFS, calcFare, fmtKzt, type Tariff } from "@/lib/fare";
 import { formatChildMeta } from "@/lib/passenger-children";
 import { isWaitingStatus } from "@/lib/passenger-rides";
-=======
-import { Loader2, MapPin, Search, X, Crosshair } from "lucide-react";
-import type { Database } from "@/integrations/supabase/types";
-import { MapGL, type MapMarker } from "@/components/MapGL";
-import { geocode2gis, reverseGeocode2gis, getRoute2gis } from "@/lib/maps.functions";
-import { TARIFFS, calcFare, fmtKzt, type Tariff } from "@/lib/fare";
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 import tariffStandardImg from "@/assets/tariff-standard.jpg";
 import tariffKidsImg from "@/assets/tariff-kids.jpg";
 import tariffDeliveryImg from "@/assets/tariff-delivery.jpg";
@@ -37,10 +29,6 @@ const TARIFF_IMAGES: Record<Tariff, string> = {
   cargo: tariffCargoImg,
 };
 
-<<<<<<< HEAD
-=======
-
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Point = { lat: number; lng: number; address: string };
 type Field = "pickup" | "dropoff";
@@ -52,15 +40,12 @@ export const Route = createFileRoute("/_authenticated/passenger")({
 function PassengerHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
-<<<<<<< HEAD
   const {
     children,
     eligibleMother,
     loading: childrenLoading,
     reload: reloadChildren,
   } = usePassengerChildren(user?.id);
-=======
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   const [activeRide, setActiveRide] = useState<Ride | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -71,7 +56,6 @@ function PassengerHome() {
   const [center, setCenter] = useState<{ lat: number; lng: number } | undefined>(undefined);
   const reverse = useServerFn(reverseGeocode2gis);
   const fetchRoute = useServerFn(getRoute2gis);
-<<<<<<< HEAD
   const [route, setRoute] = useState<{
     coords: Array<[number, number]>;
     distance_m: number;
@@ -108,27 +92,10 @@ function PassengerHome() {
             distance_m: r.distance_m,
             duration_s: r.duration_s,
           });
-=======
-  const [route, setRoute] = useState<{ coords: Array<[number, number]>; distance_m: number; duration_s: number } | null>(null);
-  const [routeLoading, setRouteLoading] = useState(false);
-  const [tariff, setTariff] = useState<Tariff>("standard");
-
-
-  useEffect(() => {
-    if (!pickup || !dropoff) { setRoute(null); return; }
-    let cancelled = false;
-    setRouteLoading(true);
-    void fetchRoute({ data: { pickup: { lat: pickup.lat, lng: pickup.lng }, dropoff: { lat: dropoff.lat, lng: dropoff.lng } } })
-      .then((r) => {
-        if (cancelled) return;
-        if (r.coordinates.length >= 2) {
-          setRoute({ coords: r.coordinates as Array<[number, number]>, distance_m: r.distance_m, duration_s: r.duration_s });
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         } else {
           setRoute(null);
         }
       })
-<<<<<<< HEAD
       .catch(() => {
         if (!cancelled) setRoute(null);
       })
@@ -139,12 +106,6 @@ function PassengerHome() {
       cancelled = true;
     };
   }, [pickup, dropoff, fetchRoute]);
-=======
-      .catch(() => { if (!cancelled) setRoute(null); })
-      .finally(() => { if (!cancelled) setRouteLoading(false); });
-    return () => { cancelled = true; };
-  }, [pickup?.lat, pickup?.lng, dropoff?.lat, dropoff?.lng, fetchRoute]);
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   useEffect(() => {
     if (!user) return;
@@ -154,7 +115,6 @@ function PassengerHome() {
         .from("rides")
         .select("*")
         .eq("passenger_id", user.id)
-<<<<<<< HEAD
         .in("status", [
           "requested",
           "searching",
@@ -163,9 +123,6 @@ function PassengerHome() {
           "driver_arrived",
           "in_progress",
         ])
-=======
-        .in("status", ["requested", "searching", "accepted", "driver_arriving", "driver_arrived", "in_progress"])
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         .order("requested_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -174,18 +131,13 @@ function PassengerHome() {
         setLoading(false);
       }
     })();
-<<<<<<< HEAD
     return () => {
       mounted = false;
     };
-=======
-    return () => { mounted = false; };
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }, [user]);
 
   useEffect(() => {
     if (activeRide) {
-<<<<<<< HEAD
       void navigate({
         to: isWaitingStatus(activeRide.status)
           ? "/passenger/ride/$rideId/waiting"
@@ -193,9 +145,6 @@ function PassengerHome() {
         params: { rideId: activeRide.id },
         replace: true,
       });
-=======
-      void navigate({ to: "/passenger/ride/$rideId", params: { rideId: activeRide.id }, replace: true });
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     }
   }, [activeRide, navigate]);
 
@@ -208,7 +157,6 @@ function PassengerHome() {
     );
   }, []);
 
-<<<<<<< HEAD
   useEffect(() => {
     if (tariff !== "kids") return;
     if (!canUseKidsTariff) {
@@ -233,12 +181,6 @@ function PassengerHome() {
       m.push({ id: "pickup", lat: pickup.lat, lng: pickup.lng, color: "#16a34a", label: "A" });
     if (dropoff)
       m.push({ id: "dropoff", lat: dropoff.lat, lng: dropoff.lng, color: "#2563eb", label: "B" });
-=======
-  const markers = useMemo<MapMarker[]>(() => {
-    const m: MapMarker[] = [];
-    if (pickup) m.push({ id: "pickup", lat: pickup.lat, lng: pickup.lng, color: "#16a34a", label: "A" });
-    if (dropoff) m.push({ id: "dropoff", lat: dropoff.lat, lng: dropoff.lng, color: "#2563eb", label: "B" });
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     return m;
   }, [pickup, dropoff]);
 
@@ -250,17 +192,12 @@ function PassengerHome() {
       lng: coords.lng,
       address: res.address ?? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`,
     };
-<<<<<<< HEAD
     if (target === "pickup") setPickup(point);
     else setDropoff(point);
-=======
-    if (target === "pickup") setPickup(point); else setDropoff(point);
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     setTapField(null);
     toast.success(`Точка ${target === "pickup" ? "A" : "B"} установлена`);
   }
 
-<<<<<<< HEAD
   function handleMyLocation(field: Field) {
     if (!navigator.geolocation) {
       toast.error("Геолокация недоступна");
@@ -271,12 +208,6 @@ function PassengerHome() {
         void handleMapTap({ lat: p.coords.latitude, lng: p.coords.longitude }).then(() =>
           setTapField(null),
         ),
-=======
-  function useMyLocation(field: Field) {
-    if (!navigator.geolocation) { toast.error("Геолокация недоступна"); return; }
-    navigator.geolocation.getCurrentPosition(
-      (p) => void handleMapTap({ lat: p.coords.latitude, lng: p.coords.longitude }).then(() => setTapField(null)),
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       () => toast.error("Не удалось получить координаты"),
       { enableHighAccuracy: true, timeout: 10000 },
     );
@@ -285,7 +216,6 @@ function PassengerHome() {
 
   async function handleRequest() {
     if (!user || !pickup || !dropoff) return;
-<<<<<<< HEAD
     if (tariff === "kids" && !eligibleMother) {
       toast.error("Детский тариф доступен только совершеннолетним женщинам-пассажиркам");
       return;
@@ -301,8 +231,6 @@ function PassengerHome() {
       toast.error("Заполните данные получателя ребёнка");
       return;
     }
-=======
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     setSubmitting(true);
     try {
       const fare = route ? calcFare(tariff, route.distance_m, route.duration_s) : null;
@@ -310,7 +238,6 @@ function PassengerHome() {
         .from("rides")
         .insert({
           passenger_id: user.id,
-<<<<<<< HEAD
           pickup_lat: pickup.lat,
           pickup_lng: pickup.lng,
           pickup_address: pickup.address,
@@ -323,22 +250,12 @@ function PassengerHome() {
           recipient_full_name: tariff === "kids" ? recipientFullName.trim() : null,
           recipient_phone: tariff === "kids" ? recipientPhone.trim() : null,
           recipient_relation: tariff === "kids" ? recipientRelation.trim() : null,
-=======
-          pickup_lat: pickup.lat, pickup_lng: pickup.lng, pickup_address: pickup.address,
-          dropoff_lat: dropoff.lat, dropoff_lng: dropoff.lng, dropoff_address: dropoff.address,
-          status: "searching",
-          tariff,
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           estimated_fare: fare,
           distance_km: route ? Number((route.distance_m / 1000).toFixed(2)) : null,
           duration_min: route ? Math.max(1, Math.round(route.duration_s / 60)) : null,
         })
-<<<<<<< HEAD
         .select()
         .single();
-=======
-        .select().single();
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       if (error) throw error;
       toast.success("Ищем водителя…");
       void navigate({ to: "/passenger/ride/$rideId", params: { rideId: data.id } });
@@ -349,10 +266,6 @@ function PassengerHome() {
     }
   }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   if (loading) {
     return (
       <div className="grid h-64 place-items-center">
@@ -362,7 +275,6 @@ function PassengerHome() {
   }
   if (activeRide) return null;
 
-<<<<<<< HEAD
   const ready =
     pickup &&
     dropoff &&
@@ -372,9 +284,6 @@ function PassengerHome() {
         !!recipientFullName.trim() &&
         !!recipientPhone.trim() &&
         !!recipientRelation.trim()));
-=======
-  const ready = pickup && dropoff && !submitting;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   return (
     <div className="relative -mx-4 -my-4 sm:-my-6 h-[calc(100dvh-9rem)] overflow-hidden">
@@ -405,11 +314,7 @@ function PassengerHome() {
             onPick={() => setPickerField("pickup")}
             onTapMap={() => setTapField("pickup")}
             onClear={() => setPickup(null)}
-<<<<<<< HEAD
             onMyLocation={() => handleMyLocation("pickup")}
-=======
-            onMyLocation={() => useMyLocation("pickup")}
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             tapActive={tapField === "pickup"}
           />
           <FieldButton
@@ -432,13 +337,9 @@ function PassengerHome() {
                 ) : route ? (
                   <>
                     <span className="font-medium">{(route.distance_m / 1000).toFixed(1)} км</span>
-<<<<<<< HEAD
                     <span className="text-muted-foreground">
                       ≈ {Math.max(1, Math.round(route.duration_s / 60))} мин в пути
                     </span>
-=======
-                    <span className="text-muted-foreground">≈ {Math.max(1, Math.round(route.duration_s / 60))} мин в пути</span>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                   </>
                 ) : (
                   <span className="text-muted-foreground">Маршрут недоступен</span>
@@ -450,15 +351,11 @@ function PassengerHome() {
                   const img = TARIFF_IMAGES[id];
                   const price = route ? calcFare(id, route.distance_m, route.duration_s) : null;
                   const active = tariff === id;
-<<<<<<< HEAD
                   const disabled = id === "kids" && !canUseKidsTariff;
-=======
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                   return (
                     <button
                       key={id}
                       type="button"
-<<<<<<< HEAD
                       onClick={() => !disabled && setTariff(id)}
                       className={`flex min-w-[5.5rem] flex-1 flex-col items-center gap-1 rounded-lg border p-2 text-center transition ${
                         active
@@ -475,12 +372,6 @@ function PassengerHome() {
                         height={128}
                         className="h-12 w-12 rounded-md object-cover"
                       />
-=======
-                      onClick={() => setTariff(id)}
-                      className={`flex min-w-[5.5rem] flex-1 flex-col items-center gap-1 rounded-lg border p-2 text-center transition ${active ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-foreground/40"}`}
-                    >
-                      <img src={img} alt={t.name} loading="lazy" width={128} height={128} className="h-12 w-12 rounded-md object-cover" />
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                       <div className="text-xs font-semibold leading-tight">{t.name}</div>
                       <div className="text-[11px] font-bold text-primary">
                         {price != null ? fmtKzt(price) : routeLoading ? "…" : "—"}
@@ -489,7 +380,6 @@ function PassengerHome() {
                   );
                 })}
               </div>
-<<<<<<< HEAD
               {!canUseKidsTariff && (
                 <div className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
                   {eligibleMother
@@ -580,8 +470,6 @@ function PassengerHome() {
                   )}
                 </div>
               )}
-=======
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             </>
           )}
           <Button onClick={handleRequest} disabled={!ready} size="lg" className="w-full">
@@ -593,10 +481,6 @@ function PassengerHome() {
         </Card>
       </div>
 
-<<<<<<< HEAD
-=======
-
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       <AddressSearchDialog
         open={pickerField !== null}
         onOpenChange={(v) => !v && setPickerField(null)}
@@ -612,7 +496,6 @@ function PassengerHome() {
 }
 
 function FieldButton({
-<<<<<<< HEAD
   color,
   label,
   placeholder,
@@ -632,14 +515,6 @@ function FieldButton({
   onClear: () => void;
   onMyLocation?: () => void;
   tapActive?: boolean;
-=======
-  color, label, placeholder, point, onPick, onTapMap, onClear, onMyLocation, tapActive,
-}: {
-  color: string; label: string; placeholder: string;
-  point: Point | null;
-  onPick: () => void; onTapMap: () => void; onClear: () => void;
-  onMyLocation?: () => void; tapActive?: boolean;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -682,7 +557,6 @@ function FieldButton({
 }
 
 function AddressSearchDialog({
-<<<<<<< HEAD
   open,
   onOpenChange,
   title,
@@ -691,27 +565,17 @@ function AddressSearchDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   title: string;
-=======
-  open, onOpenChange, title, onPick,
-}: {
-  open: boolean; onOpenChange: (v: boolean) => void; title: string;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   onPick: (p: Point) => void;
 }) {
   const geocode = useServerFn(geocode2gis);
   const [query, setQuery] = useState("");
-<<<<<<< HEAD
   const [results, setResults] = useState<
     Array<{ name: string; address: string; lat: number; lng: number }>
   >([]);
-=======
-  const [results, setResults] = useState<Array<{ name: string; address: string; lat: number; lng: number }>>([]);
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   const [searching, setSearching] = useState(false);
   const debounceRef = useRef<number | null>(null);
 
   useEffect(() => {
-<<<<<<< HEAD
     if (!open) {
       setQuery("");
       setResults([]);
@@ -724,20 +588,12 @@ function AddressSearchDialog({
       setResults([]);
       return;
     }
-=======
-    if (!open) { setQuery(""); setResults([]); return; }
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || query.trim().length < 2) { setResults([]); return; }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(async () => {
       setSearching(true);
       try {
         const res = await geocode({ data: { q: query.trim() } });
         setResults(res.items);
-<<<<<<< HEAD
       } finally {
         setSearching(false);
       }
@@ -745,23 +601,14 @@ function AddressSearchDialog({
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-=======
-      } finally { setSearching(false); }
-    }, 300);
-    return () => { if (debounceRef.current) window.clearTimeout(debounceRef.current); };
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }, [query, geocode, open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[80dvh] overflow-hidden">
-<<<<<<< HEAD
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-=======
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         <div className="space-y-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -773,26 +620,18 @@ function AddressSearchDialog({
               className="pl-9"
               maxLength={250}
             />
-<<<<<<< HEAD
             {searching && (
               <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
             )}
-=======
-            {searching && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />}
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           </div>
           <div className="max-h-[50dvh] overflow-y-auto">
             {results.length === 0 ? (
               <p className="px-1 py-6 text-center text-xs text-muted-foreground">
-<<<<<<< HEAD
                 {query.trim().length < 2
                   ? "Начните вводить адрес"
                   : searching
                     ? "Поиск…"
                     : "Ничего не найдено"}
-=======
-                {query.trim().length < 2 ? "Начните вводить адрес" : searching ? "Поиск…" : "Ничего не найдено"}
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               </p>
             ) : (
               results.map((r, i) => (
@@ -803,13 +642,9 @@ function AddressSearchDialog({
                   className="block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
                 >
                   <div className="font-medium">{r.name || r.address}</div>
-<<<<<<< HEAD
                   {r.address && r.name && (
                     <div className="text-xs text-muted-foreground">{r.address}</div>
                   )}
-=======
-                  {r.address && r.name && <div className="text-xs text-muted-foreground">{r.address}</div>}
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                 </button>
               ))
             )}

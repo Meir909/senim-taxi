@@ -1,9 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-<<<<<<< HEAD
 import { useCallback, useEffect, useMemo, useState } from "react";
-=======
-import { useEffect, useState } from "react";
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -12,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-<<<<<<< HEAD
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -37,13 +32,6 @@ import {
   Trash2,
   ShieldOff,
 } from "lucide-react";
-=======
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-import { Loader2, ShieldCheck, RefreshCw, CheckCircle2, XCircle, Clock, FileText, ExternalLink, Ban, Trash2, ShieldOff } from "lucide-react";
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 import type { Database } from "@/integrations/supabase/types";
 import { deleteUserAdmin } from "@/lib/admin.functions";
 
@@ -91,7 +79,6 @@ function PassengerList() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"pending" | "all">("pending");
 
-<<<<<<< HEAD
   const load = useCallback(async () => {
     setLoading(true);
     let q = supabase
@@ -102,31 +89,18 @@ function PassengerList() {
       .limit(100);
     if (filter === "pending")
       q = q.in("status", ["pending", "manual_review", "reupload_requested"]);
-=======
-  async function load() {
-    setLoading(true);
-    let q = supabase.from("verification_requests").select("*").eq("kind", "passenger")
-      .order("created_at", { ascending: false }).limit(100);
-    if (filter === "pending") q = q.in("status", ["pending", "manual_review", "reupload_requested"]);
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     const { data, error } = await q;
     if (error) toast.error(error.message);
     setItems(data ?? []);
     setLoading(false);
-<<<<<<< HEAD
   }, [filter]);
   useEffect(() => {
     void load();
   }, [load]);
-=======
-  }
-  useEffect(() => { void load(); }, [filter]);
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end gap-2">
-<<<<<<< HEAD
         <Button
           size="sm"
           variant={filter === "pending" ? "default" : "outline"}
@@ -157,18 +131,6 @@ function PassengerList() {
             <PassengerCard key={r.id} req={r} onChanged={load} />
           ))}
         </div>
-=======
-        <Button size="sm" variant={filter === "pending" ? "default" : "outline"} onClick={() => setFilter("pending")}>Ожидают</Button>
-        <Button size="sm" variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>Все</Button>
-        <Button size="icon" variant="ghost" onClick={() => void load()}><RefreshCw className="h-4 w-4" /></Button>
-      </div>
-      {loading ? (
-        <div className="grid h-40 place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-      ) : items.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-muted-foreground">Нет заявок</Card>
-      ) : (
-        <div className="space-y-3">{items.map((r) => <PassengerCard key={r.id} req={r} onChanged={load} />)}</div>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       )}
     </div>
   );
@@ -185,7 +147,6 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
   useEffect(() => {
     const paths = [req.selfie_path].filter(Boolean) as string[];
     if (paths.length === 0) return;
-<<<<<<< HEAD
     void supabase.storage
       .from("verification")
       .createSignedUrls(paths, 600)
@@ -225,34 +186,11 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
       toast.error(error.message);
       return;
     }
-=======
-    void supabase.storage.from("verification").createSignedUrls(paths, 600).then(({ data }) => {
-      const map: Record<string, string> = {};
-      data?.forEach((d) => { if (d.path && d.signedUrl) map[d.path] = d.signedUrl; });
-      setSigned(map);
-    });
-  }, [req.id, req.selfie_path]);
-
-  useEffect(() => {
-    void supabase.from("profiles").select("blocked_at, blocked_reason").eq("id", req.user_id).maybeSingle()
-      .then(({ data }) => setBlocked({ at: data?.blocked_at ?? null, reason: data?.blocked_reason ?? null }));
-  }, [req.user_id]);
-
-  async function review(decision: "approve" | "reject" | "reupload") {
-    if (decision !== "approve" && !comment.trim()) { toast.error("Добавьте комментарий"); return; }
-    setBusy(decision);
-    const { error } = await supabase.rpc("admin_review_verification", {
-      _request_id: req.id, _decision: decision, _comment: comment.trim() || "",
-    });
-    setBusy(null);
-    if (error) { toast.error(error.message); return; }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     toast.success("Решение сохранено");
     onChanged();
   }
 
   async function block() {
-<<<<<<< HEAD
     if (blockReason.trim().length < 2) {
       toast.error("Укажите причину");
       return;
@@ -267,13 +205,6 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
       toast.error(error.message);
       return;
     }
-=======
-    if (blockReason.trim().length < 2) { toast.error("Укажите причину"); return; }
-    setBusy("block");
-    const { error } = await supabase.rpc("admin_block_user", { _user_id: req.user_id, _reason: blockReason.trim() });
-    setBusy(null);
-    if (error) { toast.error(error.message); return; }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     toast.success("Пользователь заблокирован");
     setBlockReason("");
     onChanged();
@@ -282,14 +213,10 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
     setBusy("unblock");
     const { error } = await supabase.rpc("admin_unblock_user", { _user_id: req.user_id });
     setBusy(null);
-<<<<<<< HEAD
     if (error) {
       toast.error(error.message);
       return;
     }
-=======
-    if (error) { toast.error(error.message); return; }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     toast.success("Разблокирован");
     onChanged();
   }
@@ -301,13 +228,9 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
       onChanged();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Не удалось удалить");
-<<<<<<< HEAD
     } finally {
       setBusy(null);
     }
-=======
-    } finally { setBusy(null); }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }
 
   const isPending = ["pending", "manual_review", "reupload_requested"].includes(req.status);
@@ -318,35 +241,25 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
         <Badge variant="secondary">Пассажир</Badge>
         <Badge variant="outline">{req.status}</Badge>
         {isBlocked && <Badge variant="destructive">Заблокирован</Badge>}
-<<<<<<< HEAD
         {req.ai_confidence !== null && (
           <Badge variant="outline">AI {Math.round(Number(req.ai_confidence) * 100)}%</Badge>
         )}
         <span className="ml-auto text-xs text-muted-foreground">
           {new Date(req.created_at).toLocaleString("ru-RU")}
         </span>
-=======
-        {req.ai_confidence !== null && <Badge variant="outline">AI {Math.round(Number(req.ai_confidence) * 100)}%</Badge>}
-        <span className="ml-auto text-xs text-muted-foreground">{new Date(req.created_at).toLocaleString("ru-RU")}</span>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       </div>
       <div className="grid grid-cols-2 gap-3 text-sm">
         <Field label="ФИО" value={req.full_name} />
         <Field label="ИИН" value={req.iin} />
         <Field label="Дата рождения" value={req.date_of_birth} />
-<<<<<<< HEAD
         <Field
           label="Пол"
           value={req.gender === "male" ? "Мужской" : req.gender === "female" ? "Женский" : null}
         />
-=======
-        <Field label="Пол" value={req.gender === "male" ? "Мужской" : req.gender === "female" ? "Женский" : null} />
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       </div>
       {req.selfie_path && <Photo label="Селфи" url={signed[req.selfie_path]} />}
       {isPending && !isBlocked && (
         <>
-<<<<<<< HEAD
           <Textarea
             placeholder="Комментарий (обязателен для отклонения)"
             value={comment}
@@ -354,25 +267,16 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
             rows={2}
             maxLength={500}
           />
-=======
-          <Textarea placeholder="Комментарий (обязателен для отклонения)" value={comment}
-            onChange={(e) => setComment(e.target.value)} rows={2} maxLength={500} />
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => review("approve")} disabled={busy !== null}>
               {busy === "approve" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Одобрить
             </Button>
-<<<<<<< HEAD
             <Button variant="outline" onClick={() => review("reupload")} disabled={busy !== null}>
               Запросить перезагрузку
             </Button>
             <Button variant="destructive" onClick={() => review("reject")} disabled={busy !== null}>
               Отклонить
             </Button>
-=======
-            <Button variant="outline" onClick={() => review("reupload")} disabled={busy !== null}>Запросить перезагрузку</Button>
-            <Button variant="destructive" onClick={() => review("reject")} disabled={busy !== null}>Отклонить</Button>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           </div>
         </>
       )}
@@ -383,20 +287,15 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
       <div className="border-t border-border pt-3 space-y-2">
         {isBlocked ? (
           <div className="space-y-2">
-<<<<<<< HEAD
             {blocked?.reason && (
               <p className="text-xs text-destructive">Причина: {blocked.reason}</p>
             )}
-=======
-            {blocked?.reason && <p className="text-xs text-destructive">Причина: {blocked.reason}</p>}
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             <Button size="sm" variant="outline" onClick={unblock} disabled={busy !== null}>
               <ShieldOff className="mr-1.5 h-4 w-4" /> Разблокировать
             </Button>
           </div>
         ) : (
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-<<<<<<< HEAD
             <Textarea
               placeholder="Причина блокировки (например: указан мужской пол)"
               rows={2}
@@ -411,28 +310,18 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
               ) : (
                 <Ban className="mr-1.5 h-4 w-4" />
               )}
-=======
-            <Textarea placeholder="Причина блокировки (например: указан мужской пол)" rows={2} maxLength={300}
-              value={blockReason} onChange={(e) => setBlockReason(e.target.value)} className="sm:flex-1" />
-            <Button size="sm" variant="destructive" onClick={block} disabled={busy !== null}>
-              {busy === "block" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Ban className="mr-1.5 h-4 w-4" />}
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               Заблокировать
             </Button>
           </div>
         )}
         <AlertDialog>
           <AlertDialogTrigger asChild>
-<<<<<<< HEAD
             <Button
               size="sm"
               variant="ghost"
               className="text-destructive hover:bg-destructive/10"
               disabled={busy !== null}
             >
-=======
-            <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" disabled={busy !== null}>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               <Trash2 className="mr-1.5 h-4 w-4" /> Удалить аккаунт
             </Button>
           </AlertDialogTrigger>
@@ -440,24 +329,16 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
             <AlertDialogHeader>
               <AlertDialogTitle>Удалить пользователя?</AlertDialogTitle>
               <AlertDialogDescription>
-<<<<<<< HEAD
                 Это действие необратимо. Будут удалены профиль, кошелёк, роли и все связанные
                 документы.
-=======
-                Это действие необратимо. Будут удалены профиль, кошелёк, роли и все связанные документы.
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Отмена</AlertDialogCancel>
-<<<<<<< HEAD
               <AlertDialogAction
                 onClick={remove}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-=======
-              <AlertDialogAction onClick={remove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                 Удалить
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -475,7 +356,6 @@ function DriverList() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"pending" | "all">("pending");
 
-<<<<<<< HEAD
   const load = useCallback(async () => {
     setLoading(true);
     let q = supabase
@@ -490,14 +370,6 @@ function DriverList() {
       setLoading(false);
       return;
     }
-=======
-  async function load() {
-    setLoading(true);
-    let q = supabase.from("drivers").select("*").order("submitted_at", { ascending: false, nullsFirst: false }).limit(100);
-    if (filter === "pending") q = q.in("application_status", ["pending", "needs_reupload"]);
-    const { data: ds, error } = await q;
-    if (error) { toast.error(error.message); setLoading(false); return; }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     const list = (ds ?? []) as DriverRow[];
     setDrivers(list);
     const ids = list.map((d) => d.id);
@@ -507,13 +379,9 @@ function DriverList() {
         supabase.from("driver_documents").select("*").in("driver_id", ids),
       ]);
       const pmap: Record<string, ProfileRow> = {};
-<<<<<<< HEAD
       (ps.data ?? []).forEach((p) => {
         pmap[p.id] = p as ProfileRow;
       });
-=======
-      (ps.data ?? []).forEach((p) => { pmap[p.id] = p as ProfileRow; });
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       setProfiles(pmap);
       const dmap: Record<string, DocRow[]> = {};
       (dd.data ?? []).forEach((d) => {
@@ -523,7 +391,6 @@ function DriverList() {
       });
       setDocs(dmap);
     } else {
-<<<<<<< HEAD
       setProfiles({});
       setDocs({});
     }
@@ -532,18 +399,10 @@ function DriverList() {
   useEffect(() => {
     void load();
   }, [load]);
-=======
-      setProfiles({}); setDocs({});
-    }
-    setLoading(false);
-  }
-  useEffect(() => { void load(); }, [filter]);
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end gap-2">
-<<<<<<< HEAD
         <Button
           size="sm"
           variant={filter === "pending" ? "default" : "outline"}
@@ -566,20 +425,11 @@ function DriverList() {
         <div className="grid h-40 place-items-center">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
-=======
-        <Button size="sm" variant={filter === "pending" ? "default" : "outline"} onClick={() => setFilter("pending")}>Ожидают</Button>
-        <Button size="sm" variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>Все</Button>
-        <Button size="icon" variant="ghost" onClick={() => void load()}><RefreshCw className="h-4 w-4" /></Button>
-      </div>
-      {loading ? (
-        <div className="grid h-40 place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       ) : drivers.length === 0 ? (
         <Card className="p-8 text-center text-sm text-muted-foreground">Нет заявок</Card>
       ) : (
         <div className="space-y-3">
           {drivers.map((d) => (
-<<<<<<< HEAD
             <DriverCard
               key={d.id}
               driver={d}
@@ -587,9 +437,6 @@ function DriverList() {
               docs={docs[d.id] ?? []}
               onChanged={load}
             />
-=======
-            <DriverCard key={d.id} driver={d} profile={profiles[d.id]} docs={docs[d.id] ?? []} onChanged={load} />
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           ))}
         </div>
       )}
@@ -597,7 +444,6 @@ function DriverList() {
   );
 }
 
-<<<<<<< HEAD
 function DriverCard({
   driver,
   profile,
@@ -633,28 +479,11 @@ function DriverCard({
     [profile?.last_name, profile?.first_name, profile?.patronymic].filter(Boolean).join(" ") ||
     profile?.full_name ||
     "—";
-=======
-function DriverCard({ driver, profile, docs, onChanged }: { driver: DriverRow; profile?: ProfileRow; docs: DocRow[]; onChanged: () => void }) {
-  const [signed, setSigned] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    const paths = [profile?.selfie_path, ...docs.map((d) => d.file_path)].filter(Boolean) as string[];
-    if (paths.length === 0) return;
-    void supabase.storage.from("verification").createSignedUrls(paths, 600).then(({ data }) => {
-      const map: Record<string, string> = {};
-      data?.forEach((x) => { if (x.path && x.signedUrl) map[x.path] = x.signedUrl; });
-      setSigned(map);
-    });
-  }, [driver.id, profile?.selfie_path, docs.map((d) => d.file_path).join("|")]);
-
-  const fullName = [profile?.last_name, profile?.first_name, profile?.patronymic].filter(Boolean).join(" ") || profile?.full_name || "—";
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   return (
     <Card className="p-4 space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <Badge>Водитель</Badge>
-<<<<<<< HEAD
         <Badge
           variant={
             driver.application_status === "approved"
@@ -666,11 +495,6 @@ function DriverCard({ driver, profile, docs, onChanged }: { driver: DriverRow; p
                   : "secondary"
           }
         >
-=======
-        <Badge variant={driver.application_status === "approved" ? "default"
-          : driver.application_status === "rejected" ? "destructive"
-          : driver.application_status === "needs_reupload" ? "outline" : "secondary"}>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           {driver.application_status}
         </Badge>
         <span className="ml-auto text-xs text-muted-foreground">
@@ -680,7 +504,6 @@ function DriverCard({ driver, profile, docs, onChanged }: { driver: DriverRow; p
 
       <div className="flex gap-3">
         {profile?.selfie_path && signed[profile.selfie_path] ? (
-<<<<<<< HEAD
           <a
             href={signed[profile.selfie_path]}
             target="_blank"
@@ -692,10 +515,6 @@ function DriverCard({ driver, profile, docs, onChanged }: { driver: DriverRow; p
               alt="Селфи"
               className="h-20 w-20 rounded-md border border-border object-cover"
             />
-=======
-          <a href={signed[profile.selfie_path]} target="_blank" rel="noreferrer" className="shrink-0">
-            <img src={signed[profile.selfie_path]} alt="Селфи" className="h-20 w-20 rounded-md border border-border object-cover" />
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           </a>
         ) : (
           <div className="h-20 w-20 rounded-md border border-dashed border-border" />
@@ -704,7 +523,6 @@ function DriverCard({ driver, profile, docs, onChanged }: { driver: DriverRow; p
           <Field label="ФИО" value={fullName} />
           <Field label="ИИН" value={profile?.iin} />
           <Field label="Дата рождения" value={profile?.date_of_birth} />
-<<<<<<< HEAD
           <Field
             label="Пол"
             value={
@@ -715,9 +533,6 @@ function DriverCard({ driver, profile, docs, onChanged }: { driver: DriverRow; p
                   : null
             }
           />
-=======
-          <Field label="Пол" value={profile?.gender === "female" ? "Женский" : profile?.gender === "male" ? "Мужской" : null} />
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           <Field label="Госномер" value={driver.vehicle_plate} />
           <Field label="Страна" value={driver.vehicle_country} />
           <Field label="Детское кресло" value={driver.child_seat ? "Да" : "Нет"} />
@@ -725,7 +540,6 @@ function DriverCard({ driver, profile, docs, onChanged }: { driver: DriverRow; p
       </div>
 
       <div className="space-y-2">
-<<<<<<< HEAD
         {(["identity", "license", "vehicle_registration", "vehicle_documents"] as const).map(
           (kind) => {
             const doc = docs.find((d) => d.kind === kind);
@@ -740,18 +554,11 @@ function DriverCard({ driver, profile, docs, onChanged }: { driver: DriverRow; p
             );
           },
         )}
-=======
-        {(["identity", "license", "vehicle_registration", "vehicle_documents"] as const).map((kind) => {
-          const doc = docs.find((d) => d.kind === kind);
-          return <DocReviewRow key={kind} kind={kind} doc={doc} signedUrl={doc ? signed[doc.file_path] : undefined} onChanged={onChanged} />;
-        })}
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       </div>
     </Card>
   );
 }
 
-<<<<<<< HEAD
 function DocReviewRow({
   kind,
   doc,
@@ -763,16 +570,12 @@ function DocReviewRow({
   signedUrl?: string;
   onChanged: () => void;
 }) {
-=======
-function DocReviewRow({ kind, doc, signedUrl, onChanged }: { kind: string; doc?: DocRow; signedUrl?: string; onChanged: () => void }) {
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
   async function decide(decision: "approve" | "reject") {
     if (!doc) return;
-<<<<<<< HEAD
     if (decision === "reject" && comment.trim().length < 2) {
       toast.error("Добавьте комментарий");
       return;
@@ -803,24 +606,6 @@ function DocReviewRow({ kind, doc, signedUrl, onChanged }: { kind: string; doc?:
   ) : (
     <Clock className="h-4 w-4 text-muted-foreground" />
   );
-=======
-    if (decision === "reject" && comment.trim().length < 2) { toast.error("Добавьте комментарий"); return; }
-    setBusy(decision);
-    const { error } = await supabase.rpc("admin_review_document", {
-      _doc_id: doc.id, _decision: decision, _comment: comment.trim(),
-    });
-    setBusy(null);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Решение сохранено");
-    setComment(""); setOpen(false);
-    onChanged();
-  }
-
-  const statusIcon = !doc ? <Clock className="h-4 w-4 text-muted-foreground" />
-    : doc.status === "approved" ? <CheckCircle2 className="h-4 w-4 text-success" />
-    : doc.status === "rejected" ? <XCircle className="h-4 w-4 text-destructive" />
-    : <Clock className="h-4 w-4 text-muted-foreground" />;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   return (
     <div className="rounded-lg border border-border p-3">
@@ -830,7 +615,6 @@ function DocReviewRow({ kind, doc, signedUrl, onChanged }: { kind: string; doc?:
           <div className="min-w-0">
             <div className="truncate text-sm font-medium">{DOC_LABELS[kind] ?? kind}</div>
             <div className="text-xs text-muted-foreground">
-<<<<<<< HEAD
               {doc
                 ? doc.status === "approved"
                   ? "Одобрено"
@@ -838,35 +622,24 @@ function DocReviewRow({ kind, doc, signedUrl, onChanged }: { kind: string; doc?:
                     ? "Отклонено"
                     : "На проверке"
                 : "Не загружен"}
-=======
-              {doc ? (doc.status === "approved" ? "Одобрено" : doc.status === "rejected" ? "Отклонено" : "На проверке") : "Не загружен"}
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {signedUrl && (
-<<<<<<< HEAD
             <a
               href={signedUrl}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
             >
-=======
-            <a href={signedUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               <FileText className="h-3.5 w-3.5" /> Открыть <ExternalLink className="h-3 w-3" />
             </a>
           )}
           {doc && doc.status !== "approved" && (
-<<<<<<< HEAD
             <Button size="sm" variant="outline" onClick={() => setOpen((s) => !s)}>
               Решение
             </Button>
-=======
-            <Button size="sm" variant="outline" onClick={() => setOpen((s) => !s)}>Решение</Button>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           )}
         </div>
       </div>
@@ -875,7 +648,6 @@ function DocReviewRow({ kind, doc, signedUrl, onChanged }: { kind: string; doc?:
       )}
       {open && doc && (
         <div className="mt-2 space-y-2">
-<<<<<<< HEAD
           <Textarea
             placeholder="Комментарий (обязателен при отклонении)"
             rows={2}
@@ -883,24 +655,16 @@ function DocReviewRow({ kind, doc, signedUrl, onChanged }: { kind: string; doc?:
             value={comment}
             onChange={(e) => setComment(e.target.value)}
           />
-=======
-          <Textarea placeholder="Комментарий (обязателен при отклонении)" rows={2} maxLength={500}
-            value={comment} onChange={(e) => setComment(e.target.value)} />
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           <div className="flex gap-2">
             <Button size="sm" onClick={() => decide("approve")} disabled={busy !== null}>
               {busy === "approve" && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}Одобрить
             </Button>
-<<<<<<< HEAD
             <Button
               size="sm"
               variant="destructive"
               onClick={() => decide("reject")}
               disabled={busy !== null}
             >
-=======
-            <Button size="sm" variant="destructive" onClick={() => decide("reject")} disabled={busy !== null}>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               {busy === "reject" && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}Отклонить
             </Button>
           </div>
@@ -925,7 +689,6 @@ function Photo({ label, url }: { label: string; url?: string }) {
       <div className="text-xs text-muted-foreground">{label}</div>
       {url ? (
         <a href={url} target="_blank" rel="noreferrer" className="block">
-<<<<<<< HEAD
           <img
             src={url}
             alt={label}
@@ -936,12 +699,6 @@ function Photo({ label, url }: { label: string; url?: string }) {
         <div className="grid aspect-square w-40 place-items-center rounded-md border border-dashed border-border text-xs text-muted-foreground">
           —
         </div>
-=======
-          <img src={url} alt={label} className="aspect-square w-40 rounded-md border border-border object-cover" />
-        </a>
-      ) : (
-        <div className="grid aspect-square w-40 place-items-center rounded-md border border-dashed border-border text-xs text-muted-foreground">—</div>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       )}
     </div>
   );

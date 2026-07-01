@@ -12,14 +12,10 @@ function SettingsLayout() {
   if (!isRoot) {
     return (
       <div className="space-y-4">
-<<<<<<< HEAD
         <Link
           to="/settings"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-=======
-        <Link to="/settings" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           <ArrowLeft className="h-4 w-4" /> Настройки
         </Link>
         <Outlet />
@@ -30,7 +26,6 @@ function SettingsLayout() {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Настройки</h1>
       <Card className="divide-y overflow-hidden">
-<<<<<<< HEAD
         <SettingsItem
           to="/settings/addresses"
           icon={<MapPin className="h-5 w-5 text-primary" />}
@@ -59,19 +54,11 @@ function SettingsLayout() {
           title="О приложении"
           subtitle="Партнёры и информация"
         />
-=======
-        <SettingsItem to="/settings/addresses" icon={<MapPin className="h-5 w-5 text-primary" />} title="Сохранённые адреса" subtitle="Дом, работа и другие места" />
-        <SettingsItem to="/settings/support" icon={<LifeBuoy className="h-5 w-5 text-primary" />} title="Техподдержка" subtitle="Связаться с нами" />
-        <SettingsItem to="/settings/privacy" icon={<Shield className="h-5 w-5 text-primary" />} title="Политика конфиденциальности" />
-        <SettingsItem to="/settings/terms" icon={<FileText className="h-5 w-5 text-primary" />} title="Условия использования" />
-        <SettingsItem to="/settings/about" icon={<Info className="h-5 w-5 text-primary" />} title="О приложении" subtitle="Партнёры и информация" />
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       </Card>
     </div>
   );
 }
 
-<<<<<<< HEAD
 function SettingsItem({
   to,
   icon,
@@ -83,9 +70,6 @@ function SettingsItem({
   title: string;
   subtitle?: string;
 }) {
-=======
-function SettingsItem({ to, icon, title, subtitle }: { to: string; icon: React.ReactNode; title: string; subtitle?: string }) {
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   return (
     <Link to={to} className="flex items-center gap-3 px-4 py-3 hover:bg-accent">
       <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10">{icon}</div>

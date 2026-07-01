@@ -1,10 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-<<<<<<< HEAD
-=======
-/** Returns the public 2GIS MapGL key (safe to expose; restricted by referrer at 2GIS). */
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 export const getMap2gisKey = createServerFn({ method: "GET" }).handler(async () => {
   const key = process.env.TWOGIS_MAPGL_API_KEY;
   if (!key) return { key: null as string | null };
@@ -14,18 +10,11 @@ export const getMap2gisKey = createServerFn({ method: "GET" }).handler(async () 
 const geocodeSchema = z.object({ q: z.string().min(2).max(200) });
 
 export const geocode2gis = createServerFn({ method: "POST" })
-<<<<<<< HEAD
   .validator((d: unknown) => geocodeSchema.parse(d))
   .handler(async ({ data }) => {
     const key = process.env.TWOGIS_MAPGL_API_KEY;
     if (!key)
       return { items: [] as Array<{ name: string; address: string; lat: number; lng: number }> };
-=======
-  .inputValidator((d: unknown) => geocodeSchema.parse(d))
-  .handler(async ({ data }) => {
-    const key = process.env.TWOGIS_MAPGL_API_KEY;
-    if (!key) return { items: [] as Array<{ name: string; address: string; lat: number; lng: number }> };
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     const url = new URL("https://catalog.api.2gis.com/3.0/items/geocode");
     url.searchParams.set("q", data.q);
     url.searchParams.set("fields", "items.point,items.full_address_name");
@@ -35,7 +24,6 @@ export const geocode2gis = createServerFn({ method: "POST" })
       const res = await fetch(url.toString());
       if (!res.ok) return { items: [] };
       const json = (await res.json()) as {
-<<<<<<< HEAD
         result?: {
           items?: Array<{
             name?: string;
@@ -44,9 +32,6 @@ export const geocode2gis = createServerFn({ method: "POST" })
             point?: { lat: number; lon: number };
           }>;
         };
-=======
-        result?: { items?: Array<{ name?: string; full_address_name?: string; address_name?: string; point?: { lat: number; lon: number } }> };
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       };
       const items = (json.result?.items ?? [])
         .filter((i) => i.point)
@@ -63,11 +48,7 @@ export const geocode2gis = createServerFn({ method: "POST" })
   });
 
 export const reverseGeocode2gis = createServerFn({ method: "POST" })
-<<<<<<< HEAD
   .validator((d: unknown) => z.object({ lat: z.number(), lng: z.number() }).parse(d))
-=======
-  .inputValidator((d: unknown) => z.object({ lat: z.number(), lng: z.number() }).parse(d))
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   .handler(async ({ data }) => {
     const key = process.env.TWOGIS_MAPGL_API_KEY;
     if (!key) return { address: null as string | null };
@@ -94,14 +75,8 @@ const routeSchema = z.object({
   dropoff: z.object({ lat: z.number(), lng: z.number() }),
 });
 
-<<<<<<< HEAD
 type RoutePoint = [number, number];
 
-=======
-type RoutePoint = [number, number]; // [lng, lat]
-
-/** Parses a WKT "LINESTRING(lon lat, lon lat, ...)" into [lng,lat] pairs. */
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 function parseLineString(wkt: string): RoutePoint[] {
   const m = wkt.match(/LINESTRING\s*\(([^)]+)\)/i);
   if (!m) return [];
@@ -112,19 +87,12 @@ function parseLineString(wkt: string): RoutePoint[] {
     .map((p) => [p[0], p[1]] as RoutePoint);
 }
 
-<<<<<<< HEAD
 export const getRoute2gis = createServerFn({ method: "POST" })
   .validator((d: unknown) => routeSchema.parse(d))
-=======
-/** Optimal driving route between two points via 2GIS Routing API. */
-export const getRoute2gis = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => routeSchema.parse(d))
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   .handler(async ({ data }) => {
     const key = process.env.TWOGIS_MAPGL_API_KEY;
     if (!key) return { coordinates: [] as RoutePoint[], distance_m: 0, duration_s: 0 };
     try {
-<<<<<<< HEAD
       const res = await fetch(
         `https://routing.api.2gis.com/routing/7.0.0/global?key=${encodeURIComponent(key)}`,
         {
@@ -142,22 +110,6 @@ export const getRoute2gis = createServerFn({ method: "POST" })
           }),
         },
       );
-=======
-      const res = await fetch(`https://routing.api.2gis.com/routing/7.0.0/global?key=${encodeURIComponent(key)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          points: [
-            { type: "stop", lat: data.pickup.lat, lon: data.pickup.lng },
-            { type: "stop", lat: data.dropoff.lat, lon: data.dropoff.lng },
-          ],
-          transport: "driving",
-          route_mode: "fastest",
-          traffic_mode: "jam",
-          output: "detailed",
-        }),
-      });
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       if (!res.ok) return { coordinates: [], distance_m: 0, duration_s: 0 };
       const json = (await res.json()) as {
         result?: Array<{
@@ -173,7 +125,6 @@ export const getRoute2gis = createServerFn({ method: "POST" })
         for (const g of mv.outcoming_path?.geometry ?? []) {
           if (g.selection) {
             const pts = parseLineString(g.selection);
-<<<<<<< HEAD
             const start =
               coords.length &&
               pts.length &&
@@ -181,10 +132,6 @@ export const getRoute2gis = createServerFn({ method: "POST" })
               coords[coords.length - 1][1] === pts[0][1]
                 ? 1
                 : 0;
-=======
-            // avoid duplicating join points
-            const start = coords.length && pts.length && coords[coords.length - 1][0] === pts[0][0] && coords[coords.length - 1][1] === pts[0][1] ? 1 : 0;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             for (let i = start; i < pts.length; i++) coords.push(pts[i]);
           }
         }
@@ -198,7 +145,3 @@ export const getRoute2gis = createServerFn({ method: "POST" })
       return { coordinates: [], distance_m: 0, duration_s: 0 };
     }
   });
-<<<<<<< HEAD
-=======
-
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231

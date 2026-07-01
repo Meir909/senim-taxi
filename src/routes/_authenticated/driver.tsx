@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-<<<<<<< HEAD
 import {
   Dialog,
   DialogContent,
@@ -23,10 +22,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-=======
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 import { toast } from "sonner";
 import { Loader2, Navigation, X } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
@@ -38,7 +33,6 @@ import { StarRating } from "@/components/StarRating";
 type Driver = Database["public"]["Tables"]["drivers"]["Row"];
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Offer = Database["public"]["Tables"]["ride_offers"]["Row"] & {
-<<<<<<< HEAD
   rides?: Pick<
     Ride,
     | "pickup_address"
@@ -49,9 +43,6 @@ type Offer = Database["public"]["Tables"]["ride_offers"]["Row"] & {
     | "tariff"
     | "child_name"
   >;
-=======
-  rides?: Pick<Ride, "pickup_address" | "dropoff_address" | "pickup_lat" | "pickup_lng" | "passenger_id">;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 };
 type PassengerInfo = { id: string; name: string; rating: number | null };
 
@@ -59,16 +50,12 @@ export const Route = createFileRoute("/_authenticated/driver")({
   component: DriverHome,
 });
 
-<<<<<<< HEAD
 const ACTIVE_STATUSES: Ride["status"][] = [
   "accepted",
   "driver_arriving",
   "driver_arrived",
   "in_progress",
 ];
-=======
-const ACTIVE_STATUSES: Ride["status"][] = ["accepted", "driver_arriving", "driver_arrived", "in_progress"];
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
 const DRIVER_STATUS: Record<string, string> = {
   online: "На линии",
@@ -98,7 +85,6 @@ function DriverHome() {
   const [rideToRate, setRideToRate] = useState<Ride | null>(null);
 
   useEffect(() => {
-<<<<<<< HEAD
     if (!user || !isDriver) {
       setLoading(false);
       return;
@@ -114,15 +100,6 @@ function DriverHome() {
     return () => {
       mounted = false;
     };
-=======
-    if (!user || !isDriver) { setLoading(false); return; }
-    let mounted = true;
-    (async () => {
-      const { data } = await supabase.from("drivers").select("*").eq("id", user.id).maybeSingle();
-      if (mounted) { setDriver(data); setLoading(false); }
-    })();
-    return () => { mounted = false; };
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }, [user, isDriver]);
 
   useEffect(() => {
@@ -131,23 +108,17 @@ function DriverHome() {
     const load = async () => {
       const { data } = await supabase
         .from("ride_offers")
-<<<<<<< HEAD
         .select(
           "*, rides(pickup_address, dropoff_address, pickup_lat, pickup_lng, passenger_id, tariff, child_name)",
         )
         .eq("driver_id", user.id)
         .eq("status", "pending")
-=======
-        .select("*, rides(pickup_address, dropoff_address, pickup_lat, pickup_lng, passenger_id)")
-        .eq("driver_id", user.id).eq("status", "pending")
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         .order("created_at", { ascending: false });
       if (mounted) setOffers((data ?? []) as Offer[]);
     };
     void load();
     const ch = supabase
       .channel(`offers-${user.id}`)
-<<<<<<< HEAD
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "ride_offers", filter: `driver_id=eq.${user.id}` },
@@ -158,11 +129,6 @@ function DriverHome() {
       mounted = false;
       supabase.removeChannel(ch);
     };
-=======
-      .on("postgres_changes", { event: "*", schema: "public", table: "ride_offers", filter: `driver_id=eq.${user.id}` }, () => void load())
-      .subscribe();
-    return () => { mounted = false; supabase.removeChannel(ch); };
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }, [user, isDriver]);
 
   useEffect(() => {
@@ -182,7 +148,6 @@ function DriverHome() {
     void load();
     const ch = supabase
       .channel(`driver-rides-${user.id}`)
-<<<<<<< HEAD
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "rides", filter: `driver_id=eq.${user.id}` },
@@ -193,32 +158,22 @@ function DriverHome() {
       mounted = false;
       supabase.removeChannel(ch);
     };
-=======
-      .on("postgres_changes", { event: "*", schema: "public", table: "rides", filter: `driver_id=eq.${user.id}` }, () => void load())
-      .subscribe();
-    return () => { mounted = false; supabase.removeChannel(ch); };
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }, [user, isDriver]);
 
   useEffect(() => {
     if (!user) return;
     const active = driver?.status === "online" || driver?.status === "on_ride";
     if (!active) return;
-<<<<<<< HEAD
     if (!navigator.geolocation) {
       toast.error("Геолокация недоступна");
       return;
     }
-=======
-    if (!navigator.geolocation) { toast.error("Геолокация недоступна"); return; }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     let cancelled = false;
     const push = (p: GeolocationPosition) => {
       if (cancelled) return;
       const next = { lat: p.coords.latitude, lng: p.coords.longitude };
       setPos(next);
       void supabase.from("driver_locations").upsert({
-<<<<<<< HEAD
         driver_id: user.id,
         lat: next.lat,
         lng: next.lng,
@@ -241,21 +196,10 @@ function DriverHome() {
       cancelled = true;
       navigator.geolocation.clearWatch(watchId);
     };
-=======
-        driver_id: user.id, lat: next.lat, lng: next.lng,
-        heading: p.coords.heading ?? null, speed: p.coords.speed ?? null,
-        accuracy: p.coords.accuracy ?? null, updated_at: new Date().toISOString(),
-      });
-      void supabase.from("drivers").update({ last_seen_at: new Date().toISOString() }).eq("id", user.id);
-    };
-    const watchId = navigator.geolocation.watchPosition(push, (e) => console.warn("geo error", e), { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
-    return () => { cancelled = true; navigator.geolocation.clearWatch(watchId); };
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }, [user, driver?.status]);
 
   async function toggleOnline(next: boolean) {
     if (!user || !driver) return;
-<<<<<<< HEAD
     if (driver.verification !== "approved") {
       toast.error("Аккаунт ещё не подтверждён");
       return;
@@ -268,30 +212,18 @@ function DriverHome() {
       .single();
     if (error) toast.error(error.message);
     else setDriver(data);
-=======
-    if (driver.verification !== "approved") { toast.error("Аккаунт ещё не подтверждён"); return; }
-    const { data, error } = await supabase.from("drivers")
-      .update({ status: next ? "online" : "offline", last_seen_at: new Date().toISOString() })
-      .eq("id", user.id).select().single();
-    if (error) toast.error(error.message); else setDriver(data);
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }
 
   async function accept(offerId: string) {
     const { error } = await supabase.rpc("accept_ride_offer", { _offer_id: offerId });
-<<<<<<< HEAD
     if (error) toast.error(error.message);
     else toast.success("Заказ принят");
-=======
-    if (error) toast.error(error.message); else toast.success("Заказ принят");
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }
   async function reject(offerId: string) {
     const { error } = await supabase.rpc("reject_ride_offer", { _offer_id: offerId });
     if (error) toast.error(error.message);
   }
 
-<<<<<<< HEAD
   async function setRideStatus(status: Ride["status"], pin?: string) {
     if (!activeRide) return;
     if (status === "in_progress") {
@@ -303,19 +235,12 @@ function DriverHome() {
       return;
     }
     const patch: Partial<Ride> = { status };
-=======
-  async function setRideStatus(status: Ride["status"]) {
-    if (!activeRide) return;
-    const patch: Partial<Ride> = { status };
-    if (status === "in_progress") patch.started_at = new Date().toISOString();
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     const { error } = await supabase.from("rides").update(patch).eq("id", activeRide.id);
     if (error) toast.error(error.message);
   }
 
   async function cancelRide() {
     if (!activeRide) return;
-<<<<<<< HEAD
     const { error } = await supabase
       .from("rides")
       .update({
@@ -323,10 +248,6 @@ function DriverHome() {
         cancelled_at: new Date().toISOString(),
         cancellation_reason: "driver_cancelled",
       })
-=======
-    const { error } = await supabase.from("rides")
-      .update({ status: "cancelled", cancelled_at: new Date().toISOString(), cancellation_reason: "driver_cancelled" })
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       .eq("id", activeRide.id);
     if (error) toast.error(error.message);
     else {
@@ -334,16 +255,12 @@ function DriverHome() {
     }
   }
 
-<<<<<<< HEAD
   if (loading)
     return (
       <div className="grid h-64 place-items-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
-=======
-  if (loading) return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   if (!isDriver || !driver) {
     if (hasDriverApplication && driverVerification === "pending") {
@@ -361,30 +278,21 @@ function DriverHome() {
         <Card className="p-6 text-center">
           <h2 className="text-lg font-semibold">Заявка отклонена</h2>
           <p className="mt-1 text-sm text-muted-foreground">Обновите данные и подайте повторно.</p>
-<<<<<<< HEAD
           <Button asChild className="mt-4">
             <Link to="/become-driver">Подать заново</Link>
           </Button>
-=======
-          <Button asChild className="mt-4"><Link to="/become-driver">Подать заново</Link></Button>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         </Card>
       );
     }
     return (
       <Card className="p-6 text-center">
         <h2 className="text-lg font-semibold">Стать водителем</h2>
-<<<<<<< HEAD
         <p className="mt-1 text-sm text-muted-foreground">
           Добавьте автомобиль, чтобы принимать заказы.
         </p>
         <Button asChild className="mt-4">
           <Link to="/become-driver">Начать</Link>
         </Button>
-=======
-        <p className="mt-1 text-sm text-muted-foreground">Добавьте автомобиль, чтобы принимать заказы.</p>
-        <Button asChild className="mt-4"><Link to="/become-driver">Начать</Link></Button>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       </Card>
     );
   }
@@ -394,7 +302,6 @@ function DriverHome() {
       <Card className="flex items-center justify-between gap-3 p-5">
         <div className="min-w-0">
           <div className="text-sm text-muted-foreground">Статус</div>
-<<<<<<< HEAD
           <div className="truncate text-lg font-semibold">
             {DRIVER_STATUS[driver.status] ?? driver.status}
           </div>
@@ -410,14 +317,6 @@ function DriverHome() {
           onCheckedChange={toggleOnline}
           disabled={!!activeRide}
         />
-=======
-          <div className="truncate text-lg font-semibold">{DRIVER_STATUS[driver.status] ?? driver.status}</div>
-          <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-            Подтверждение: <Badge variant={driver.verification === "approved" ? "default" : "secondary"}>{VERIFICATION[driver.verification] ?? driver.verification}</Badge>
-          </div>
-        </div>
-        <Switch checked={driver.status !== "offline"} onCheckedChange={toggleOnline} disabled={!!activeRide} />
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       </Card>
 
       <DriverMap activeRide={activeRide} pos={pos} />
@@ -427,11 +326,7 @@ function DriverHome() {
           ride={activeRide}
           pos={pos}
           onArrived={() => void setRideStatus("driver_arrived")}
-<<<<<<< HEAD
           onStart={(pin) => void setRideStatus("in_progress", pin)}
-=======
-          onStart={() => void setRideStatus("in_progress")}
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           onComplete={() => setCompleteOpen(true)}
           onCancel={() => void cancelRide()}
         />
@@ -439,7 +334,6 @@ function DriverHome() {
         <RatePassengerCard ride={rideToRate} onDone={() => setRideToRate(null)} />
       ) : (
         <div>
-<<<<<<< HEAD
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Входящие заказы
           </h2>
@@ -447,11 +341,6 @@ function DriverHome() {
             <Card className="p-6 text-center text-sm text-muted-foreground">
               Заказов пока нет. Оставайтесь на линии.
             </Card>
-=======
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Входящие заказы</h2>
-          {offers.length === 0 ? (
-            <Card className="p-6 text-center text-sm text-muted-foreground">Заказов пока нет. Оставайтесь на линии.</Card>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           ) : (
             <div className="space-y-2">
               {offers.map((o) => (
@@ -461,7 +350,6 @@ function DriverHome() {
                   )}
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 text-sm">
-<<<<<<< HEAD
                       <div className="truncate font-medium">
                         {o.rides?.pickup_address ||
                           `Точка A ${o.rides?.pickup_lat?.toFixed(4)}, ${o.rides?.pickup_lng?.toFixed(4)}`}
@@ -495,17 +383,6 @@ function DriverHome() {
                       >
                         Принять
                       </Button>
-=======
-                      <div className="truncate font-medium">{o.rides?.pickup_address || `Точка A ${o.rides?.pickup_lat?.toFixed(4)}, ${o.rides?.pickup_lng?.toFixed(4)}`}</div>
-                      <div className="truncate text-muted-foreground">→ {o.rides?.dropoff_address || "Точка B"}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {o.distance_km ? `${Number(o.distance_km).toFixed(2)} км` : ""} · истекает {new Date(o.expires_at).toLocaleTimeString("ru-RU")}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 gap-2">
-                      <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => reject(o.id)}>Пропустить</Button>
-                      <Button size="sm" className="flex-1 sm:flex-none" onClick={() => accept(o.id)}>Принять</Button>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                     </div>
                   </div>
                 </Card>
@@ -535,13 +412,9 @@ function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: 
   const toRad = (x: number) => (x * Math.PI) / 180;
   const dLat = toRad(b.lat - a.lat);
   const dLng = toRad(b.lng - a.lng);
-<<<<<<< HEAD
   const s =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
-=======
-  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
 }
 
@@ -549,7 +422,6 @@ function OfferPassengerBadge({ passengerId }: { passengerId: string }) {
   const [info, setInfo] = useState<{ name: string; rating: number | null } | null>(null);
   useEffect(() => {
     let mounted = true;
-<<<<<<< HEAD
     void supabase
       .from("profiles")
       .select("first_name, last_name, full_name, rating")
@@ -570,17 +442,6 @@ function OfferPassengerBadge({ passengerId }: { passengerId: string }) {
   return (
     <UserBadgeCard userId={passengerId} name={info?.name} rating={info?.rating ?? null} size="sm" />
   );
-=======
-    void supabase.from("profiles").select("first_name, last_name, full_name, rating").eq("id", passengerId).maybeSingle()
-      .then(({ data }) => {
-        if (!mounted || !data) return;
-        const name = [data.last_name, data.first_name].filter(Boolean).join(" ") || data.full_name || "Пассажир";
-        setInfo({ name, rating: data.rating != null ? Number(data.rating) : null });
-      });
-    return () => { mounted = false; };
-  }, [passengerId]);
-  return <UserBadgeCard userId={passengerId} name={info?.name} rating={info?.rating ?? null} size="sm" />;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 }
 
 function RatePassengerCard({ ride, onDone }: { ride: Ride; onDone: () => void }) {
@@ -591,45 +452,32 @@ function RatePassengerCard({ ride, onDone }: { ride: Ride; onDone: () => void })
     setBusy(true);
     const { error } = await supabase.rpc("rate_ride", { _ride_id: ride.id, _rating: rating });
     setBusy(false);
-<<<<<<< HEAD
     if (error) {
       toast.error(error.message);
       return;
     }
-=======
-    if (error) { toast.error(error.message); return; }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     toast.success("Спасибо за оценку!");
     onDone();
   }
   return (
     <Card className="p-5">
       <h3 className="text-center font-semibold">Оцените пассажира</h3>
-<<<<<<< HEAD
       <p className="mt-1 text-center text-sm text-muted-foreground">
         Это поможет другим водителям.
       </p>
-=======
-      <p className="mt-1 text-center text-sm text-muted-foreground">Это поможет другим водителям.</p>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       <div className="mt-4 flex justify-center">
         <StarRating value={rating} onChange={setRating} size={40} />
       </div>
       <Button className="mt-4 w-full" size="lg" disabled={rating < 1 || busy} onClick={submit}>
         {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Отправить
       </Button>
-<<<<<<< HEAD
       <Button variant="ghost" className="mt-2 w-full" onClick={onDone}>
         Пропустить
       </Button>
-=======
-      <Button variant="ghost" className="mt-2 w-full" onClick={onDone}>Пропустить</Button>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     </Card>
   );
 }
 
-<<<<<<< HEAD
 function DriverMap({
   activeRide,
   pos,
@@ -645,16 +493,10 @@ function DriverMap({
   } | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
-=======
-function DriverMap({ activeRide, pos }: { activeRide: Ride | null; pos: { lat: number; lng: number } | null }) {
-  const fetchRoute = useServerFn(getRoute2gis);
-  const [route, setRoute] = useState<{ coords: Array<[number, number]>; distance_m: number; duration_s: number } | null>(null);
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   const target = useMemo(() => {
     if (!activeRide) return null;
     return activeRide.status === "in_progress"
-<<<<<<< HEAD
       ? {
           lat: activeRide.dropoff_lat,
           lng: activeRide.dropoff_lng,
@@ -719,32 +561,11 @@ function DriverMap({ activeRide, pos }: { activeRide: Ride | null; pos: { lat: n
       window.clearInterval(id);
     };
   }, [fetchRoute, pos, target]);
-=======
-      ? { lat: activeRide.dropoff_lat, lng: activeRide.dropoff_lng, kind: "B" as const }
-      : { lat: activeRide.pickup_lat, lng: activeRide.pickup_lng, kind: "A" as const };
-  }, [activeRide?.id, activeRide?.status, activeRide?.pickup_lat, activeRide?.pickup_lng, activeRide?.dropoff_lat, activeRide?.dropoff_lng]);
-
-  // Refresh navigation route every 20s while driving
-  useEffect(() => {
-    if (!pos || !target) { setRoute(null); return; }
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const r = await fetchRoute({ data: { pickup: { lat: pos.lat, lng: pos.lng }, dropoff: { lat: target.lat, lng: target.lng } } });
-        if (!cancelled) setRoute({ coords: r.coordinates as Array<[number, number]>, distance_m: r.distance_m, duration_s: r.duration_s });
-      } catch { /* noop */ }
-    };
-    void load();
-    const id = window.setInterval(load, 20000);
-    return () => { cancelled = true; window.clearInterval(id); };
-  }, [fetchRoute, target?.kind, target?.lat, target?.lng, pos?.lat, pos?.lng]);
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   const markers = useMemo<MapMarker[]>(() => {
     const m: MapMarker[] = [];
     if (pos) m.push({ id: "me", lat: pos.lat, lng: pos.lng, color: "#f59e0b", label: "🚗" });
     if (activeRide) {
-<<<<<<< HEAD
       m.push({
         id: "pickup",
         lat: activeRide.pickup_lat,
@@ -759,10 +580,6 @@ function DriverMap({ activeRide, pos }: { activeRide: Ride | null; pos: { lat: n
         color: "#2563eb",
         label: "B",
       });
-=======
-      m.push({ id: "pickup", lat: activeRide.pickup_lat, lng: activeRide.pickup_lng, color: "#16a34a", label: "A" });
-      m.push({ id: "dropoff", lat: activeRide.dropoff_lat, lng: activeRide.dropoff_lng, color: "#2563eb", label: "B" });
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     }
     return m;
   }, [activeRide, pos]);
@@ -770,7 +587,6 @@ function DriverMap({ activeRide, pos }: { activeRide: Ride | null; pos: { lat: n
   const polylineColor = target?.kind === "B" ? "#2563eb" : "#16a34a";
 
   return (
-<<<<<<< HEAD
     <div className="space-y-3">
       {target && (
         <Card className="p-4">
@@ -841,24 +657,6 @@ function RouteStat({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg border border-border bg-muted/40 px-3 py-2">
       <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="mt-1 text-sm font-semibold">{value}</div>
-=======
-    <div className="relative overflow-hidden rounded-xl border">
-      <MapGL
-        className="h-64 w-full sm:h-72"
-        markers={markers}
-        center={pos ?? undefined}
-        zoom={13}
-        polyline={route?.coords && route.coords.length >= 2 ? route.coords : undefined}
-        polylineColor={polylineColor}
-        fitMarkers={!!route?.coords?.length}
-      />
-      {target && route && route.distance_m > 0 && (
-        <div className="pointer-events-none absolute left-2 top-2 rounded-md bg-background/90 px-2.5 py-1.5 text-xs font-medium shadow">
-          До точки {target.kind}: {route.distance_m < 1000 ? `${Math.round(route.distance_m)} м` : `${(route.distance_m / 1000).toFixed(1)} км`}
-          {" · "}≈ {Math.max(1, Math.round(route.duration_s / 60))} мин
-        </div>
-      )}
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     </div>
   );
 }
@@ -871,7 +669,6 @@ const STATUS_NEXT_LABEL: Partial<Record<Ride["status"], string>> = {
 };
 
 function ActiveRideCard({
-<<<<<<< HEAD
   ride,
   pos,
   onArrived,
@@ -904,25 +701,6 @@ function ActiveRideCard({
     ride.status === "in_progress"
       ? { lat: ride.dropoff_lat, lng: ride.dropoff_lng, label: "Б" as const }
       : { lat: ride.pickup_lat, lng: ride.pickup_lng, label: "А" as const };
-=======
-  ride, pos, onArrived, onStart, onComplete, onCancel,
-}: {
-  ride: Ride;
-  pos: { lat: number; lng: number } | null;
-  onArrived: () => void; onStart: () => void; onComplete: () => void; onCancel: () => void;
-}) {
-  const nextLabel = STATUS_NEXT_LABEL[ride.status];
-  const handleNext =
-    ride.status === "in_progress" ? onComplete :
-    ride.status === "driver_arrived" ? onStart : onArrived;
-
-  const distToDropoff = pos ? distanceMeters(pos, { lat: ride.dropoff_lat, lng: ride.dropoff_lng }) : null;
-  const tooFar = ride.status === "in_progress" && (distToDropoff == null || distToDropoff > 200);
-
-  const target = ride.status === "in_progress"
-    ? { lat: ride.dropoff_lat, lng: ride.dropoff_lng, label: "Б" as const }
-    : { lat: ride.pickup_lat, lng: ride.pickup_lng, label: "А" as const };
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   const navUrls = {
     twogis: `https://2gis.com/directions/points/${pos ? `${pos.lng},${pos.lat}|` : "|"}${target.lng},${target.lat}`,
@@ -938,7 +716,6 @@ function ActiveRideCard({
         <span className="shrink-0 text-xs text-muted-foreground">#{ride.id.slice(0, 8)}</span>
       </div>
       <div className="space-y-1 text-sm">
-<<<<<<< HEAD
         <div>
           <span className="text-muted-foreground">Откуда:</span>{" "}
           {ride.pickup_address || `${ride.pickup_lat.toFixed(5)}, ${ride.pickup_lng.toFixed(5)}`}
@@ -967,18 +744,10 @@ function ActiveRideCard({
             {distToDropoff < 1000
               ? `${Math.round(distToDropoff)} м`
               : `${(distToDropoff / 1000).toFixed(2)} км`}
-=======
-        <div><span className="text-muted-foreground">Откуда:</span> {ride.pickup_address || `${ride.pickup_lat.toFixed(5)}, ${ride.pickup_lng.toFixed(5)}`}</div>
-        <div><span className="text-muted-foreground">Куда:</span> {ride.dropoff_address || `${ride.dropoff_lat.toFixed(5)}, ${ride.dropoff_lng.toFixed(5)}`}</div>
-        {ride.status === "in_progress" && distToDropoff != null && (
-          <div className="text-xs text-muted-foreground">
-            До точки назначения: {distToDropoff < 1000 ? `${Math.round(distToDropoff)} м` : `${(distToDropoff / 1000).toFixed(2)} км`}
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             {tooFar && " — кнопка завершения активируется в радиусе 200 м"}
           </div>
         )}
       </div>
-<<<<<<< HEAD
       {ride.tariff === "kids" && ride.status === "driver_arrived" && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
           <div className="text-sm font-semibold">Введите PIN от мамы</div>
@@ -1004,11 +773,6 @@ function ActiveRideCard({
               (ride.tariff === "kids" && ride.status === "driver_arrived" && pin.length !== 4)
             }
           >
-=======
-      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
-        {nextLabel && (
-          <Button onClick={handleNext} disabled={ride.status === "in_progress" && tooFar}>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             {nextLabel}
           </Button>
         )}
@@ -1022,7 +786,6 @@ function ActiveRideCard({
           <DropdownMenuContent align="start">
             <DropdownMenuItem onClick={() => openNav(navUrls.twogis)}>2ГИС</DropdownMenuItem>
             <DropdownMenuItem onClick={() => openNav(navUrls.google)}>Google Maps</DropdownMenuItem>
-<<<<<<< HEAD
             <DropdownMenuItem onClick={() => openNav(navUrls.yandex)}>
               Яндекс.Карты
             </DropdownMenuItem>
@@ -1033,13 +796,6 @@ function ActiveRideCard({
             <X className="mr-1.5 h-4 w-4" />
             Отменить
           </Button>
-=======
-            <DropdownMenuItem onClick={() => openNav(navUrls.yandex)}>Яндекс.Карты</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        {ride.status !== "in_progress" && (
-          <Button variant="ghost" onClick={onCancel}><X className="mr-1.5 h-4 w-4" />Отменить</Button>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         )}
       </div>
     </Card>
@@ -1047,7 +803,6 @@ function ActiveRideCard({
 }
 
 function CompleteDialog({
-<<<<<<< HEAD
   open,
   onOpenChange,
   ride,
@@ -1073,20 +828,6 @@ function CompleteDialog({
       setDistance("");
       setDropoffPin("");
     }
-=======
-  open, onOpenChange, ride, pos, startedAt, onDone,
-}: {
-  open: boolean; onOpenChange: (v: boolean) => void;
-  ride: Ride | null; pos: { lat: number; lng: number } | null;
-  startedAt: string | null; onDone: (completed: Ride | null) => void;
-}) {
-  const [fare, setFare] = useState("");
-  const [distance, setDistance] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (open) { setFare(""); setDistance(""); }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }, [open]);
 
   if (!ride) return null;
@@ -1095,20 +836,15 @@ function CompleteDialog({
     ? Math.max(1, Math.round((Date.now() - new Date(startedAt).getTime()) / 60000))
     : 1;
 
-<<<<<<< HEAD
   const distToDropoff = pos
     ? distanceMeters(pos, { lat: ride.dropoff_lat, lng: ride.dropoff_lng })
     : null;
-=======
-  const distToDropoff = pos ? distanceMeters(pos, { lat: ride.dropoff_lat, lng: ride.dropoff_lng }) : null;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   const tooFar = distToDropoff == null || distToDropoff > 200;
 
   async function submit() {
     const fareNum = Number(fare);
     const distNum = Number(distance);
     if (!ride) return;
-<<<<<<< HEAD
     if (!pos) {
       toast.error("Не удалось определить местоположение");
       return;
@@ -1146,22 +882,6 @@ function CompleteDialog({
       toast.error(error.message);
       return;
     }
-=======
-    if (!pos) { toast.error("Не удалось определить местоположение"); return; }
-    if (tooFar) {
-      toast.error(`Подъезжайте к точке назначения${distToDropoff != null ? ` (${Math.round(distToDropoff)} м)` : ""}`);
-      return;
-    }
-    if (!fareNum || fareNum <= 0) { toast.error("Укажите стоимость"); return; }
-    if (!distNum || distNum <= 0) { toast.error("Укажите расстояние"); return; }
-    setBusy(true);
-    const { data, error } = await supabase.rpc("complete_ride", {
-      _ride_id: ride.id, _fare: fareNum, _distance: distNum, _duration: durationMin,
-      _lat: pos.lat, _lng: pos.lng,
-    });
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     toast.success(`Зачислено: ${(fareNum * 0.8).toFixed(2)}`);
     onDone((data as Ride | null) ?? ride);
   }
@@ -1169,13 +889,9 @@ function CompleteDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-<<<<<<< HEAD
         <DialogHeader>
           <DialogTitle>Завершить поездку</DialogTitle>
         </DialogHeader>
-=======
-        <DialogHeader><DialogTitle>Завершить поездку</DialogTitle></DialogHeader>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         <div className="space-y-3">
           {tooFar && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
@@ -1185,7 +901,6 @@ function CompleteDialog({
           )}
           <div>
             <Label htmlFor="fare">Стоимость (₸)</Label>
-<<<<<<< HEAD
             <Input
               id="fare"
               inputMode="decimal"
@@ -1249,19 +964,6 @@ function CompleteDialog({
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Завершить"}
           </Button>
-=======
-            <Input id="fare" inputMode="decimal" value={fare} onChange={(e) => setFare(e.target.value)} placeholder="напр. 1500" />
-          </div>
-          <div>
-            <Label htmlFor="dist">Расстояние (км)</Label>
-            <Input id="dist" inputMode="decimal" value={distance} onChange={(e) => setDistance(e.target.value)} placeholder="напр. 4.3" />
-          </div>
-          <p className="text-xs text-muted-foreground">Длительность: {durationMin} мин · Комиссия платформы: 20%</p>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>Отмена</Button>
-          <Button onClick={submit} disabled={busy || tooFar}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Завершить"}</Button>
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         </DialogFooter>
       </DialogContent>
     </Dialog>

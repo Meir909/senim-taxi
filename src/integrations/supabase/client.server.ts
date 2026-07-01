@@ -2,29 +2,17 @@
 // Server-side Supabase client with service role key - bypasses RLS.
 // Use this for admin operations in server functions and server routes only.
 // For user-authenticated queries (with RLS), use the auth middleware instead.
-<<<<<<< HEAD
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
-=======
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from './types';
-
-function isNewSupabaseApiKey(value: string): boolean {
-  return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 }
 
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
-<<<<<<< HEAD
       typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
-=======
-      typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined,
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     );
 
     if (init?.headers) {
@@ -32,7 +20,6 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
     }
 
     // New Supabase API keys are opaque strings, not bearer JWTs.
-<<<<<<< HEAD
     if (
       isNewSupabaseApiKey(supabaseKey) &&
       headers.get("Authorization") === `Bearer ${supabaseKey}`
@@ -41,13 +28,6 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
     }
 
     headers.set("apikey", supabaseKey);
-=======
-    if (isNewSupabaseApiKey(supabaseKey) && headers.get('Authorization') === `Bearer ${supabaseKey}`) {
-      headers.delete('Authorization');
-    }
-
-    headers.set('apikey', supabaseKey);
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     return fetch(input, { ...init, headers });
   };
 }
@@ -58,17 +38,10 @@ function createSupabaseAdminClient() {
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
-<<<<<<< HEAD
       ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
       ...(!SUPABASE_SERVICE_ROLE_KEY ? ["SUPABASE_SERVICE_ROLE_KEY"] : []),
     ];
     const message = `Missing Supabase environment variable(s): ${missing.join(", ")}. Connect Supabase in Lovable Cloud.`;
-=======
-      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_SERVICE_ROLE_KEY ? ['SUPABASE_SERVICE_ROLE_KEY'] : []),
-    ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }
@@ -81,11 +54,7 @@ function createSupabaseAdminClient() {
       storage: undefined,
       persistSession: false,
       autoRefreshToken: false,
-<<<<<<< HEAD
     },
-=======
-    }
->>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   });
 }
 
