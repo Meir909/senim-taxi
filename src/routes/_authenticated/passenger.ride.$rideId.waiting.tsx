@@ -44,7 +44,7 @@ function WaitingPage() {
         return;
       }
       toast.info("Поездка отменена");
-      void navigate({ to: "/passenger", replace: true });
+      window.location.replace("/passenger");
     } finally {
       setCancelling(false);
     }

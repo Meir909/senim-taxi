@@ -22,7 +22,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MapGL, type MapMarker } from "@/components/MapGL";
-import { RideSettlementCard } from "@/components/RideSettlementCard";
 import { StarRating } from "@/components/StarRating";
 import { TripSafetyCard } from "@/components/TripSafetyPanel";
 import { UserBadgeCard } from "@/components/UserBadgeCard";
@@ -118,7 +117,7 @@ function RideView() {
         return;
       }
       toast.info("Поездка отменена");
-      void navigate({ to: "/passenger", replace: true });
+      window.location.replace("/passenger");
     } finally {
       setCancelling(false);
     }
@@ -339,8 +338,6 @@ function RideView() {
           )}
         </div>
       </Card>
-
-      {ride.status !== "completed" && <RideSettlementCard ride={ride} audience="passenger" />}
 
       {ride.tariff === "kids" && (
         <ChildRidePinCard
