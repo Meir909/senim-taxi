@@ -248,7 +248,7 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- haversine, fixed: filter distance in outer query
-CREATE OR REPLACE FUNCTION public.find_nearby_drivers(_lat DOUBLE PRECISION, _lng DOUBLE PRECISION, _radius_km DOUBLE PRECISION DEFAULT 3)
+CREATE OR REPLACE FUNCTION public.find_nearby_drivers(_lat DOUBLE PRECISION, _lng DOUBLE PRECISION, _radius_km DOUBLE PRECISION DEFAULT 0)
 RETURNS TABLE (driver_id UUID, lat DOUBLE PRECISION, lng DOUBLE PRECISION, distance_km DOUBLE PRECISION)
 LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT * FROM (
@@ -265,7 +265,7 @@ LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
       AND d.verification = 'approved'
       AND dl.updated_at > now() - interval '10 minutes'
   ) x
-  WHERE x.distance_km <= _radius_km
+  WHERE _radius_km IS NULL OR _radius_km <= 0 OR x.distance_km <= _radius_km
   ORDER BY x.distance_km ASC
 $$;
 
@@ -403,7 +403,7 @@ BEGIN
 
   SELECT n.driver_id, n.distance_km
     INTO v_driver, v_distance
-  FROM public.find_nearby_drivers(v_ride.pickup_lat, v_ride.pickup_lng, 3) n
+  FROM public.find_nearby_drivers(v_ride.pickup_lat, v_ride.pickup_lng, 0) n
   WHERE NOT EXISTS (
     SELECT 1 FROM public.ride_offers o
     WHERE o.ride_id = _ride_id AND o.driver_id = n.driver_id
@@ -2608,7 +2608,7 @@ BEGIN
 
   SELECT n.driver_id, n.distance_km
     INTO v_driver, v_distance
-  FROM public.find_nearby_drivers(v_ride.pickup_lat, v_ride.pickup_lng, 3) n
+  FROM public.find_nearby_drivers(v_ride.pickup_lat, v_ride.pickup_lng, 0) n
   JOIN public.drivers d ON d.id = n.driver_id
   WHERE NOT EXISTS (
     SELECT 1

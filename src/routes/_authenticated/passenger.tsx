@@ -277,12 +277,21 @@ function PassengerHome() {
         .single();
       if (error) throw error;
       toast.success("Ищем водителя…");
-      void navigate({
+      const hardTarget = isWaitingStatus(data.status)
+        ? `/passenger/ride/${data.id}/waiting`
+        : `/passenger/ride/${data.id}`;
+      setActiveRide(data);
+      await navigate({
         to: isWaitingStatus(data.status)
           ? "/passenger/ride/$rideId/waiting"
           : "/passenger/ride/$rideId",
         params: { rideId: data.id },
       });
+      window.setTimeout(() => {
+        if (!window.location.pathname.includes(`/passenger/ride/${data.id}`)) {
+          window.location.assign(hardTarget);
+        }
+      }, 150);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось создать заказ");
     } finally {
