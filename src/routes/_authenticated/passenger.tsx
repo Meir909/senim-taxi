@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth-context";
@@ -41,6 +41,7 @@ export const Route = createFileRoute("/_authenticated/passenger")({
 function PassengerHome() {
   const { user, roles } = useAuth();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const {
     profile,
     children,
@@ -153,10 +154,18 @@ function PassengerHome() {
         replace: true,
       });
       window.setTimeout(() => {
-        if (window.location.pathname === "/passenger") {
+        if (window.location.pathname === "/passenger" || window.location.pathname === "/home") {
           window.location.assign(hardTarget);
         }
       }, 250);
+
+      const intervalId = window.setInterval(() => {
+        if (window.location.pathname === "/passenger" || window.location.pathname === "/home") {
+          window.location.replace(hardTarget);
+        }
+      }, 1200);
+
+      return () => window.clearInterval(intervalId);
     }
   }, [activeRide, navigate]);
 
@@ -315,6 +324,10 @@ function PassengerHome() {
     );
   }
   if (activeRide) {
+    const rideTarget = isWaitingStatus(activeRide.status)
+      ? `/passenger/ride/${activeRide.id}/waiting`
+      : `/passenger/ride/${activeRide.id}`;
+
     return (
       <Card className="grid min-h-[16rem] place-items-center p-6 text-center">
         <div>
@@ -322,6 +335,12 @@ function PassengerHome() {
           <div className="mt-3 text-base font-semibold">Открываем заказ</div>
           <div className="mt-1 text-sm text-muted-foreground">
             Перенаправляем на экран поиска или ожидания водителя…
+          </div>
+          <Button className="mt-4" onClick={() => window.location.assign(rideTarget)}>
+            Открыть заказ сейчас
+          </Button>
+          <div className="mt-2 text-xs text-muted-foreground">
+            Текущий путь: {pathname}
           </div>
         </div>
       </Card>
