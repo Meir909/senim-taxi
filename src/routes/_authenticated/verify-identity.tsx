@@ -5,7 +5,11 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { compareFaces } from "@/lib/verification.functions";
+<<<<<<< HEAD
 import { canBeDriverByIin, canBePassengerByIin, getAgeFromDob, parseIin } from "@/lib/iin";
+=======
+import { parseIin } from "@/lib/iin";
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 import { CameraCapture } from "@/components/CameraCapture";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,9 +70,13 @@ function VerifyIdentity() {
         setPriorReason(req?.reviewer_comment || req?.ai_reason || null);
       }
     })();
+<<<<<<< HEAD
     return () => {
       cancelled = true;
     };
+=======
+    return () => { cancelled = true; };
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }, [user]);
 
   function resetForRetry() {
@@ -91,10 +99,22 @@ function VerifyIdentity() {
         setIinRejection("ИИН не прошёл проверку контрольной суммы. Проверьте номер.");
         return;
       }
+<<<<<<< HEAD
       if (!canBeDriverByIin(parsed) && !canBePassengerByIin(parsed)) {
         setIinRejection(
           "По ИИН это взрослый мужчина. Сервис допускает только детей младше 18 лет или женщин 18+.",
         );
+=======
+      if (parsed.gender !== "female") {
+        setIinRejection("По ИИН пол — мужской. Сервис доступен только женщинам. Заявка отклонена.");
+        return;
+      }
+      const dob = new Date(parsed.dob);
+      const eighteen = new Date();
+      eighteen.setFullYear(eighteen.getFullYear() - 18);
+      if (dob > eighteen) {
+        setIinRejection("По ИИН возраст меньше 18 лет. Сервис доступен только совершеннолетним. Заявка отклонена.");
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         return;
       }
       setStep("selfie1");
@@ -152,12 +172,16 @@ function VerifyIdentity() {
 
   return (
     <div className="space-y-4">
+<<<<<<< HEAD
       <Button
         variant="ghost"
         size="sm"
         onClick={() => void navigate({ to: "/profile" })}
         className="-ml-2"
       >
+=======
+      <Button variant="ghost" size="sm" onClick={() => void navigate({ to: "/profile" })} className="-ml-2">
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         <ArrowLeft className="mr-1 h-4 w-4" /> К профилю
       </Button>
 
@@ -168,10 +192,14 @@ function VerifyIdentity() {
           </div>
           <div>
             <h1 className="text-lg font-semibold">Подтверждение личности</h1>
+<<<<<<< HEAD
             <p className="text-xs text-muted-foreground">
               ИИН + живое селфи. Дети младше 18 лет могут быть пассажирами, женщины 18+ могут
               пользоваться сервисом и подавать заявку в водители.
             </p>
+=======
+            <p className="text-xs text-muted-foreground">Сервис только для женщин 18+. ИИН + живое селфи.</p>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           </div>
         </div>
 
@@ -182,6 +210,7 @@ function VerifyIdentity() {
               {priorStatus === "rejected" ? "Заявка отклонена" : "Требуется повторная отправка"}
             </AlertTitle>
             <AlertDescription className="space-y-2">
+<<<<<<< HEAD
               <p>
                 {priorReason ||
                   "Данные не прошли проверку. Сервис доступен детям младше 18 лет и женщинам 18+. Отправьте заявку повторно с корректными данными."}
@@ -194,6 +223,13 @@ function VerifyIdentity() {
                   setFullName("");
                   resetForRetry();
                 }}
+=======
+              <p>{priorReason || "Данные не прошли проверку. Сервис доступен только женщинам 18+. Отправьте заявку повторно с корректными данными."}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => { setIin(""); setFullName(""); resetForRetry(); }}
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               >
                 Очистить и начать заново
               </Button>
@@ -205,6 +241,7 @@ function VerifyIdentity() {
           <form onSubmit={submitForm} className="mt-5 space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="full_name">ФИО как в документе</Label>
+<<<<<<< HEAD
               <Input
                 id="full_name"
                 value={fullName}
@@ -212,21 +249,33 @@ function VerifyIdentity() {
                 maxLength={100}
                 required
               />
+=======
+              <Input id="full_name" value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={100} required />
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="iin">ИИН (12 цифр)</Label>
               <Input
+<<<<<<< HEAD
                 id="iin"
                 value={iin}
                 onChange={(e) => setIin(e.target.value.replace(/\D/g, "").slice(0, 12))}
                 inputMode="numeric"
                 pattern="\d{12}"
                 required
+=======
+                id="iin" value={iin} onChange={(e) => setIin(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                inputMode="numeric" pattern="\d{12}" required
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               />
               {iin.length === 12 && (
                 <p className="text-xs text-muted-foreground">
                   {parseIin(iin)
+<<<<<<< HEAD
                     ? `ИИН валиден · дата рождения ${parseIin(iin)!.dob}, возраст ${getAgeFromDob(parseIin(iin)!.dob)}, пол ${parseIin(iin)!.gender === "male" ? "мужской" : "женский"}`
+=======
+                    ? `ИИН валиден · дата рождения ${parseIin(iin)!.dob}, пол ${parseIin(iin)!.gender === "male" ? "мужской" : "женский"}`
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                     : "Контрольная сумма не сходится"}
                 </p>
               )}
@@ -238,9 +287,13 @@ function VerifyIdentity() {
                 <AlertDescription>{iinRejection}</AlertDescription>
               </Alert>
             )}
+<<<<<<< HEAD
             <Button type="submit" className="w-full">
               {iinRejection ? "Отправить повторно" : "Далее"}
             </Button>
+=======
+            <Button type="submit" className="w-full">{iinRejection ? "Отправить повторно" : "Далее"}</Button>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           </form>
         )}
 
@@ -249,10 +302,14 @@ function VerifyIdentity() {
             <CameraCapture
               label="Шаг 1 из 2 — посмотрите прямо в камеру"
               facing="user"
+<<<<<<< HEAD
               onCapture={(d) => {
                 setSelfie1(d);
                 setStep("selfie2");
               }}
+=======
+              onCapture={(d) => { setSelfie1(d); setStep("selfie2"); }}
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             />
           </div>
         )}
@@ -278,9 +335,13 @@ function VerifyIdentity() {
         {step === "done" && (
           <div className="mt-6 space-y-3 text-center">
             <Badge variant={resultStatus === "auto_approved" ? "default" : "secondary"}>
+<<<<<<< HEAD
               {resultStatus === "auto_approved"
                 ? "Подтверждено автоматически"
                 : "Отправлено на ручную проверку"}
+=======
+              {resultStatus === "auto_approved" ? "Подтверждено автоматически" : "Отправлено на ручную проверку"}
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             </Badge>
             <p className="text-sm text-muted-foreground">
               {resultStatus === "auto_approved"
@@ -292,6 +353,7 @@ function VerifyIdentity() {
                 На главную
               </Button>
               {resultStatus !== "auto_approved" && (
+<<<<<<< HEAD
                 <Button
                   variant="outline"
                   className="w-full"
@@ -301,6 +363,9 @@ function VerifyIdentity() {
                     resetForRetry();
                   }}
                 >
+=======
+                <Button variant="outline" className="w-full" onClick={() => { setIin(""); setFullName(""); resetForRetry(); }}>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                   Отправить повторно
                 </Button>
               )}

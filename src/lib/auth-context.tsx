@@ -22,6 +22,7 @@ type AuthCtx = {
 
 const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
+<<<<<<< HEAD
 const EMPTY_ACCOUNT_STATE = {
   roles: [] as AppRole[],
   driverVerification: null as DriverVerification | null,
@@ -30,6 +31,8 @@ const EMPTY_ACCOUNT_STATE = {
   blockedReason: null as string | null,
 };
 
+=======
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
@@ -39,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [blockedReason, setBlockedReason] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+<<<<<<< HEAD
   async function loadAccount(uid: string) {
     const [{ data: roleRows }, { data: driverRow }, { data: profileRow }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
@@ -64,10 +68,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+=======
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadAccount(uid: string) {
+      const [{ data: roleRows }, { data: driverRow }, { data: profileRow }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", uid),
+        supabase.from("drivers").select("verification").eq("id", uid).maybeSingle(),
+        supabase.from("profiles").select("blocked_at, blocked_reason").eq("id", uid).maybeSingle(),
+      ]);
+      if (!mounted) return;
+      setRoles((roleRows ?? []).map((r) => r.role));
+      setHasDriverApplication(Boolean(driverRow));
+      setDriverVerification(driverRow?.verification ?? null);
+      setIsBlocked(Boolean(profileRow?.blocked_at));
+      setBlockedReason(profileRow?.blocked_reason ?? null);
+    }
+
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       if (!mounted) return;
       setSession(s);
       if (s?.user) {
+<<<<<<< HEAD
         setLoading(true);
         setTimeout(() => {
           void loadAccount(s.user.id).finally(() => {
@@ -77,6 +101,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         resetAccountState();
         setLoading(false);
+=======
+        setTimeout(() => void loadAccount(s.user.id), 0);
+      } else {
+        setRoles([]);
+        setDriverVerification(null);
+        setHasDriverApplication(false);
+        setIsBlocked(false);
+        setBlockedReason(null);
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       }
     });
 
@@ -84,11 +117,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
       setSession(data.session);
       if (data.session?.user) {
+<<<<<<< HEAD
         loadAccount(data.session.user.id).finally(() => {
           if (mounted) setLoading(false);
         });
       } else {
         resetAccountState();
+=======
+        loadAccount(data.session.user.id).finally(() => mounted && setLoading(false));
+      } else {
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         setLoading(false);
       }
     });
@@ -105,7 +143,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function refreshDriver() {
     const uid = session?.user?.id;
     if (!uid) return;
+<<<<<<< HEAD
     await loadAccount(uid);
+=======
+    const [{ data: roleRows }, { data: driverRow }, { data: profileRow }] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", uid),
+      supabase.from("drivers").select("verification").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("blocked_at, blocked_reason").eq("id", uid).maybeSingle(),
+    ]);
+    setRoles((roleRows ?? []).map((r) => r.role));
+    setHasDriverApplication(Boolean(driverRow));
+    setDriverVerification(driverRow?.verification ?? null);
+    setIsBlocked(Boolean(profileRow?.blocked_at));
+    setBlockedReason(profileRow?.blocked_reason ?? null);
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }
 
   return (
@@ -131,7 +182,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+<<<<<<< HEAD
 // eslint-disable-next-line react-refresh/only-export-components
+=======
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");

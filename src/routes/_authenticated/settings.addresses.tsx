@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+<<<<<<< HEAD
 import { useCallback, useEffect, useState } from "react";
+=======
+import { useEffect, useState } from "react";
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Card } from "@/components/ui/card";
@@ -25,13 +29,18 @@ function AddressesPage() {
   const [point, setPoint] = useState<PickedPoint | null>(null);
   const [saving, setSaving] = useState(false);
 
+<<<<<<< HEAD
   const load = useCallback(async () => {
+=======
+  async function load() {
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     if (!user) return;
     const { data, error } = await supabase
       .from("saved_addresses")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
+<<<<<<< HEAD
     if (error) {
       toast.error(error.message);
       return;
@@ -42,6 +51,13 @@ function AddressesPage() {
   useEffect(() => {
     void load();
   }, [load]);
+=======
+    if (error) { toast.error(error.message); return; }
+    setItems(data ?? []);
+  }
+
+  useEffect(() => { void load(); }, [user?.id]);
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   async function save() {
     if (!user || !point || !label.trim()) {
@@ -57,6 +73,7 @@ function AddressesPage() {
       lng: point.lng,
     });
     setSaving(false);
+<<<<<<< HEAD
     if (error) {
       toast.error(error.message);
       return;
@@ -65,15 +82,24 @@ function AddressesPage() {
     setLabel("");
     setPoint(null);
     setAdding(false);
+=======
+    if (error) { toast.error(error.message); return; }
+    toast.success("Адрес сохранён");
+    setLabel(""); setPoint(null); setAdding(false);
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     void load();
   }
 
   async function remove(id: string) {
     const { error } = await supabase.from("saved_addresses").delete().eq("id", id);
+<<<<<<< HEAD
     if (error) {
       toast.error(error.message);
       return;
     }
+=======
+    if (error) { toast.error(error.message); return; }
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     toast.success("Удалено");
     void load();
   }
@@ -106,6 +132,7 @@ function AddressesPage() {
             <Button onClick={save} disabled={saving} className="flex-1">
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Сохранить
             </Button>
+<<<<<<< HEAD
             <Button
               variant="outline"
               onClick={() => {
@@ -114,6 +141,9 @@ function AddressesPage() {
                 setPoint(null);
               }}
             >
+=======
+            <Button variant="outline" onClick={() => { setAdding(false); setLabel(""); setPoint(null); }}>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               Отмена
             </Button>
           </div>
@@ -121,6 +151,7 @@ function AddressesPage() {
       )}
 
       {items === null ? (
+<<<<<<< HEAD
         <div className="flex justify-center py-8">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
@@ -128,6 +159,12 @@ function AddressesPage() {
         <Card className="p-6 text-center text-sm text-muted-foreground">
           У вас пока нет сохранённых адресов. Добавьте дом, работу и другие частые места —
           заказывать поездки станет быстрее.
+=======
+        <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+      ) : items.length === 0 ? (
+        <Card className="p-6 text-center text-sm text-muted-foreground">
+          У вас пока нет сохранённых адресов. Добавьте дом, работу и другие частые места — заказывать поездки станет быстрее.
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         </Card>
       ) : (
         <div className="space-y-2">
@@ -140,12 +177,16 @@ function AddressesPage() {
                 <div className="truncate font-medium">{a.label}</div>
                 <div className="truncate text-xs text-muted-foreground">{a.address}</div>
               </div>
+<<<<<<< HEAD
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => void remove(a.id)}
                 aria-label="Удалить"
               >
+=======
+              <Button variant="ghost" size="icon" onClick={() => void remove(a.id)} aria-label="Удалить">
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
             </Card>

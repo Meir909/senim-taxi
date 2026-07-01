@@ -29,22 +29,30 @@ export function useRealtimeNotifications() {
       .channel(`notif-${user.id}`)
       .on(
         "postgres_changes",
+<<<<<<< HEAD
         {
           event: "INSERT",
           schema: "public",
           table: "notifications",
           filter: `user_id=eq.${user.id}`,
         },
+=======
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         (p) => {
           const n = p.new as Notif;
           if (seen.current.has(n.id)) return;
           seen.current.add(n.id);
           toast(n.title, { description: n.body ?? undefined });
+<<<<<<< HEAD
           if (
             typeof Notification !== "undefined" &&
             Notification.permission === "granted" &&
             document.hidden
           ) {
+=======
+          if (typeof Notification !== "undefined" && Notification.permission === "granted" && document.hidden) {
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             try {
               new Notification(n.title, { body: n.body ?? undefined, tag: n.id });
             } catch {

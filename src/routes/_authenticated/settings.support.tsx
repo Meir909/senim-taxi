@@ -20,22 +20,30 @@ function SupportPage() {
             <div className="text-xs text-muted-foreground">+7 700 000 00 00</div>
           </div>
         </a>
+<<<<<<< HEAD
         <a
           href="mailto:support@senim.app"
           className="flex items-center gap-3 px-4 py-3 hover:bg-accent"
         >
+=======
+        <a href="mailto:support@senim.app" className="flex items-center gap-3 px-4 py-3 hover:bg-accent">
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           <Mail className="h-5 w-5 text-primary" />
           <div className="flex-1">
             <div className="font-medium">Электронная почта</div>
             <div className="text-xs text-muted-foreground">support@senim.app</div>
           </div>
         </a>
+<<<<<<< HEAD
         <a
           href="https://wa.me/77000000000"
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-3 px-4 py-3 hover:bg-accent"
         >
+=======
+        <a href="https://wa.me/77000000000" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-4 py-3 hover:bg-accent">
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           <MessageCircle className="h-5 w-5 text-primary" />
           <div className="flex-1">
             <div className="font-medium">WhatsApp</div>

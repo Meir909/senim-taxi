@@ -18,6 +18,11 @@ const SIZE: Record<NonNullable<Props["size"]>, string> = {
   lg: "h-20 w-20",
 };
 
+<<<<<<< HEAD
+=======
+/** Shows a user's verification selfie + name + rating. Used by passengers and
+ *  drivers to see each other on active rides / offers. */
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 export function UserBadgeCard({ userId, name, rating, subtitle, size = "md" }: Props) {
   const fetchUrl = useServerFn(getUserAvatarUrl);
   const [url, setUrl] = useState<string | null>(null);
@@ -27,6 +32,7 @@ export function UserBadgeCard({ userId, name, rating, subtitle, size = "md" }: P
     void fetchUrl({ data: { userId } }).then((r) => {
       if (mounted) setUrl(r.url);
     });
+<<<<<<< HEAD
     return () => {
       mounted = false;
     };
@@ -39,11 +45,18 @@ export function UserBadgeCard({ userId, name, rating, subtitle, size = "md" }: P
       .map((s) => s[0]?.toUpperCase())
       .slice(0, 2)
       .join("") || "?";
+=======
+    return () => { mounted = false; };
+  }, [userId, fetchUrl]);
+
+  const initials = (name ?? "?").trim().split(/\s+/).map((s) => s[0]?.toUpperCase()).slice(0, 2).join("") || "?";
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   return (
     <div className="flex items-center gap-3">
       <Avatar className={SIZE[size]}>
         {url ? <AvatarImage src={url} alt={name ?? "Аватар"} /> : null}
+<<<<<<< HEAD
         <AvatarFallback>
           <UserIcon className="h-5 w-5 text-muted-foreground" />
         </AvatarFallback>
@@ -51,6 +64,11 @@ export function UserBadgeCard({ userId, name, rating, subtitle, size = "md" }: P
           <AvatarFallback className="bg-primary/10 text-primary font-semibold">
             {initials}
           </AvatarFallback>
+=======
+        <AvatarFallback><UserIcon className="h-5 w-5 text-muted-foreground" /></AvatarFallback>
+        {!url && initials !== "?" && (
+          <AvatarFallback className="bg-primary/10 text-primary font-semibold">{initials}</AvatarFallback>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         )}
       </Avatar>
       <div className="min-w-0">

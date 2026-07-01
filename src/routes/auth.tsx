@@ -5,7 +5,11 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/lib/auth-context";
+<<<<<<< HEAD
 import { canBeDriverByIin, canBePassengerByIin, getAgeFromDob, parseIin } from "@/lib/iin";
+=======
+import { parseIin } from "@/lib/iin";
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 import { compareFaces } from "@/lib/verification.functions";
 import { CameraCapture } from "@/components/CameraCapture";
 import { Button } from "@/components/ui/button";
@@ -15,7 +19,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Loader2, Info, AlertTriangle, ShieldCheck } from "lucide-react";
+<<<<<<< HEAD
 const APP_LOGO_SRC = "/icon-512.png";
+=======
+import logoAsset from "@/assets/logo.png.asset.json";
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Вход — Senim" }] }),
@@ -25,10 +33,14 @@ export const Route = createFileRoute("/auth")({
 const emailSchema = z.string().trim().email("Неверный email").max(255);
 const passwordSchema = z.string().min(6, "Минимум 6 символов").max(72);
 const nameSchema = z.string().trim().min(1, "Обязательное поле").max(60);
+<<<<<<< HEAD
 const phoneSchema = z
   .string()
   .trim()
   .regex(/^\+?[0-9\s\-()]{7,20}$/, "Неверный телефон");
+=======
+const phoneSchema = z.string().trim().regex(/^\+?[0-9\s\-()]{7,20}$/, "Неверный телефон");
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
 function formatKzPhone(input: string): string {
   // Keep only digits; auto-prepend "+" for KZ numbers (starting with 7 or 8→7).
@@ -69,8 +81,11 @@ function AuthPage() {
 
   const iinInfo = useMemo(() => (iin.length === 12 ? parseIin(iin) : null), [iin]);
   const genderRu = iinInfo ? (iinInfo.gender === "female" ? "Женский" : "Мужской") : "";
+<<<<<<< HEAD
   const age = iinInfo ? getAgeFromDob(iinInfo.dob) : null;
   const canRegister = iinInfo ? canBeDriverByIin(iinInfo) || canBePassengerByIin(iinInfo) : false;
+=======
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   async function handleSignIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -85,9 +100,13 @@ function AuthPage() {
       void navigate({ to: "/home", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось войти");
+<<<<<<< HEAD
     } finally {
       setBusy(false);
     }
+=======
+    } finally { setBusy(false); }
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }
 
   async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
@@ -101,15 +120,28 @@ function AuthPage() {
       if (!/^\d{12}$/.test(iin)) throw new Error("ИИН — 12 цифр");
       const info = parseIin(iin);
       if (!info) throw new Error("ИИН не прошёл проверку контрольной суммы");
+<<<<<<< HEAD
       if (!canBeDriverByIin(info) && !canBePassengerByIin(info)) {
         throw new Error("Регистрация доступна только детям младше 18 лет или женщинам 18+.");
       }
+=======
+      if (info.gender !== "female") {
+        throw new Error("Приложение предназначено только для женщин и детей.");
+      }
+      const dob = new Date(info.dob);
+      const eighteen = new Date(); eighteen.setFullYear(eighteen.getFullYear() - 18);
+      if (dob > eighteen) throw new Error("Регистрация доступна с 18 лет");
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
       setBusy(true);
       const fullName = [ln, fn, patronymic.trim()].filter(Boolean).join(" ");
       const { data, error } = await supabase.auth.signUp({
+<<<<<<< HEAD
         email: em,
         password: pw,
+=======
+        email: em, password: pw,
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         options: {
           emailRedirectTo: `${window.location.origin}/home`,
           data: {
@@ -134,9 +166,13 @@ function AuthPage() {
       if (!data.session) {
         const signIn = await supabase.auth.signInWithPassword({ email: em, password: pw });
         if (!signIn.data.session) {
+<<<<<<< HEAD
           toast.success(
             "Аккаунт создан. Проверьте почту, затем войдите для подтверждения личности.",
           );
+=======
+          toast.success("Аккаунт создан. Проверьте почту, затем войдите для подтверждения личности.");
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           setBusy(false);
           return;
         }
@@ -146,17 +182,25 @@ function AuthPage() {
       setSignupStep("selfie1");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось зарегистрироваться");
+<<<<<<< HEAD
     } finally {
       setBusy(false);
     }
+=======
+    } finally { setBusy(false); }
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }
 
   async function uploadDataUrl(uid: string, dataUrl: string, name: string): Promise<string> {
     const blob = await (await fetch(dataUrl)).blob();
     const path = `${uid}/${name}-${Date.now()}.jpg`;
     const { error } = await supabase.storage.from("verification").upload(path, blob, {
+<<<<<<< HEAD
       contentType: "image/jpeg",
       upsert: true,
+=======
+      contentType: "image/jpeg", upsert: true,
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     });
     if (error) throw error;
     return path;
@@ -197,9 +241,13 @@ function AuthPage() {
   async function handleGoogle() {
     try {
       setBusy(true);
+<<<<<<< HEAD
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
+=======
+      const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       if (result.error) throw new Error(result.error.message ?? "Ошибка входа через Google");
       if (!result.redirected) void navigate({ to: "/home", replace: true });
     } catch (err) {
@@ -219,9 +267,13 @@ function AuthPage() {
               </div>
               <div>
                 <h1 className="text-lg font-semibold">Подтверждение личности</h1>
+<<<<<<< HEAD
                 <p className="text-xs text-muted-foreground">
                   Сделайте два живых селфи для завершения регистрации.
                 </p>
+=======
+                <p className="text-xs text-muted-foreground">Сделайте два живых селфи для завершения регистрации.</p>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               </div>
             </div>
 
@@ -230,10 +282,14 @@ function AuthPage() {
                 <CameraCapture
                   label="Шаг 1 из 2 — посмотрите прямо в камеру"
                   facing="user"
+<<<<<<< HEAD
                   onCapture={(d) => {
                     setSelfie1(d);
                     setSignupStep("selfie2");
                   }}
+=======
+                  onCapture={(d) => { setSelfie1(d); setSignupStep("selfie2"); }}
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                 />
               </div>
             )}
@@ -263,7 +319,11 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2">
+<<<<<<< HEAD
           <img src={APP_LOGO_SRC} alt="Senim" className="h-10 w-10 rounded-lg object-cover" />
+=======
+          <img src={logoAsset.url} alt="Senim" className="h-10 w-10 rounded-lg object-cover" />
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           <span className="text-xl font-semibold">Senim</span>
         </div>
         {blockedNotice && (
@@ -281,6 +341,7 @@ function AuthPage() {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4 pt-2">
                 <Field label="Email" name="email" type="email" required autoComplete="email" />
+<<<<<<< HEAD
                 <Field
                   label="Пароль"
                   name="password"
@@ -288,6 +349,9 @@ function AuthPage() {
                   required
                   autoComplete="current-password"
                 />
+=======
+                <Field label="Пароль" name="password" type="password" required autoComplete="current-password" />
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                 <Button type="submit" className="w-full" disabled={busy}>
                   {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Войти
                 </Button>
@@ -298,6 +362,7 @@ function AuthPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="last_name">Фамилия</Label>
+<<<<<<< HEAD
                     <Input
                       id="last_name"
                       value={lastName}
@@ -317,10 +382,18 @@ function AuthPage() {
                       required
                       autoComplete="given-name"
                     />
+=======
+                    <Input id="last_name" value={lastName} onChange={(e) => setLastName(e.target.value)} maxLength={60} required autoComplete="family-name" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="first_name">Имя</Label>
+                    <Input id="first_name" value={firstName} onChange={(e) => setFirstName(e.target.value)} maxLength={60} required autoComplete="given-name" />
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="patronymic">Отчество (необязательно)</Label>
+<<<<<<< HEAD
                   <Input
                     id="patronymic"
                     value={patronymic}
@@ -328,6 +401,9 @@ function AuthPage() {
                     maxLength={60}
                     autoComplete="additional-name"
                   />
+=======
+                  <Input id="patronymic" value={patronymic} onChange={(e) => setPatronymic(e.target.value)} maxLength={60} autoComplete="additional-name" />
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="iin_signup">ИИН</Label>
@@ -340,18 +416,27 @@ function AuthPage() {
                     required
                   />
                 </div>
+<<<<<<< HEAD
                 {iin.length === 12 &&
                   (iinInfo ? (
                     <div className="grid grid-cols-3 gap-3">
                       <ReadOnly label="Дата рождения" value={iinInfo.dob} />
                       <ReadOnly label="Пол" value={genderRu} />
                       <ReadOnly label="Возраст" value={age != null ? String(age) : "—"} />
+=======
+                {iin.length === 12 && (
+                  iinInfo ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <ReadOnly label="Дата рождения" value={iinInfo.dob} />
+                      <ReadOnly label="Пол" value={genderRu} />
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                     </div>
                   ) : (
                     <Alert variant="destructive">
                       <AlertTriangle className="h-4 w-4" />
                       <AlertDescription>ИИН не прошёл проверку контрольной суммы.</AlertDescription>
                     </Alert>
+<<<<<<< HEAD
                   ))}
                 {iinInfo && (
                   <Alert variant="destructive">
@@ -363,10 +448,19 @@ function AuthPage() {
                           ? "По ИИН этот пользователь может пользоваться сервисом как пассажир."
                           : "По ИИН регистрация недоступна: взрослые мужчины не допускаются к сервису."}
                     </AlertDescription>
+=======
+                  )
+                )}
+                {iinInfo && iinInfo.gender !== "female" && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>Приложение предназначено только для женщин и детей.</AlertDescription>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                   </Alert>
                 )}
                 <div className="space-y-1.5">
                   <Label htmlFor="phone_signup">Телефон</Label>
+<<<<<<< HEAD
                   <Input
                     id="phone_signup"
                     type="tel"
@@ -411,6 +505,20 @@ function AuthPage() {
                   className="w-full"
                   disabled={busy || (iinInfo ? !canRegister : false)}
                 >
+=======
+                  <Input id="phone_signup" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(formatKzPhone(e.target.value))} placeholder="+7 700 000 00 00" maxLength={20} required autoComplete="tel" />
+
+                </div>
+                <Field label="Email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+                <Field label="Пароль" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
+                <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <p>
+                    Сразу после нажатия кнопки нужно сделать <span className="font-medium text-foreground">два живых селфи</span> для подтверждения личности. Стать водителем можно позже в профиле.
+                  </p>
+                </div>
+                <Button type="submit" className="w-full" disabled={busy || (iinInfo?.gender !== undefined && iinInfo.gender !== "female")}>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                   {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Продолжить
                 </Button>
               </form>
@@ -420,6 +528,7 @@ function AuthPage() {
           <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
             <div className="h-px flex-1 bg-border" /> или <div className="h-px flex-1 bg-border" />
           </div>
+<<<<<<< HEAD
           <Button
             type="button"
             variant="outline"
@@ -427,6 +536,9 @@ function AuthPage() {
             disabled={busy}
             onClick={handleGoogle}
           >
+=======
+          <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={handleGoogle}>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             Продолжить с Google
           </Button>
         </div>
@@ -435,10 +547,14 @@ function AuthPage() {
   );
 }
 
+<<<<<<< HEAD
 function Field({
   label,
   ...props
 }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+=======
+function Field({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   return (
     <div className="space-y-1.5">
       <Label htmlFor={props.name}>{label}</Label>

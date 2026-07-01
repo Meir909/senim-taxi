@@ -16,6 +16,7 @@ type Props = {
   showMyLocation?: boolean;
 };
 
+<<<<<<< HEAD
 export function AddressPicker({
   label,
   color = "#2563eb",
@@ -29,6 +30,13 @@ export function AddressPicker({
   const [results, setResults] = useState<
     Array<{ name: string; address: string; lat: number; lng: number }>
   >([]);
+=======
+export function AddressPicker({ label, color = "#2563eb", initialPoint, onChange, showMyLocation }: Props) {
+  const geocode = useServerFn(geocode2gis);
+  const reverse = useServerFn(reverseGeocode2gis);
+  const [query, setQuery] = useState(initialPoint?.address ?? "");
+  const [results, setResults] = useState<Array<{ name: string; address: string; lat: number; lng: number }>>([]);
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   const [open, setOpen] = useState(false);
   const [searching, setSearching] = useState(false);
   const [point, setPoint] = useState<PickedPoint | null>(initialPoint ?? null);
@@ -66,11 +74,15 @@ export function AddressPicker({
 
   async function pickFromMap(coords: { lat: number; lng: number }) {
     const res = await reverse({ data: coords });
+<<<<<<< HEAD
     pick({
       lat: coords.lat,
       lng: coords.lng,
       address: res.address ?? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`,
     });
+=======
+    pick({ lat: coords.lat, lng: coords.lng, address: res.address ?? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` });
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   }
 
   function useMyLocation() {
@@ -104,9 +116,13 @@ export function AddressPicker({
           className="pl-9 pr-9"
           maxLength={250}
         />
+<<<<<<< HEAD
         {searching && (
           <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
         )}
+=======
+        {searching && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />}
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         {!searching && query && (
           <button
             type="button"
@@ -132,9 +148,13 @@ export function AddressPicker({
                 className="block w-full px-3 py-2 text-left text-sm hover:bg-accent"
               >
                 <div className="font-medium">{r.name || r.address}</div>
+<<<<<<< HEAD
                 {r.address && r.name && (
                   <div className="text-xs text-muted-foreground">{r.address}</div>
                 )}
+=======
+                {r.address && r.name && <div className="text-xs text-muted-foreground">{r.address}</div>}
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               </button>
             ))}
           </div>
@@ -160,9 +180,13 @@ export function AddressPicker({
             onClick={pickFromMap}
             fitMarkers={false}
           />
+<<<<<<< HEAD
           <p className="px-3 py-2 text-xs text-muted-foreground">
             Коснитесь карты, чтобы выбрать точку.
           </p>
+=======
+          <p className="px-3 py-2 text-xs text-muted-foreground">Коснитесь карты, чтобы выбрать точку.</p>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         </div>
       )}
     </div>

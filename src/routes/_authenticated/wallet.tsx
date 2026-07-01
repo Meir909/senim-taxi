@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+<<<<<<< HEAD
 import { useCallback, useEffect, useState } from "react";
+=======
+import { useEffect, useState } from "react";
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Card } from "@/components/ui/card";
@@ -50,6 +54,7 @@ function WalletPage() {
   const [card, setCard] = useState<string>("");
   const [holder, setHolder] = useState<string>("");
 
+<<<<<<< HEAD
   const refresh = useCallback(async () => {
     if (!user) return;
     const [{ data: w }, { data: t }] = await Promise.all([
@@ -60,10 +65,18 @@ function WalletPage() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(30),
+=======
+  async function refresh() {
+    if (!user) return;
+    const [{ data: w }, { data: t }] = await Promise.all([
+      supabase.from("wallets").select("*").eq("user_id", user.id).maybeSingle(),
+      supabase.from("transactions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
     ]);
     setWallet(w);
     setTxs(t ?? []);
     setLoading(false);
+<<<<<<< HEAD
   }, [user]);
 
   useEffect(() => {
@@ -76,6 +89,13 @@ function WalletPage() {
 
     void refresh();
   }, [user, refresh]);
+=======
+  }
+  useEffect(() => {
+    void refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 
   const last4 = card.replace(/\D/g, "").slice(-4);
   const amt = Number(amount);
@@ -131,6 +151,10 @@ function WalletPage() {
     }
   }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   function formatCard(v: string) {
     const digits = v.replace(/\D/g, "").slice(0, 16);
     return digits.replace(/(.{4})/g, "$1 ").trim();
@@ -149,6 +173,10 @@ function WalletPage() {
 
   return (
     <div className="space-y-4">
+<<<<<<< HEAD
+=======
+      {/* Balance card */}
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/70 p-5 text-primary-foreground shadow-lg">
         <div className="flex items-center gap-2 text-sm opacity-90">
           <WalletIcon className="h-4 w-4" /> Баланс кошелька
@@ -159,6 +187,10 @@ function WalletPage() {
         )}
       </Card>
 
+<<<<<<< HEAD
+=======
+      {/* Tabs */}
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       <div className="grid grid-cols-2 gap-2">
         <Button
           variant={tab === "topup" ? "default" : "outline"}
@@ -182,9 +214,13 @@ function WalletPage() {
       {tab === "topup" && (
         <Card className="p-5">
           <h2 className="font-semibold">Пополнение картой</h2>
+<<<<<<< HEAD
           <p className="mt-1 text-xs text-muted-foreground">
             Демо-режим. Реальные деньги не списываются.
           </p>
+=======
+          <p className="mt-1 text-xs text-muted-foreground">Демо-режим. Реальные деньги не списываются.</p>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           <form onSubmit={handleTopup} className="mt-4 space-y-3">
             <div className="flex flex-wrap gap-2">
               {QUICK_AMOUNTS.map((v) => (
@@ -239,9 +275,13 @@ function WalletPage() {
           ) : (
             <>
               <h2 className="font-semibold">Вывод на карту</h2>
+<<<<<<< HEAD
               <p className="mt-1 text-xs text-muted-foreground">
                 Минимум 500 ₸. Демо — деньги не переводятся.
               </p>
+=======
+              <p className="mt-1 text-xs text-muted-foreground">Минимум 500 ₸. Демо — деньги не переводятся.</p>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               <form onSubmit={handleWithdraw} className="mt-4 space-y-3">
                 <div className="space-y-1">
                   <Label>Сумма, ₸</Label>
@@ -257,6 +297,7 @@ function WalletPage() {
                 </div>
                 <div className="space-y-1">
                   <Label>Владелец карты</Label>
+<<<<<<< HEAD
                   <Input
                     value={holder}
                     onChange={(e) => setHolder(e.target.value)}
@@ -264,6 +305,9 @@ function WalletPage() {
                     placeholder="IVAN IVANOV"
                     required
                   />
+=======
+                  <Input value={holder} onChange={(e) => setHolder(e.target.value)} maxLength={100} placeholder="IVAN IVANOV" required />
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                 </div>
                 <div className="space-y-1">
                   <Label>Номер карты</Label>
@@ -276,12 +320,16 @@ function WalletPage() {
                     required
                   />
                 </div>
+<<<<<<< HEAD
                 <Button
                   type="submit"
                   size="lg"
                   className="w-full"
                   disabled={submitting || balance < 500}
                 >
+=======
+                <Button type="submit" size="lg" className="w-full" disabled={submitting || balance < 500}>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                   {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Запросить вывод
                 </Button>
                 {balance < 500 && (
@@ -304,17 +352,25 @@ function WalletPage() {
               return (
                 <li key={t.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                   <div className="min-w-0">
+<<<<<<< HEAD
                     <div className="truncate font-medium">
                       {t.description ?? TX_TYPE[t.type] ?? t.type}
                     </div>
+=======
+                    <div className="truncate font-medium">{t.description ?? TX_TYPE[t.type] ?? t.type}</div>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                     <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                       <span>{new Date(t.created_at).toLocaleString("ru-RU")}</span>
                       <Badge variant="outline">{TX_STATUS[t.status] ?? t.status}</Badge>
                     </div>
                   </div>
+<<<<<<< HEAD
                   <div
                     className={`shrink-0 font-semibold ${v < 0 ? "text-destructive" : "text-success"}`}
                   >
+=======
+                  <div className={`shrink-0 font-semibold ${v < 0 ? "text-destructive" : "text-success"}`}>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
                     {v > 0 ? "+" : ""}
                     {fmt(v)} ₸
                   </div>

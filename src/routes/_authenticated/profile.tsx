@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+<<<<<<< HEAD
 import { PassengerChildrenCard } from "@/components/PassengerChildrenCard";
 import { TrustedContactsCard } from "@/components/TrustedContactsCard";
 import { usePassengerChildren } from "@/hooks/usePassengerChildren";
+=======
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 import { toast } from "sonner";
 import { Loader2, Star, MapPin, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
@@ -24,7 +27,11 @@ const ProfileSchema = z.object({
     .string()
     .trim()
     .max(20)
+<<<<<<< HEAD
     .regex(/^\+?[0-9 ()-]{6,20}$/, "Некорректный номер телефона"),
+=======
+    .regex(/^\+?[0-9 ()\-]{6,20}$/, "Некорректный номер телефона"),
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 });
 
 const VehicleSchema = z.object({
@@ -36,7 +43,11 @@ const VehicleSchema = z.object({
     .trim()
     .min(3, "Укажите номер")
     .max(15)
+<<<<<<< HEAD
     .regex(/^[A-Za-zА-Яа-я0-9 -]+$/, "Недопустимые символы"),
+=======
+    .regex(/^[A-Za-zА-Яа-я0-9 \-]+$/, "Недопустимые символы"),
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
 });
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -46,12 +57,15 @@ export const Route = createFileRoute("/_authenticated/profile")({
 function ProfilePage() {
   const { user, isDriver, hasDriverApplication, driverVerification, roles, signOut } = useAuth();
   const isAdmin = roles.includes("admin");
+<<<<<<< HEAD
   const {
     children,
     eligibleMother,
     loading: childrenLoading,
     reload: reloadChildren,
   } = usePassengerChildren(user?.id);
+=======
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   const [profile, setProfile] = useState<Profile | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
   const [rideCount, setRideCount] = useState<number>(0);
@@ -62,6 +76,7 @@ function ProfilePage() {
   useEffect(() => {
     if (!user) return;
     void (async () => {
+<<<<<<< HEAD
       const [{ data: p }, { data: d }, { count }, { count: drvRatings }, { count: paxRatings }] =
         await Promise.all([
           supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
@@ -84,6 +99,29 @@ function ProfilePage() {
             .eq("passenger_id", user.id)
             .not("passenger_rating", "is", null),
         ]);
+=======
+      const [{ data: p }, { data: d }, { count }, { count: drvRatings }, { count: paxRatings }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+        hasDriverApplication
+          ? supabase.from("drivers").select("*").eq("id", user.id).maybeSingle()
+          : Promise.resolve({ data: null as Driver | null }),
+        supabase
+          .from("rides")
+          .select("id", { count: "exact", head: true })
+          .eq(isDriver ? "driver_id" : "passenger_id", user.id)
+          .eq("status", "completed"),
+        supabase
+          .from("rides")
+          .select("id", { count: "exact", head: true })
+          .eq("driver_id", user.id)
+          .not("driver_rating", "is", null),
+        supabase
+          .from("rides")
+          .select("id", { count: "exact", head: true })
+          .eq("passenger_id", user.id)
+          .not("passenger_rating", "is", null),
+      ]);
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       setProfile(p);
       setDriver(d);
       setRideCount(count ?? 0);
@@ -152,11 +190,15 @@ function ProfilePage() {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
+<<<<<<< HEAD
           <StatBox
             icon={<MapPin className="h-4 w-4" />}
             label="Поездок"
             value={String(rideCount)}
           />
+=======
+          <StatBox icon={<MapPin className="h-4 w-4" />} label="Поездок" value={String(rideCount)} />
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           {isDriver ? (
             <StatBox
               icon={<Star className="h-4 w-4 fill-warning text-warning" />}
@@ -194,6 +236,7 @@ function ProfilePage() {
         </Card>
       )}
 
+<<<<<<< HEAD
       <Card className="p-5">
         <h2 className="font-semibold">Личные данные</h2>
         <form onSubmit={save} className="mt-4 space-y-3">
@@ -222,12 +265,22 @@ function ProfilePage() {
               placeholder="+7 ___ ___ __ __"
             />
           </div>
+=======
+
+      <Card className="p-5">
+        <h2 className="font-semibold">Личные данные</h2>
+        <form onSubmit={save} className="mt-4 space-y-3">
+          <div className="space-y-1"><Label>Email</Label><Input value={user?.email ?? ""} disabled /></div>
+          <div className="space-y-1"><Label htmlFor="full_name">Полное имя</Label><Input id="full_name" name="full_name" defaultValue={profile.full_name ?? ""} maxLength={100} /></div>
+          <div className="space-y-1"><Label htmlFor="phone">Телефон</Label><Input id="phone" name="phone" type="tel" inputMode="tel" defaultValue={profile.phone ?? ""} maxLength={20} placeholder="+7 ___ ___ __ __" /></div>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           <Button type="submit" className="w-full" disabled={busy}>
             {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Сохранить
           </Button>
         </form>
       </Card>
 
+<<<<<<< HEAD
       <TrustedContactsCard />
 
       {user && (
@@ -240,6 +293,8 @@ function ProfilePage() {
         />
       )}
 
+=======
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       {hasDriverApplication && driver && (
         <VehicleCard driver={driver} onSaved={(d) => setDriver(d)} />
       )}
@@ -247,12 +302,17 @@ function ProfilePage() {
       {!hasDriverApplication && (
         <Card className="p-5">
           <h2 className="font-semibold">Хотите водить?</h2>
+<<<<<<< HEAD
           <p className="mt-1 text-sm text-muted-foreground">
             Добавьте данные авто и начните зарабатывать.
           </p>
           <Button asChild className="mt-3 w-full">
             <Link to="/become-driver">Стать водителем</Link>
           </Button>
+=======
+          <p className="mt-1 text-sm text-muted-foreground">Добавьте данные авто и начните зарабатывать.</p>
+          <Button asChild className="mt-3 w-full"><Link to="/become-driver">Стать водителем</Link></Button>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         </Card>
       )}
 
@@ -286,10 +346,14 @@ function ProfilePage() {
 function StatBox({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-3">
+<<<<<<< HEAD
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         {icon}
         {label}
       </div>
+=======
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
       <div className="mt-1 text-xl font-bold">{value}</div>
     </div>
   );
@@ -333,9 +397,13 @@ function VehicleCard({ driver, onSaved }: { driver: Driver; onSaved: (d: Driver)
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Автомобиль</h2>
         {!editing && (
+<<<<<<< HEAD
           <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
             Изменить
           </Button>
+=======
+          <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Изменить</Button>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
         )}
       </div>
 
@@ -344,6 +412,7 @@ function VehicleCard({ driver, onSaved }: { driver: Driver; onSaved: (d: Driver)
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label htmlFor="vehicle_make">Марка</Label>
+<<<<<<< HEAD
               <Input
                 id="vehicle_make"
                 name="vehicle_make"
@@ -361,10 +430,18 @@ function VehicleCard({ driver, onSaved }: { driver: Driver; onSaved: (d: Driver)
                 maxLength={40}
                 required
               />
+=======
+              <Input id="vehicle_make" name="vehicle_make" defaultValue={driver.vehicle_make ?? ""} maxLength={40} required />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="vehicle_model">Модель</Label>
+              <Input id="vehicle_model" name="vehicle_model" defaultValue={driver.vehicle_model ?? ""} maxLength={40} required />
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
             </div>
           </div>
           <div className="space-y-1">
             <Label htmlFor="vehicle_color">Цвет</Label>
+<<<<<<< HEAD
             <Input
               id="vehicle_color"
               name="vehicle_color"
@@ -372,20 +449,30 @@ function VehicleCard({ driver, onSaved }: { driver: Driver; onSaved: (d: Driver)
               maxLength={30}
               required
             />
+=======
+            <Input id="vehicle_color" name="vehicle_color" defaultValue={driver.vehicle_color ?? ""} maxLength={30} required />
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           </div>
           <div className="space-y-1">
             <Label htmlFor="vehicle_plate">Гос. номер</Label>
             <Input
+<<<<<<< HEAD
               id="vehicle_plate"
               name="vehicle_plate"
               defaultValue={driver.vehicle_plate ?? ""}
               maxLength={15}
               required
+=======
+              id="vehicle_plate" name="vehicle_plate"
+              defaultValue={driver.vehicle_plate ?? ""}
+              maxLength={15} required
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               className="uppercase"
               placeholder="123 ABC 02"
             />
           </div>
           <div className="flex gap-2">
+<<<<<<< HEAD
             <Button
               type="button"
               variant="outline"
@@ -393,6 +480,9 @@ function VehicleCard({ driver, onSaved }: { driver: Driver; onSaved: (d: Driver)
               onClick={() => setEditing(false)}
               disabled={busy}
             >
+=======
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setEditing(false)} disabled={busy}>
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
               Отмена
             </Button>
             <Button type="submit" className="flex-1" disabled={busy}>
@@ -402,10 +492,14 @@ function VehicleCard({ driver, onSaved }: { driver: Driver; onSaved: (d: Driver)
         </form>
       ) : (
         <div className="mt-3 space-y-2 text-sm">
+<<<<<<< HEAD
           <Row
             label="Марка / модель"
             value={[driver.vehicle_make, driver.vehicle_model].filter(Boolean).join(" ") || "—"}
           />
+=======
+          <Row label="Марка / модель" value={[driver.vehicle_make, driver.vehicle_model].filter(Boolean).join(" ") || "—"} />
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
           <Row label="Цвет" value={driver.vehicle_color || "—"} />
           <Row label="Номер" value={driver.vehicle_plate || "—"} />
         </div>
@@ -424,6 +518,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 function VerificationCard({ status }: { status: Profile["verification_status"] }) {
+<<<<<<< HEAD
   const meta: Record<
     string,
     {
@@ -476,6 +571,15 @@ function VerificationCard({ status }: { status: Profile["verification_status"] }
       cta: "Перезагрузить",
       variant: "secondary",
     },
+=======
+  const meta: Record<string, { icon: React.ReactNode; title: string; desc: string; cta: string | null; variant: "default" | "secondary" | "outline" | "destructive" }> = {
+    pending: { icon: <ShieldAlert className="h-5 w-5 text-warning" />, title: "Личность не подтверждена", desc: "Пройдите проверку: ИИН + живое селфи.", cta: "Пройти верификацию", variant: "secondary" },
+    manual_review: { icon: <ShieldAlert className="h-5 w-5 text-warning" />, title: "На ручной проверке", desc: "Администратор рассмотрит заявку и пришлёт уведомление.", cta: null, variant: "secondary" },
+    auto_approved: { icon: <ShieldCheck className="h-5 w-5 text-success" />, title: "Подтверждено автоматически", desc: "Личность успешно проверена.", cta: null, variant: "default" },
+    approved: { icon: <ShieldCheck className="h-5 w-5 text-success" />, title: "Подтверждено администратором", desc: "Аккаунт активирован.", cta: null, variant: "default" },
+    rejected: { icon: <ShieldX className="h-5 w-5 text-destructive" />, title: "Верификация отклонена", desc: "Проверьте данные и подайте заявку повторно.", cta: "Подать снова", variant: "destructive" },
+    reupload_requested: { icon: <ShieldAlert className="h-5 w-5 text-warning" />, title: "Требуется повторная загрузка", desc: "Администратор запросил перезагрузку фото.", cta: "Перезагрузить", variant: "secondary" },
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   };
   const m = meta[status] ?? meta.pending;
   return (
@@ -498,3 +602,7 @@ function VerificationCard({ status }: { status: Profile["verification_status"] }
     </Card>
   );
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231

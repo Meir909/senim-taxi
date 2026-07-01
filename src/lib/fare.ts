@@ -1,5 +1,6 @@
 export type Tariff = "standard" | "kids" | "delivery" | "cargo";
 
+<<<<<<< HEAD
 export const TARIFFS: Record<
   Tariff,
   {
@@ -11,6 +12,16 @@ export const TARIFFS: Record<
     perMin: number;
   }
 > = {
+=======
+export const TARIFFS: Record<Tariff, {
+  id: Tariff;
+  name: string;
+  description: string;
+  base: number;
+  perKm: number;
+  perMin: number;
+}> = {
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   standard: {
     id: "standard",
     name: "Стандарт",
@@ -21,11 +32,19 @@ export const TARIFFS: Record<
   },
   kids: {
     id: "kids",
+<<<<<<< HEAD
     name: "Для ребенка",
     description: "Поездка для ребёнка до 12 лет с подтверждением получателя",
     base: 800,
     perKm: 140,
     perMin: 26,
+=======
+    name: "Детский",
+    description: "С детским креслом",
+    base: 700,
+    perKm: 130,
+    perMin: 25,
+>>>>>>> e04c986f27501ce55aa6761282b45af2d1d8c231
   },
   delivery: {
     id: "delivery",
