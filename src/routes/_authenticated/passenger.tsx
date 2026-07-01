@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth-context";
@@ -146,6 +146,12 @@ function PassengerHome() {
       const hardTarget = isWaitingStatus(activeRide.status)
         ? `/passenger/ride/${activeRide.id}/waiting`
         : `/passenger/ride/${activeRide.id}`;
+      const isOnRideRoute = pathname.startsWith(`/passenger/ride/${activeRide.id}`);
+
+      if (isOnRideRoute) {
+        return;
+      }
+
       void navigate({
         to: isWaitingStatus(activeRide.status)
           ? "/passenger/ride/$rideId/waiting"
@@ -167,7 +173,7 @@ function PassengerHome() {
 
       return () => window.clearInterval(intervalId);
     }
-  }, [activeRide, navigate]);
+  }, [activeRide, navigate, pathname]);
 
   useEffect(() => {
     if (!user || childrenLoading) return;
@@ -323,7 +329,7 @@ function PassengerHome() {
       </div>
     );
   }
-  if (activeRide) {
+  if (activeRide && (pathname === "/passenger" || pathname === "/home")) {
     const rideTarget = isWaitingStatus(activeRide.status)
       ? `/passenger/ride/${activeRide.id}/waiting`
       : `/passenger/ride/${activeRide.id}`;
@@ -345,6 +351,10 @@ function PassengerHome() {
         </div>
       </Card>
     );
+  }
+
+  if (activeRide) {
+    return <Outlet />;
   }
 
   const ready =
