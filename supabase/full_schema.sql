@@ -2729,7 +2729,7 @@ BEGIN
   FROM public.profiles
   WHERE id = NEW.passenger_id;
 
-  IF v_status IS DISTINCT FROM 'approved' THEN
+  IF v_status NOT IN ('approved', 'auto_approved') THEN
     RAISE EXCEPTION 'Сначала подтвердите личность, чтобы создать заказ';
   END IF;
 

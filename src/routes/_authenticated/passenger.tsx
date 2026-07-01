@@ -70,7 +70,9 @@ function PassengerHome() {
   const [recipientRelation, setRecipientRelation] = useState("");
 
   const canUseKidsTariff = eligibleMother && children.length > 0;
-  const isIdentityVerified = profile?.verification_status === "approved";
+  const isIdentityVerified =
+    profile?.verification_status === "approved" ||
+    profile?.verification_status === "auto_approved";
   const selectedChild = children.find((child) => child.id === selectedChildId) ?? null;
 
   useEffect(() => {
@@ -152,7 +154,11 @@ function PassengerHome() {
 
   useEffect(() => {
     if (!user || childrenLoading) return;
-    if (profile && profile.verification_status !== "approved") {
+    if (
+      profile &&
+      profile.verification_status !== "approved" &&
+      profile.verification_status !== "auto_approved"
+    ) {
       toast.error("Сначала подтвердите личность");
       void navigate({ to: "/verify-identity", replace: true });
     }
