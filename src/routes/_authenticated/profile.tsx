@@ -12,6 +12,7 @@ import { PassengerChildrenCard } from "@/components/PassengerChildrenCard";
 import { TrustedContactsCard } from "@/components/TrustedContactsCard";
 import { usePassengerChildren } from "@/hooks/usePassengerChildren";
 import { isAdultProfile } from "@/lib/passenger-children";
+import { normalizePhone } from "@/lib/phone";
 import { toast } from "sonner";
 import { Loader2, Star, MapPin, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
@@ -59,6 +60,7 @@ function ProfilePage() {
   const [driverRatingsCount, setDriverRatingsCount] = useState<number>(0);
   const [passengerRatingsCount, setPassengerRatingsCount] = useState<number>(0);
   const [busy, setBusy] = useState(false);
+  const [phone, setPhone] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -86,6 +88,7 @@ function ProfilePage() {
             .not("passenger_rating", "is", null),
         ]);
       setProfile(p);
+      setPhone(normalizePhone(p?.phone ?? ""));
       setDriver(d);
       setRideCount(count ?? 0);
       setDriverRatingsCount(drvRatings ?? 0);
@@ -100,7 +103,7 @@ function ProfilePage() {
     try {
       const v = ProfileSchema.parse({
         full_name: String(fd.get("full_name") ?? ""),
-        phone: String(fd.get("phone") ?? ""),
+        phone: normalizePhone(String(fd.get("phone") ?? "")),
       });
       setBusy(true);
       const { error } = await supabase
@@ -127,6 +130,7 @@ function ProfilePage() {
   }
 
   const initial = (profile.full_name?.[0] ?? user?.email?.[0] ?? "?").toUpperCase();
+  const isAdult = isAdultProfile(profile);
 
   return (
     <div className="space-y-4">
@@ -218,7 +222,8 @@ function ProfilePage() {
               name="phone"
               type="tel"
               inputMode="tel"
-              defaultValue={profile.phone ?? ""}
+              value={phone}
+              onChange={(e) => setPhone(normalizePhone(e.target.value))}
               maxLength={20}
               placeholder="+7 ___ ___ __ __"
             />
@@ -245,7 +250,7 @@ function ProfilePage() {
         <VehicleCard driver={driver} onSaved={(d) => setDriver(d)} />
       )}
 
-      {!hasDriverApplication && (
+      {!hasDriverApplication && isAdult && (
         <Card className="p-5">
           <h2 className="font-semibold">Хотите водить?</h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -257,7 +262,7 @@ function ProfilePage() {
         </Card>
       )}
 
-      {hasDriverApplication && !isDriver && (
+      {hasDriverApplication && !isDriver && isAdult && (
         <Card className="p-5">
           <h2 className="font-semibold">Заявка водителя</h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -435,30 +440,9 @@ function VerificationCard({ status }: { status: Profile["verification_status"] }
       variant: "default" | "secondary" | "outline" | "destructive";
     }
   > = {
-    pending: {
-      icon: <ShieldAlert className="h-5 w-5 text-warning" />,
-      title: "Личность не подтверждена",
-      desc: "Пройдите проверку: ИИН + живое селфи.",
-      cta: "Пройти верификацию",
-      variant: "secondary",
-    },
-    manual_review: {
-      icon: <ShieldAlert className="h-5 w-5 text-warning" />,
-      title: "На ручной проверке",
-      desc: "Администратор рассмотрит заявку и пришлёт уведомление.",
-      cta: null,
-      variant: "secondary",
-    },
-    auto_approved: {
-      icon: <ShieldCheck className="h-5 w-5 text-success" />,
-      title: "Подтверждено автоматически",
-      desc: "Личность успешно проверена.",
-      cta: null,
-      variant: "default",
-    },
     approved: {
       icon: <ShieldCheck className="h-5 w-5 text-success" />,
-      title: "Подтверждено администратором",
+      title: "Принят",
       desc: "Аккаунт активирован.",
       cta: null,
       variant: "default",
@@ -470,15 +454,8 @@ function VerificationCard({ status }: { status: Profile["verification_status"] }
       cta: "Подать снова",
       variant: "destructive",
     },
-    reupload_requested: {
-      icon: <ShieldAlert className="h-5 w-5 text-warning" />,
-      title: "Требуется повторная загрузка",
-      desc: "Администратор запросил перезагрузку фото.",
-      cta: "Перезагрузить",
-      variant: "secondary",
-    },
   };
-  const m = meta[status] ?? meta.pending;
+  const m = meta[status] ?? meta.rejected;
   return (
     <Card className="p-5">
       <div className="flex items-start gap-3">

@@ -17,6 +17,7 @@ import { geocode2gis, reverseGeocode2gis, getRoute2gis } from "@/lib/maps.functi
 import { TARIFFS, calcFare, fmtKzt, type Tariff } from "@/lib/fare";
 import { formatChildMeta } from "@/lib/passenger-children";
 import { isWaitingStatus } from "@/lib/passenger-rides";
+import { normalizePhone } from "@/lib/phone";
 import tariffStandardImg from "@/assets/tariff-standard.jpg";
 import tariffKidsImg from "@/assets/tariff-kids.jpg";
 import tariffDeliveryImg from "@/assets/tariff-delivery.jpg";
@@ -70,9 +71,7 @@ function PassengerHome() {
   const [recipientRelation, setRecipientRelation] = useState("");
 
   const canUseKidsTariff = eligibleMother && children.length > 0;
-  const isIdentityVerified =
-    profile?.verification_status === "approved" ||
-    profile?.verification_status === "auto_approved";
+  const isIdentityVerified = profile?.verification_status === "approved";
   const selectedChild = children.find((child) => child.id === selectedChildId) ?? null;
 
   useEffect(() => {
@@ -156,8 +155,7 @@ function PassengerHome() {
     if (!user || childrenLoading) return;
     if (
       profile &&
-      profile.verification_status !== "approved" &&
-      profile.verification_status !== "auto_approved"
+      profile.verification_status !== "approved"
     ) {
       toast.error("Сначала подтвердите личность");
       void navigate({ to: "/verify-identity", replace: true });
@@ -268,7 +266,7 @@ function PassengerHome() {
           tariff,
           child_id: tariff === "kids" ? selectedChild!.id : null,
           recipient_full_name: tariff === "kids" ? recipientFullName.trim() : null,
-          recipient_phone: tariff === "kids" ? recipientPhone.trim() : null,
+          recipient_phone: tariff === "kids" ? normalizePhone(recipientPhone) : null,
           recipient_relation: tariff === "kids" ? recipientRelation.trim() : null,
           estimated_fare: fare,
           distance_km: route ? Number((route.distance_m / 1000).toFixed(2)) : null,
@@ -473,7 +471,7 @@ function PassengerHome() {
                         />
                         <Input
                           value={recipientPhone}
-                          onChange={(e) => setRecipientPhone(e.target.value)}
+                          onChange={(e) => setRecipientPhone(normalizePhone(e.target.value))}
                           placeholder="Телефон получателя"
                           inputMode="tel"
                           maxLength={25}

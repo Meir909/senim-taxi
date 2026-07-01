@@ -77,7 +77,7 @@ function AdminVerifications() {
 function PassengerList() {
   const [items, setItems] = useState<VR[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"pending" | "all">("pending");
+  const [filter, setFilter] = useState<"rejected" | "all">("rejected");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -87,8 +87,7 @@ function PassengerList() {
       .eq("kind", "passenger")
       .order("created_at", { ascending: false })
       .limit(100);
-    if (filter === "pending")
-      q = q.in("status", ["pending", "manual_review", "reupload_requested"]);
+    if (filter === "rejected") q = q.eq("status", "rejected");
     const { data, error } = await q;
     if (error) toast.error(error.message);
     setItems(data ?? []);
@@ -103,10 +102,10 @@ function PassengerList() {
       <div className="flex items-center justify-end gap-2">
         <Button
           size="sm"
-          variant={filter === "pending" ? "default" : "outline"}
-          onClick={() => setFilter("pending")}
+          variant={filter === "rejected" ? "default" : "outline"}
+          onClick={() => setFilter("rejected")}
         >
-          Ожидают
+          Отклонены
         </Button>
         <Button
           size="sm"
@@ -170,7 +169,7 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
       );
   }, [req.user_id]);
 
-  async function review(decision: "approve" | "reject" | "reupload") {
+  async function review(decision: "approve" | "reject") {
     if (decision !== "approve" && !comment.trim()) {
       toast.error("Добавьте комментарий");
       return;
@@ -233,7 +232,7 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
     }
   }
 
-  const isPending = ["pending", "manual_review", "reupload_requested"].includes(req.status);
+  const isPending = req.status === "rejected";
   const isBlocked = Boolean(blocked?.at);
   return (
     <Card className="p-4 space-y-3">
@@ -270,9 +269,6 @@ function PassengerCard({ req, onChanged }: { req: VR; onChanged: () => void }) {
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => review("approve")} disabled={busy !== null}>
               {busy === "approve" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Одобрить
-            </Button>
-            <Button variant="outline" onClick={() => review("reupload")} disabled={busy !== null}>
-              Запросить перезагрузку
             </Button>
             <Button variant="destructive" onClick={() => review("reject")} disabled={busy !== null}>
               Отклонить

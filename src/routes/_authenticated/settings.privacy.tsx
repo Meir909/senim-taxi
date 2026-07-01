@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 
+const SUPPORT_EMAIL = "nurmiko22@gmail.com";
+
 export const Route = createFileRoute("/_authenticated/settings/privacy")({
   component: PrivacyPage,
 });
@@ -30,10 +32,10 @@ function PrivacyPage() {
         </p>
         <p>
           <strong className="text-foreground">5. Ваши права.</strong> Вы можете запросить копию
-          данных или удаление аккаунта, написав на support@senim.app.
+          данных или удаление аккаунта, написав на {SUPPORT_EMAIL}.
         </p>
         <p>
-          <strong className="text-foreground">6. Контакты.</strong> support@senim.app
+          <strong className="text-foreground">6. Контакты.</strong> {SUPPORT_EMAIL}
         </p>
         <p className="text-xs">Последнее обновление: 30.06.2026</p>
       </Card>

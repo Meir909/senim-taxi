@@ -1702,8 +1702,8 @@ BEGIN
   END IF;
 
   v_status := CASE
-    WHEN _ai_confidence IS NOT NULL AND _ai_confidence >= 0.85 THEN 'auto_approved'::verify_status
-    ELSE 'manual_review'::verify_status
+    WHEN _ai_confidence IS NOT NULL AND _ai_confidence >= 0.85 THEN 'approved'::verify_status
+    ELSE 'rejected'::verify_status
   END;
 
   INSERT INTO verification_requests (
@@ -1745,8 +1745,11 @@ BEGIN
   INSERT INTO notifications (user_id, title, body, type, data)
   VALUES (
     auth.uid(),
-    CASE WHEN v_status = 'auto_approved' THEN 'Аккаунт подтверждён' ELSE 'Заявка на проверке' END,
-    CASE WHEN v_status = 'auto_approved' THEN 'Личность успешно подтверждена' ELSE 'Ожидайте решения администратора' END,
+    CASE WHEN v_status = 'approved' THEN 'Аккаунт подтверждён' ELSE 'Верификация отклонена' END,
+    CASE
+      WHEN v_status = 'approved' THEN 'Личность успешно подтверждена'
+      ELSE COALESCE(NULLIF(_ai_reason, ''), 'Проверьте данные и отправьте верификацию заново')
+    END,
     'verification',
     jsonb_build_object('request_id', v_req.id, 'status', v_status)
   );
@@ -2729,7 +2732,7 @@ BEGIN
   FROM public.profiles
   WHERE id = NEW.passenger_id;
 
-  IF v_status NOT IN ('approved', 'auto_approved') THEN
+  IF v_status <> 'approved' THEN
     RAISE EXCEPTION 'Сначала подтвердите личность, чтобы создать заказ';
   END IF;
 

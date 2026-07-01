@@ -1,3 +1,5 @@
+import { normalizePhone } from "@/lib/phone";
+
 export type TrustedContact = {
   id: string;
   name: string;
@@ -36,17 +38,6 @@ function safeId(): string {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-export function normalizePhone(phone: string): string {
-  let cleaned = phone.trim().replace(/[^\d+]/g, "");
-  if (cleaned.startsWith("8") && !cleaned.startsWith("+")) {
-    cleaned = `+7${cleaned.slice(1)}`;
-  }
-  if (!cleaned.startsWith("+") && /^\d+$/.test(cleaned)) {
-    cleaned = `+${cleaned}`;
-  }
-  return cleaned;
 }
 
 export function loadTrustedContacts(): TrustedContact[] {

@@ -170,7 +170,7 @@ export function TrustedContactsCard() {
             type="tel"
             inputMode="tel"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => setPhone(normalizePhone(e.target.value))}
             placeholder="+7 700 000 00 00"
             maxLength={20}
             disabled={contacts.length >= maxContacts}

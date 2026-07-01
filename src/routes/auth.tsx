@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/lib/auth-context";
 import { canBeDriverByIin, canBePassengerByIin, getAgeFromDob, parseIin } from "@/lib/iin";
+import { normalizePhone } from "@/lib/phone";
 import { compareFaces } from "@/lib/verification.functions";
 import { CameraCapture } from "@/components/CameraCapture";
 import { Button } from "@/components/ui/button";
@@ -25,19 +26,7 @@ export const Route = createFileRoute("/auth")({
 const emailSchema = z.string().trim().email("Неверный email").max(255);
 const passwordSchema = z.string().min(6, "Минимум 6 символов").max(72);
 const nameSchema = z.string().trim().min(1, "Обязательное поле").max(60);
-const phoneSchema = z
-  .string()
-  .trim()
-  .regex(/^\+?[0-9\s\-()]{7,20}$/, "Неверный телефон");
-
-function formatKzPhone(input: string): string {
-  // Keep only digits; auto-prepend "+" for KZ numbers (starting with 7 or 8→7).
-  let digits = input.replace(/\D/g, "");
-  if (digits.startsWith("8")) digits = "7" + digits.slice(1);
-  if (digits.length === 0) return "";
-  if (digits[0] !== "7") return "+" + digits;
-  return "+" + digits.slice(0, 11);
-}
+const phoneSchema = z.string().trim().regex(/^\+?[0-9\s\-()]{7,20}$/, "Неверный телефон");
 
 type SignupStep = "form" | "selfie1" | "selfie2" | "submitting";
 
@@ -97,7 +86,7 @@ function AuthPage() {
       const pw = passwordSchema.parse(password);
       const fn = nameSchema.parse(firstName);
       const ln = nameSchema.parse(lastName);
-      const ph = phoneSchema.parse(phone);
+      const ph = normalizePhone(phoneSchema.parse(phone));
       if (!/^\d{12}$/.test(iin)) throw new Error("ИИН — 12 цифр");
       const info = parseIin(iin);
       if (!info) throw new Error("ИИН не прошёл проверку контрольной суммы");
@@ -372,7 +361,7 @@ function AuthPage() {
                     type="tel"
                     inputMode="tel"
                     value={phone}
-                    onChange={(e) => setPhone(formatKzPhone(e.target.value))}
+                    onChange={(e) => setPhone(normalizePhone(e.target.value))}
                     placeholder="+7 700 000 00 00"
                     maxLength={20}
                     required

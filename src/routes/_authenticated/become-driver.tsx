@@ -21,7 +21,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
-import { canBeDriverByIin, getAgeFromDob, parseIin } from "@/lib/iin";
+import { canBeDriverByIin, getAgeFromDob, isAdultByDob, parseIin } from "@/lib/iin";
 
 export const Route = createFileRoute("/_authenticated/become-driver")({
   component: BecomeDriver,
@@ -225,9 +225,13 @@ function BecomeDriver() {
   }
 
   const parsedProfileIin = profile.iin ? parseIin(profile.iin) : null;
+  const isAdult =
+    (parsedProfileIin ? isAdultByDob(parsedProfileIin.dob) : false) ||
+    (!!profile.date_of_birth && isAdultByDob(profile.date_of_birth));
   const canBecomeDriver = parsedProfileIin ? canBeDriverByIin(parsedProfileIin) : false;
+  const isIdentityVerified = profile.verification_status === "approved";
 
-  if (profile.verification_status !== "approved") {
+  if (!isIdentityVerified) {
     return (
       <Card className="p-5 sm:p-6">
         <div className="flex items-start gap-3">
@@ -239,6 +243,25 @@ function BecomeDriver() {
             </p>
             <Button asChild className="mt-4" variant="outline">
               <Link to="/verify-identity">Перейти к верификации</Link>
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (!isAdult) {
+    return (
+      <Card className="p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <ShieldAlert className="h-5 w-5 shrink-0 text-destructive" />
+          <div>
+            <h1 className="text-lg font-semibold">Функция недоступна до 18 лет</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Подать заявку водителя можно только после достижения 18 лет.
+            </p>
+            <Button asChild className="mt-4" variant="outline">
+              <Link to="/passenger">К поездкам</Link>
             </Button>
           </div>
         </div>

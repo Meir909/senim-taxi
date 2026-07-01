@@ -3,6 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, MessageCircle, Phone } from "lucide-react";
 
+const SUPPORT_PHONE_PRIMARY = "+7 771 692 72 16";
+const SUPPORT_PHONE_SECONDARY = "+7 775 433 05 47";
+const SUPPORT_EMAIL = "nurmiko22@gmail.com";
+const SUPPORT_WHATSAPP = "https://wa.me/77716927216";
+
 export const Route = createFileRoute("/_authenticated/settings/support")({
   component: SupportPage,
 });
@@ -13,25 +18,38 @@ function SupportPage() {
       <h1 className="text-2xl font-bold">Техподдержка</h1>
       <p className="text-sm text-muted-foreground">Мы на связи 24/7. Выберите удобный способ:</p>
       <Card className="divide-y">
-        <a href="tel:+77000000000" className="flex items-center gap-3 px-4 py-3 hover:bg-accent">
+        <a
+          href="tel:+77716927216"
+          className="flex items-center gap-3 px-4 py-3 hover:bg-accent"
+        >
           <Phone className="h-5 w-5 text-primary" />
           <div className="flex-1">
-            <div className="font-medium">Позвонить</div>
-            <div className="text-xs text-muted-foreground">+7 700 000 00 00</div>
+            <div className="font-medium">Позвонить: основная линия</div>
+            <div className="text-xs text-muted-foreground">{SUPPORT_PHONE_PRIMARY}</div>
           </div>
         </a>
         <a
-          href="mailto:support@senim.app"
+          href="tel:+77754330547"
+          className="flex items-center gap-3 px-4 py-3 hover:bg-accent"
+        >
+          <Phone className="h-5 w-5 text-primary" />
+          <div className="flex-1">
+            <div className="font-medium">Позвонить: резервная линия</div>
+            <div className="text-xs text-muted-foreground">{SUPPORT_PHONE_SECONDARY}</div>
+          </div>
+        </a>
+        <a
+          href={`mailto:${SUPPORT_EMAIL}`}
           className="flex items-center gap-3 px-4 py-3 hover:bg-accent"
         >
           <Mail className="h-5 w-5 text-primary" />
           <div className="flex-1">
             <div className="font-medium">Электронная почта</div>
-            <div className="text-xs text-muted-foreground">support@senim.app</div>
+            <div className="text-xs text-muted-foreground">{SUPPORT_EMAIL}</div>
           </div>
         </a>
         <a
-          href="https://wa.me/77000000000"
+          href={SUPPORT_WHATSAPP}
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-3 px-4 py-3 hover:bg-accent"
@@ -52,7 +70,7 @@ function SupportPage() {
         </ul>
       </Card>
       <Button variant="outline" className="w-full" asChild>
-        <a href="mailto:support@senim.app?subject=Senim%20—%20Обращение">Написать письмо</a>
+        <a href={`mailto:${SUPPORT_EMAIL}?subject=Senim%20—%20Обращение`}>Написать письмо</a>
       </Button>
     </div>
   );

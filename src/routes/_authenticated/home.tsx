@@ -24,7 +24,7 @@ function HomeRedirect() {
         .maybeSingle();
       if (cancelled) return;
       const status = data?.verification_status;
-      if (status === "reupload_requested" || status === "rejected") {
+      if (status !== "approved") {
         void navigate({ to: "/verify-identity", replace: true });
         return;
       }

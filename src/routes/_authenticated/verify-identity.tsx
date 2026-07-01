@@ -52,7 +52,7 @@ function VerifyIdentity() {
         .maybeSingle();
       const status = profile?.verification_status ?? null;
       if (cancelled) return;
-      if (status === "rejected" || status === "reupload_requested") {
+      if (status === "rejected") {
         setPriorStatus(status);
         const { data: req } = await supabase
           .from("verification_requests")
@@ -140,7 +140,7 @@ function VerifyIdentity() {
         _ai_reason: result.reason ?? "",
       });
       if (error) throw error;
-      setResultStatus(data?.status ?? "manual_review");
+      setResultStatus(data?.status ?? "rejected");
       setStep("done");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось завершить верификацию");
@@ -179,7 +179,7 @@ function VerifyIdentity() {
           <Alert variant="destructive" className="mt-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>
-              {priorStatus === "rejected" ? "Заявка отклонена" : "Требуется повторная отправка"}
+              Заявка отклонена
             </AlertTitle>
             <AlertDescription className="space-y-2">
               <p>
@@ -277,21 +277,21 @@ function VerifyIdentity() {
 
         {step === "done" && (
           <div className="mt-6 space-y-3 text-center">
-            <Badge variant={resultStatus === "auto_approved" ? "default" : "secondary"}>
-              {resultStatus === "auto_approved"
-                ? "Подтверждено автоматически"
-                : "Отправлено на ручную проверку"}
+            <Badge variant={resultStatus === "approved" ? "default" : "secondary"}>
+              {resultStatus === "approved"
+                ? "Принят"
+                : "Отклонён"}
             </Badge>
             <p className="text-sm text-muted-foreground">
-              {resultStatus === "auto_approved"
+              {resultStatus === "approved"
                 ? "Личность подтверждена. Можно пользоваться сервисом."
-                : "Администратор проверит заявку и пришлёт уведомление. Полная активация — после одобрения."}
+                : "Проверьте данные и отправьте верификацию заново."}
             </p>
             <div className="flex flex-col gap-2">
               <Button className="w-full" onClick={() => void navigate({ to: "/home" })}>
                 На главную
               </Button>
-              {resultStatus !== "auto_approved" && (
+              {resultStatus !== "approved" && (
                 <Button
                   variant="outline"
                   className="w-full"

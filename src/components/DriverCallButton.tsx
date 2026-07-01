@@ -1,9 +1,6 @@
 import { Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-function cleanPhone(phone: string): string {
-  return phone.replace(/[^\d+]/g, "");
-}
+import { normalizePhone } from "@/lib/phone";
 
 export function DriverCallButton({
   phone,
@@ -12,7 +9,7 @@ export function DriverCallButton({
   phone: string;
   fullWidth?: boolean;
 }) {
-  const href = `tel:${cleanPhone(phone)}`;
+  const href = `tel:${normalizePhone(phone)}`;
 
   return (
     <Button asChild variant="outline" className={fullWidth ? "w-full" : undefined}>
