@@ -1,10 +1,26 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, ArrowLeft, MapPin, Clock, Route as RouteIcon, X } from "lucide-react";
+import {
+  Loader2,
+  ArrowLeft,
+  MapPin,
+  Clock,
+  Route as RouteIcon,
+  Car,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { MapGL, type MapMarker } from "@/components/MapGL";
 import { StarRating } from "@/components/StarRating";
 import { TripSafetyCard } from "@/components/TripSafetyPanel";
@@ -18,6 +34,7 @@ import { useAuth } from "@/lib/auth-context";
 import {
   cancelPassengerRide,
   fmtElapsed,
+  haversineKm,
   isSearchingStatus,
   isWaitingStatus,
   STATUS_LABEL,
@@ -32,12 +49,19 @@ function RideView() {
   const { rideId } = Route.useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { ride, driver, driverProfile, driverLoc, loading } = usePassengerRideLive(rideId);
+  const { ride, driver, driverProfile, driverLoc, locError, loading } = usePassengerRideLive(rideId);
   const { pin } = useRidePickupPin(rideId, ride?.tariff === "kids");
   const { pin: dropoffPin } = useRideDropoffPin(rideId, ride?.tariff === "kids");
+  const [now, setNow] = useState(() => Date.now());
   const [rating, setRating] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timerId);
+  }, []);
 
   useEffect(() => {
     if (ride?.status === "no_drivers") {
@@ -58,6 +82,15 @@ function RideView() {
     });
   }, [ride, navigate]);
 
+  useEffect(() => {
+    if (!ride || !user) return;
+    const shouldPromptRating =
+      ride.status === "completed" &&
+      user.id === ride.passenger_id &&
+      ride.driver_rating == null;
+    setRatingDialogOpen(shouldPromptRating);
+  }, [ride, user]);
+
   async function submitRating() {
     if (!ride || rating < 1) return;
     setSubmittingRating(true);
@@ -65,6 +98,7 @@ function RideView() {
       const { error } = await supabase.rpc("rate_ride", { _ride_id: ride.id, _rating: rating });
       if (error) throw error;
       toast.success("Спасибо за оценку!");
+      setRatingDialogOpen(false);
       void navigate({ to: "/passenger", replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Не удалось");
@@ -127,14 +161,151 @@ function RideView() {
     });
   }
 
+  const liveDistanceKm =
+    driverLoc && ride.status === "in_progress"
+      ? haversineKm(
+          { lat: driverLoc.lat, lng: driverLoc.lng },
+          { lat: ride.dropoff_lat, lng: ride.dropoff_lng },
+        )
+      : null;
+  const liveEtaMin = liveDistanceKm != null ? Math.max(1, Math.round(liveDistanceKm * 2)) : null;
+  const locAgeSec = driverLoc
+    ? Math.max(0, Math.floor((now - new Date(driverLoc.updated_at).getTime()) / 1000))
+    : null;
+  const staleLoc = locAgeSec != null && locAgeSec > 20;
+  const liveText =
+    locError ??
+    (locAgeSec == null
+      ? "Ожидаем первую геопозицию водителя"
+      : locAgeSec < 5
+        ? "Машина движется в реальном времени"
+        : locAgeSec < 60
+          ? `Обновлено ${locAgeSec} сек назад`
+          : `Обновлено ${Math.floor(locAgeSec / 60)} мин назад`);
+  const livePolyline =
+    ride.status === "in_progress" && driverLoc
+      ? [
+          [driverLoc.lng, driverLoc.lat] as [number, number],
+          [ride.dropoff_lng, ride.dropoff_lat] as [number, number],
+        ]
+      : undefined;
+  const tariffName =
+    TARIFFS[(ride.tariff as keyof typeof TARIFFS) ?? "standard"]?.name ?? "Стандарт";
+
   return (
     <div className="space-y-4">
+      <Dialog open={ratingDialogOpen} onOpenChange={setRatingDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Поездка завершена</DialogTitle>
+            <DialogDescription>
+              Оцените водителя, если хотите. Пропуск не повлияет на его рейтинг.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Card className="p-4">
+              <div className="text-center">
+                <div className="text-sm text-muted-foreground">Ваш водитель</div>
+                <div className="mt-1 font-semibold">
+                  {[driverProfile?.last_name, driverProfile?.first_name]
+                    .filter(Boolean)
+                    .join(" ") ||
+                    driverProfile?.full_name ||
+                    "Водитель"}
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  {[driver?.vehicle_make, driver?.vehicle_model, driver?.vehicle_plate]
+                    .filter(Boolean)
+                    .join(" · ") || "Данные автомобиля"}
+                </div>
+              </div>
+            </Card>
+            <div className="flex justify-center">
+              <StarRating value={rating} onChange={setRating} size={42} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRatingDialogOpen(false);
+                void navigate({ to: "/passenger", replace: true });
+              }}
+              disabled={submittingRating}
+            >
+              Пропустить
+            </Button>
+            <Button disabled={rating < 1 || submittingRating} onClick={submitRating}>
+              {submittingRating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Отправить оценку
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {(ride.status === "in_progress" || (ride.status !== "completed" && !!driverLoc)) && (
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary/95 to-primary/70 p-5 text-primary-foreground shadow-lg">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-sm text-primary-foreground/80">
+                <Car className="h-4 w-4" />
+                <span>
+                  {ride.status === "in_progress"
+                    ? "Пассажирская поездка идет прямо сейчас"
+                    : "Водитель отображается на карте вживую"}
+                </span>
+              </div>
+              <h1 className="mt-2 text-2xl font-bold">
+                {liveEtaMin != null ? `~${liveEtaMin} мин до точки B` : "Live tracking"}
+              </h1>
+              <p className="mt-1 text-sm text-primary-foreground/80">{liveText}</p>
+            </div>
+            <div className="rounded-2xl bg-white/10 px-3 py-2 text-right">
+              <div className="text-[10px] uppercase tracking-wide text-primary-foreground/70">
+                Статус
+              </div>
+              <div className="mt-1 text-sm font-semibold">{STATUS_LABEL[ride.status]}</div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <LiveMetric
+              label="До точки B"
+              value={liveDistanceKm != null ? `${liveDistanceKm.toFixed(1)} км` : "—"}
+            />
+            <LiveMetric
+              label="Обновление"
+              value={locAgeSec != null ? `${locAgeSec} сек` : "—"}
+            />
+            <LiveMetric label="Тариф" value={tariffName} />
+          </div>
+
+          <div className="mt-4 flex items-center gap-2 text-xs text-primary-foreground/85">
+            <span
+              className={`inline-block h-2 w-2 rounded-full ${
+                locError ? "bg-red-300" : staleLoc ? "bg-yellow-300" : "bg-emerald-300"
+              }`}
+            />
+            <span>
+              {locError
+                ? "Связь с геопозицией водителя временно нестабильна"
+                : "Положение машины обновляется автоматически"}
+            </span>
+          </div>
+        </Card>
+      )}
+
       <div className="overflow-hidden rounded-xl border">
         <MapGL
           className="h-64 w-full sm:h-72"
           markers={markers}
-          center={{ lat: ride.pickup_lat, lng: ride.pickup_lng }}
+          center={
+            driverLoc
+              ? { lat: driverLoc.lat, lng: driverLoc.lng }
+              : { lat: ride.pickup_lat, lng: ride.pickup_lng }
+          }
           zoom={13}
+          polyline={livePolyline}
         />
       </div>
 
@@ -207,29 +378,6 @@ function RideView() {
       )}
 
       {ride.status === "in_progress" && <TripSafetyCard />}
-
-      {ride.status === "completed" &&
-        user?.id === ride.passenger_id &&
-        ride.driver_rating == null && (
-          <Card className="p-5">
-            <h3 className="text-center font-semibold">Оцените водителя</h3>
-            <p className="mt-1 text-center text-sm text-muted-foreground">
-              Ваш отзыв поможет другим пассажирам.
-            </p>
-            <div className="mt-4 flex justify-center">
-              <StarRating value={rating} onChange={setRating} size={40} />
-            </div>
-            <Button
-              className="mt-4 w-full"
-              size="lg"
-              disabled={rating < 1 || submittingRating}
-              onClick={submitRating}
-            >
-              {submittingRating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Отправить
-              оценку
-            </Button>
-          </Card>
-        )}
 
       {ride.status === "completed" && (
         <Button
@@ -327,6 +475,15 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right font-medium">{value}</span>
+    </div>
+  );
+}
+
+function LiveMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-white/10 px-3 py-2">
+      <div className="text-[10px] uppercase tracking-wide text-primary-foreground/70">{label}</div>
+      <div className="mt-1 text-base font-semibold">{value}</div>
     </div>
   );
 }

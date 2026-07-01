@@ -233,7 +233,7 @@ export function MapGL({
 }
 
 function makeMarkerIcon(color: string, label?: string): string {
-  const txt = (label ?? "").slice(0, 1).toUpperCase();
+  const txt = Array.from(label ?? "")[0]?.toUpperCase() ?? "";
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='32' height='42' viewBox='0 0 32 42'><path d='M16 0C7.2 0 0 7 0 15.6 0 27 16 42 16 42s16-15 16-26.4C32 7 24.8 0 16 0z' fill='${color}'/><circle cx='16' cy='15' r='8' fill='white'/><text x='16' y='19' text-anchor='middle' font-family='system-ui,sans-serif' font-size='11' font-weight='700' fill='${color}'>${txt}</text></svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
