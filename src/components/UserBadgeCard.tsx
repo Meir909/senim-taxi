@@ -44,14 +44,9 @@ export function UserBadgeCard({ userId, name, rating, subtitle, size = "md" }: P
     <div className="flex items-center gap-3">
       <Avatar className={SIZE[size]}>
         {url ? <AvatarImage src={url} alt={name ?? "Аватар"} /> : null}
-        <AvatarFallback>
-          <UserIcon className="h-5 w-5 text-muted-foreground" />
+        <AvatarFallback className={initials !== "?" ? "bg-primary/10 font-semibold text-primary" : ""}>
+          {initials !== "?" ? initials : <UserIcon className="h-5 w-5 text-muted-foreground" />}
         </AvatarFallback>
-        {!url && initials !== "?" && (
-          <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-            {initials}
-          </AvatarFallback>
-        )}
       </Avatar>
       <div className="min-w-0">
         <div className="truncate font-semibold">{name || "Пользователь"}</div>

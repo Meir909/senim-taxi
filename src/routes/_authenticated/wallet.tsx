@@ -25,6 +25,7 @@ const TX_TYPE: Record<string, string> = {
   topup: "Пополнение",
   refund: "Возврат",
   commission: "Комиссия",
+  adjustment: "Корректировка",
 };
 const TX_STATUS: Record<string, string> = {
   pending: "В обработке",
@@ -158,6 +159,16 @@ function WalletPage() {
           <div className="mt-1 text-xs opacity-90">В ожидании вывода: {fmt(pending)} ₸</div>
         )}
       </Card>
+
+      {balance < 0 && (
+        <Card className="border-warning/30 bg-warning/10 p-4 text-warning">
+          <div className="text-sm font-semibold">Есть задолженность по поездкам</div>
+          <div className="mt-1 text-sm">
+            Сейчас ваш долг составляет {fmt(Math.abs(balance))} ₸. Пополните кошелёк, чтобы
+            закрыть задолженность.
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <Button

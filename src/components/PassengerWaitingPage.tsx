@@ -25,6 +25,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { RideSettlementCard } from "@/components/RideSettlementCard";
 import { TripSafetyCard } from "@/components/TripSafetyPanel";
 import { UserBadgeCard } from "@/components/UserBadgeCard";
 import { TARIFFS, fmtKzt } from "@/lib/fare";
@@ -193,6 +194,8 @@ export function PassengerWaitingPage({
           <span>{freshnessText}</span>
         </div>
       </Card>
+
+      <RideSettlementCard ride={ride} audience="passenger" />
 
       <div className="overflow-hidden rounded-2xl border shadow-sm">
         <MapGL

@@ -27,6 +27,7 @@ import { Loader2, Navigation, X } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { MapGL, type MapMarker } from "@/components/MapGL";
 import { getRoute2gis } from "@/lib/maps.functions";
+import { RideSettlementCard } from "@/components/RideSettlementCard";
 import { UserBadgeCard } from "@/components/UserBadgeCard";
 import { StarRating } from "@/components/StarRating";
 
@@ -756,6 +757,7 @@ function ActiveRideCard({
           </div>
         )}
       </div>
+      <RideSettlementCard ride={ride} audience="driver" />
       {ride.tariff === "kids" && ride.status === "driver_arrived" && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
           <div className="text-sm font-semibold">Введите PIN от мамы</div>
@@ -890,7 +892,7 @@ function CompleteDialog({
       toast.error(error.message);
       return;
     }
-    toast.success(`Зачислено: ${(fareNum * 0.8).toFixed(2)}`);
+    toast.success(`Зачислено: ${(fareNum * 0.83).toFixed(2)}`);
     onDone((data as Ride | null) ?? ride);
   }
 
@@ -959,7 +961,7 @@ function CompleteDialog({
             </div>
           )}
           <p className="text-xs text-muted-foreground">
-            Длительность: {durationMin} мин · Комиссия платформы: 20%
+            Длительность: {durationMin} мин · Комиссия платформы: 17%
           </p>
         </div>
         <DialogFooter>

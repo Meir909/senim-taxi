@@ -1359,7 +1359,14 @@ export type Database = {
         | "no_drivers";
       ride_tariff: "standard" | "kids" | "delivery" | "cargo";
       tx_status: "pending" | "completed" | "failed" | "cancelled";
-      tx_type: "ride_earning" | "commission" | "withdrawal" | "topup" | "refund" | "adjustment";
+      tx_type:
+        | "ride_earning"
+        | "ride_payment"
+        | "commission"
+        | "withdrawal"
+        | "topup"
+        | "refund"
+        | "adjustment";
       verify_kind: "passenger" | "driver";
       verify_status:
         | "pending"
@@ -1515,7 +1522,15 @@ export const Constants = {
       ],
       ride_tariff: ["standard", "kids", "delivery", "cargo"],
       tx_status: ["pending", "completed", "failed", "cancelled"],
-      tx_type: ["ride_earning", "commission", "withdrawal", "topup", "refund", "adjustment"],
+      tx_type: [
+        "ride_earning",
+        "ride_payment",
+        "commission",
+        "withdrawal",
+        "topup",
+        "refund",
+        "adjustment",
+      ],
       verify_kind: ["passenger", "driver"],
       verify_status: [
         "pending",

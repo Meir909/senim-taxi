@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MapGL, type MapMarker } from "@/components/MapGL";
+import { RideSettlementCard } from "@/components/RideSettlementCard";
 import { StarRating } from "@/components/StarRating";
 import { TripSafetyCard } from "@/components/TripSafetyPanel";
 import { UserBadgeCard } from "@/components/UserBadgeCard";
@@ -330,15 +331,16 @@ function RideView() {
               `${ride.dropoff_lat.toFixed(5)}, ${ride.dropoff_lng.toFixed(5)}`
             }
           />
-          {ride.fare_amount != null && <Row label="Стоимость" value={`${ride.fare_amount} ₸`} />}
-          {ride.driver_id && driverLoc && (
+          {(ride.estimated_fare != null || ride.fare_amount != null) && (
             <Row
-              label="Обновлено"
-              value={new Date(driverLoc.updated_at).toLocaleTimeString("ru-RU")}
+              label="К оплате"
+              value={fmtKzt(Number(ride.estimated_fare ?? ride.fare_amount ?? 0))}
             />
           )}
         </div>
       </Card>
+
+      {ride.status !== "completed" && <RideSettlementCard ride={ride} audience="passenger" />}
 
       {ride.tariff === "kids" && (
         <ChildRidePinCard
