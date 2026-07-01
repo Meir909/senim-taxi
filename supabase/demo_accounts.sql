@@ -282,6 +282,7 @@ BEGIN
     last_name,
     vehicle_country,
     child_seat,
+    child_seat_details,
     application_status,
     submitted_at,
     reviewed_at
@@ -291,19 +292,19 @@ BEGIN
       '11111111-1111-4111-8111-111111111111',
       'Toyota', 'Camry', '701AAA12', 'White', 'DL-000001',
       'approved', 'online', 4.95, 148,
-      'Айжан', 'Серикова', 'KZ', true, 'approved', v_now, v_now
+      'Айжан', 'Серикова', 'KZ', true, '9–18 кг · 1–4 года', 'approved', v_now, v_now
     ),
     (
       '22222222-2222-4222-8222-222222222222',
       'Hyundai', 'Elantra', '702BBB12', 'Silver', 'DL-000002',
       'approved', 'online', 4.91, 93,
-      'Мадина', 'Нурланкызы', 'KZ', true, 'approved', v_now, v_now
+      'Мадина', 'Нурланкызы', 'KZ', true, '15–36 кг · 4–12 лет', 'approved', v_now, v_now
     ),
     (
       '33333333-3333-4333-8333-333333333333',
       'Kia', 'Rio', '703CCC12', 'Black', 'DL-000003',
       'approved', 'online', 4.87, 76,
-      'Динара', 'Бекетова', 'KZ', false, 'approved', v_now, v_now
+      'Динара', 'Бекетова', 'KZ', false, null, 'approved', v_now, v_now
     )
   ON CONFLICT (id) DO UPDATE SET
     vehicle_make = EXCLUDED.vehicle_make,
@@ -319,6 +320,7 @@ BEGIN
     last_name = EXCLUDED.last_name,
     vehicle_country = EXCLUDED.vehicle_country,
     child_seat = EXCLUDED.child_seat,
+    child_seat_details = EXCLUDED.child_seat_details,
     application_status = EXCLUDED.application_status,
     submitted_at = EXCLUDED.submitted_at,
     reviewed_at = EXCLUDED.reviewed_at;

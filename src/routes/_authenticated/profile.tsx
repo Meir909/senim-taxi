@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { PassengerChildrenCard } from "@/components/PassengerChildrenCard";
 import { TrustedContactsCard } from "@/components/TrustedContactsCard";
 import { usePassengerChildren } from "@/hooks/usePassengerChildren";
+import { isAdultProfile } from "@/lib/passenger-children";
 import { toast } from "sonner";
 import { Loader2, Star, MapPin, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
@@ -230,7 +231,7 @@ function ProfilePage() {
 
       <TrustedContactsCard />
 
-      {user && (
+      {user && isAdultProfile(profile) && (
         <PassengerChildrenCard
           motherId={user.id}
           eligible={eligibleMother}

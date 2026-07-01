@@ -4,6 +4,17 @@ import { canBeDriverByIin, getAgeFromDob, parseIin } from "@/lib/iin";
 export type PassengerProfile = Database["public"]["Tables"]["profiles"]["Row"];
 export type PassengerChild = Database["public"]["Tables"]["passenger_children"]["Row"];
 
+export function isAdultProfile(profile: PassengerProfile | null): boolean {
+  if (!profile) return false;
+
+  if (profile.iin) {
+    const parsed = parseIin(profile.iin);
+    if (parsed) return getAgeFromDob(parsed.dob) >= 18;
+  }
+
+  return !!profile.date_of_birth && getAgeFromDob(profile.date_of_birth) >= 18;
+}
+
 export function canManagePassengerChildren(profile: PassengerProfile | null): boolean {
   if (!profile) return false;
 

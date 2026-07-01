@@ -65,6 +65,7 @@ type DriverRow = {
   vehicle_plate: string | null;
   vehicle_country: string | null;
   child_seat: boolean;
+  child_seat_details: string | null;
   review_comment: string | null;
 };
 
@@ -80,6 +81,7 @@ function BecomeDriver() {
   const [plate, setPlate] = useState("");
   const [country, setCountry] = useState("Казахстан");
   const [childSeat, setChildSeat] = useState<"yes" | "no" | "">("");
+  const [childSeatDetails, setChildSeatDetails] = useState("");
   const [files, setFiles] = useState<Partial<Record<DocKind, File>>>({});
   const [busy, setBusy] = useState(false);
 
@@ -94,7 +96,7 @@ function BecomeDriver() {
         .maybeSingle(),
       supabase
         .from("drivers")
-        .select("application_status,vehicle_plate,vehicle_country,child_seat,review_comment")
+        .select("application_status,vehicle_plate,vehicle_country,child_seat,child_seat_details,review_comment")
         .eq("id", user.id)
         .maybeSingle(),
       supabase
@@ -109,6 +111,7 @@ function BecomeDriver() {
       setPlate(d.data.vehicle_plate ?? "");
       setCountry(d.data.vehicle_country ?? "Казахстан");
       setChildSeat(d.data.child_seat ? "yes" : "no");
+      setChildSeatDetails(d.data.child_seat_details ?? "");
     }
     setDocs(((dd.data as DocRow[] | null) ?? []).filter((x) => DOC_ORDER.includes(x.kind)));
     setLoadingState(false);
@@ -117,6 +120,12 @@ function BecomeDriver() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (childSeat === "no" && childSeatDetails) {
+      setChildSeatDetails("");
+    }
+  }, [childSeat, childSeatDetails]);
 
   async function uploadFile(file: File, kind: DocKind): Promise<{ path: string; mime: string }> {
     if (!user) throw new Error("Нет сессии");
@@ -147,6 +156,10 @@ function BecomeDriver() {
       toast.error("Заполните данные авто и наличие детского кресла");
       return;
     }
+    if (childSeat === "yes" && !childSeatDetails.trim()) {
+      toast.error("Укажите группу или возраст детей для кресла");
+      return;
+    }
     for (const k of DOC_ORDER) {
       if (!files[k]) {
         toast.error(`Загрузите: ${DOC_LABELS[k]}`);
@@ -163,6 +176,7 @@ function BecomeDriver() {
         _vehicle_plate: plate.trim(),
         _vehicle_country: country.trim(),
         _child_seat: childSeat === "yes",
+        _child_seat_details: childSeat === "yes" ? childSeatDetails.trim() : null,
         _identity_path: uploaded.identity.path,
         _identity_mime: uploaded.identity.mime,
         _license_path: uploaded.license.path,
@@ -212,6 +226,25 @@ function BecomeDriver() {
 
   const parsedProfileIin = profile.iin ? parseIin(profile.iin) : null;
   const canBecomeDriver = parsedProfileIin ? canBeDriverByIin(parsedProfileIin) : false;
+
+  if (profile.verification_status !== "approved") {
+    return (
+      <Card className="p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <ShieldAlert className="h-5 w-5 shrink-0 text-destructive" />
+          <div>
+            <h1 className="text-lg font-semibold">Сначала подтвердите личность</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Подача заявки водителя доступна только после успешной верификации профиля.
+            </p>
+            <Button asChild className="mt-4" variant="outline">
+              <Link to="/verify-identity">Перейти к верификации</Link>
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   if (!canBecomeDriver) {
     return (
@@ -268,6 +301,7 @@ function BecomeDriver() {
           <Info label="Госномер" value={driver?.vehicle_plate} />
           <Info label="Страна авто" value={driver?.vehicle_country} />
           <Info label="Детское кресло" value={driver?.child_seat ? "Да" : "Нет"} />
+          <Info label="Группа кресла" value={driver?.child_seat_details} />
         </div>
         <div className="space-y-2">
           {DOC_ORDER.map((kind) => {
@@ -344,6 +378,19 @@ function BecomeDriver() {
             детские тарифы будут недоступны.
           </p>
         </div>
+
+        {childSeat === "yes" && (
+          <div className="space-y-1.5">
+            <Label htmlFor="child-seat-details">Группа кресла или возраст детей</Label>
+            <Input
+              id="child-seat-details"
+              value={childSeatDetails}
+              onChange={(e) => setChildSeatDetails(e.target.value)}
+              placeholder="Например: 9–18 кг, 1–4 года"
+              maxLength={80}
+            />
+          </div>
+        )}
 
         <div className="space-y-2 pt-2">
           <h2 className="text-sm font-semibold">Документы (фото)</h2>

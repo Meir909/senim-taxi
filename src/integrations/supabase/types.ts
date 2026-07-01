@@ -90,6 +90,7 @@ export type Database = {
           admin_comment: string | null;
           application_status: Database["public"]["Enums"]["driver_app_status"];
           child_seat: boolean;
+          child_seat_details: string | null;
           created_at: string;
           first_name: string | null;
           id: string;
@@ -119,6 +120,7 @@ export type Database = {
           admin_comment?: string | null;
           application_status?: Database["public"]["Enums"]["driver_app_status"];
           child_seat?: boolean;
+          child_seat_details?: string | null;
           created_at?: string;
           first_name?: string | null;
           id: string;
@@ -148,6 +150,7 @@ export type Database = {
           admin_comment?: string | null;
           application_status?: Database["public"]["Enums"]["driver_app_status"];
           child_seat?: boolean;
+          child_seat_details?: string | null;
           created_at?: string;
           first_name?: string | null;
           id?: string;
@@ -1192,6 +1195,7 @@ export type Database = {
       submit_driver_application: {
         Args: {
           _child_seat: boolean;
+          _child_seat_details: string | null;
           _identity_mime: string;
           _identity_path: string;
           _license_mime: string;
@@ -1205,6 +1209,7 @@ export type Database = {
           admin_comment: string | null;
           application_status: Database["public"]["Enums"]["driver_app_status"];
           child_seat: boolean;
+          child_seat_details: string | null;
           created_at: string;
           first_name: string | null;
           id: string;

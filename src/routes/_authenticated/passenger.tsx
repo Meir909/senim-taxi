@@ -272,7 +272,12 @@ function PassengerHome() {
         .single();
       if (error) throw error;
       toast.success("Ищем водителя…");
-      void navigate({ to: "/passenger/ride/$rideId", params: { rideId: data.id } });
+      void navigate({
+        to: isWaitingStatus(data.status)
+          ? "/passenger/ride/$rideId/waiting"
+          : "/passenger/ride/$rideId",
+        params: { rideId: data.id },
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Не удалось создать заказ");
     } finally {
