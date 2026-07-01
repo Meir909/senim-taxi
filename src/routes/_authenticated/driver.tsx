@@ -125,8 +125,12 @@ function DriverHome() {
         () => void load(),
       )
       .subscribe();
+    const pollId = window.setInterval(() => {
+      void load();
+    }, 5000);
     return () => {
       mounted = false;
+      window.clearInterval(pollId);
       supabase.removeChannel(ch);
     };
   }, [user, isDriver]);
@@ -154,8 +158,12 @@ function DriverHome() {
         () => void load(),
       )
       .subscribe();
+    const pollId = window.setInterval(() => {
+      void load();
+    }, 5000);
     return () => {
       mounted = false;
+      window.clearInterval(pollId);
       supabase.removeChannel(ch);
     };
   }, [user, isDriver]);

@@ -48,6 +48,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 function ProfilePage() {
   const { user, isDriver, hasDriverApplication, driverVerification, roles, signOut } = useAuth();
   const isAdmin = roles.includes("admin");
+  const hasDriverRole = roles.includes("driver");
   const {
     children,
     eligibleMother,
@@ -234,9 +235,9 @@ function ProfilePage() {
         </form>
       </Card>
 
-      <TrustedContactsCard />
+      {!hasDriverRole && <TrustedContactsCard />}
 
-      {user && isAdultProfile(profile) && (
+      {user && !hasDriverRole && isAdultProfile(profile) && (
         <PassengerChildrenCard
           motherId={user.id}
           eligible={eligibleMother}

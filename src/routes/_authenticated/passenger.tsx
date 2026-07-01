@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_authenticated/passenger")({
 });
 
 function PassengerHome() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const navigate = useNavigate();
   const {
     profile,
@@ -70,7 +70,8 @@ function PassengerHome() {
   const [recipientPhone, setRecipientPhone] = useState("");
   const [recipientRelation, setRecipientRelation] = useState("");
 
-  const canUseKidsTariff = eligibleMother && children.length > 0;
+  const hasDriverRole = roles.includes("driver");
+  const canUseKidsTariff = !hasDriverRole && eligibleMother && children.length > 0;
   const isIdentityVerified = profile?.verification_status === "approved";
   const selectedChild = children.find((child) => child.id === selectedChildId) ?? null;
 
@@ -411,7 +412,9 @@ function PassengerHome() {
               </div>
               {!canUseKidsTariff && (
                 <div className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
-                  {eligibleMother
+                  {hasDriverRole
+                    ? "Для аккаунтов с ролью водителя детский тариф и добавление детей недоступны."
+                    : eligibleMother
                     ? "Чтобы воспользоваться тарифом «Ребёнок», сначала добавьте ребёнка до 12 лет в профиле."
                     : "Тариф «Ребёнок» доступен только совершеннолетним женщинам-пассажиркам."}
                 </div>
@@ -488,7 +491,7 @@ function PassengerHome() {
                         </div>
                       </div>
                     </>
-                  ) : (
+                  ) : !hasDriverRole ? (
                     <PassengerChildrenCard
                       motherId={user!.id}
                       eligible={eligibleMother}
@@ -496,7 +499,8 @@ function PassengerHome() {
                       loading={childrenLoading}
                       onSaved={reloadChildren}
                     />
-                  )}
+                  ) : null
+                  }
                 </div>
               )}
             </>

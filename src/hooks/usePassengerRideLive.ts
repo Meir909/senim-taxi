@@ -24,19 +24,40 @@ export function usePassengerRideLive(rideId: string): PassengerRideLiveState {
     setLoading(true);
     setRide(null);
 
-    (async () => {
-      const { data } = await supabase.from("rides").select("*").eq("id", rideId).maybeSingle();
+    async function loadRide(attempt = 0) {
+      const { data, error } = await supabase.from("rides").select("*").eq("id", rideId).maybeSingle();
       if (!mounted) return;
-      setRide(data);
+
+      if (data) {
+        setRide(data);
+        setLoading(false);
+        return;
+      }
+
+      if (attempt < 5) {
+        window.setTimeout(() => {
+          if (mounted) void loadRide(attempt + 1);
+        }, 800);
+        return;
+      }
+
+      if (error) {
+        console.warn("ride load failed", error);
+      }
       setLoading(false);
-    })();
+    }
+
+    void loadRide();
 
     const channel = supabase
       .channel(`ride-${rideId}`)
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "rides", filter: `id=eq.${rideId}` },
-        (payload) => setRide(payload.new as Ride),
+        { event: "*", schema: "public", table: "rides", filter: `id=eq.${rideId}` },
+        (payload) => {
+          setRide((payload.new as Ride | null) ?? null);
+          setLoading(false);
+        },
       )
       .subscribe();
 
