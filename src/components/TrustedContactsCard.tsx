@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTrustedContacts } from "@/hooks/useTrustedContacts";
-import { normalizePhone, type TrustedContact } from "@/lib/trusted-contacts";
+import { type TrustedContact } from "@/lib/trusted-contacts";
+import { normalizePhone } from "@/lib/phone";
 
 function makeContact(name: string, phone: string): TrustedContact {
   return {
