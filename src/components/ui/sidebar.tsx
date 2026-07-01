@@ -33,6 +33,7 @@ type SidebarContextProps = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+// eslint-disable-next-line react-refresh/only-export-components
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
@@ -716,6 +717,7 @@ const SidebarMenuSubButton = React.forwardRef<
 });
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export {
   Sidebar,
   SidebarContent,

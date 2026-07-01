@@ -142,6 +142,9 @@ function PassengerHome() {
 
   useEffect(() => {
     if (activeRide) {
+      const hardTarget = isWaitingStatus(activeRide.status)
+        ? `/passenger/ride/${activeRide.id}/waiting`
+        : `/passenger/ride/${activeRide.id}`;
       void navigate({
         to: isWaitingStatus(activeRide.status)
           ? "/passenger/ride/$rideId/waiting"
@@ -149,6 +152,11 @@ function PassengerHome() {
         params: { rideId: activeRide.id },
         replace: true,
       });
+      window.setTimeout(() => {
+        if (window.location.pathname === "/passenger") {
+          window.location.assign(hardTarget);
+        }
+      }, 250);
     }
   }, [activeRide, navigate]);
 
@@ -306,7 +314,19 @@ function PassengerHome() {
       </div>
     );
   }
-  if (activeRide) return null;
+  if (activeRide) {
+    return (
+      <Card className="grid min-h-[16rem] place-items-center p-6 text-center">
+        <div>
+          <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="mt-3 text-base font-semibold">Открываем заказ</div>
+          <div className="mt-1 text-sm text-muted-foreground">
+            Перенаправляем на экран поиска или ожидания водителя…
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   const ready =
     pickup &&

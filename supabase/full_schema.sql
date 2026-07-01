@@ -263,7 +263,7 @@ LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
     JOIN public.drivers d ON d.id = dl.driver_id
     WHERE d.status = 'online'
       AND d.verification = 'approved'
-      AND dl.updated_at > now() - interval '10 minutes'
+      AND dl.updated_at > now() - interval '5 seconds'
   ) x
   WHERE _radius_km IS NULL OR _radius_km <= 0 OR x.distance_km <= _radius_km
   ORDER BY x.distance_km ASC
