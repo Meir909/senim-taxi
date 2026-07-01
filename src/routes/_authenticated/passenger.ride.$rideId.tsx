@@ -157,7 +157,6 @@ function RideView() {
       lat: driverLoc.lat,
       lng: driverLoc.lng,
       color: "#f59e0b",
-      label: "C",
     });
   }
 
