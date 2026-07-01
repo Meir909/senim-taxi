@@ -6,17 +6,35 @@
 -- MIGRATION: 20260630121055_ef1c3430-c27b-40b7-a928-6eb59218109d.sql
 -- ============================================
 
-CREATE TYPE public.app_role AS ENUM ('passenger','driver','admin');
-CREATE TYPE public.driver_status AS ENUM ('offline','online','on_ride');
-CREATE TYPE public.driver_verification AS ENUM ('pending','approved','rejected');
-CREATE TYPE public.ride_status AS ENUM ('requested','searching','accepted','driver_arriving','driver_arrived','in_progress','completed','cancelled','no_drivers');
-CREATE TYPE public.ride_offer_status AS ENUM ('pending','accepted','rejected','timeout','cancelled');
-CREATE TYPE public.payment_method AS ENUM ('cash','wallet','card_demo');
-CREATE TYPE public.tx_type AS ENUM ('ride_earning','commission','withdrawal','topup','refund','adjustment');
-CREATE TYPE public.tx_status AS ENUM ('pending','completed','failed','cancelled');
-CREATE TYPE public.withdrawal_status AS ENUM ('pending','approved','rejected','paid');
+DO $$ BEGIN
+  CREATE TYPE public.app_role AS ENUM ('passenger','driver','admin');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE TYPE public.driver_status AS ENUM ('offline','online','on_ride');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE TYPE public.driver_verification AS ENUM ('pending','approved','rejected');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE TYPE public.ride_status AS ENUM ('requested','searching','accepted','driver_arriving','driver_arrived','in_progress','completed','cancelled','no_drivers');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE TYPE public.ride_offer_status AS ENUM ('pending','accepted','rejected','timeout','cancelled');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE TYPE public.payment_method AS ENUM ('cash','wallet','card_demo');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE TYPE public.tx_type AS ENUM ('ride_earning','commission','withdrawal','topup','refund','adjustment');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE TYPE public.tx_status AS ENUM ('pending','completed','failed','cancelled');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE TYPE public.withdrawal_status AS ENUM ('pending','approved','rejected','paid');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT, phone TEXT, avatar_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -25,11 +43,14 @@ CREATE TABLE public.profiles (
 GRANT SELECT, INSERT, UPDATE ON public.profiles TO authenticated;
 GRANT ALL ON public.profiles TO service_role;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "profiles_select_any_authenticated" ON public.profiles;
 CREATE POLICY "profiles_select_any_authenticated" ON public.profiles FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 CREATE POLICY "profiles_update_own" ON public.profiles FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+DROP POLICY IF EXISTS "profiles_insert_own" ON public.profiles;
 CREATE POLICY "profiles_insert_own" ON public.profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
 
-CREATE TABLE public.user_roles (
+CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   role public.app_role NOT NULL,
@@ -39,6 +60,7 @@ CREATE TABLE public.user_roles (
 GRANT SELECT ON public.user_roles TO authenticated;
 GRANT ALL ON public.user_roles TO service_role;
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "user_roles_select_own" ON public.user_roles;
 CREATE POLICY "user_roles_select_own" ON public.user_roles FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role public.app_role)
@@ -46,7 +68,7 @@ RETURNS BOOLEAN LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS
   SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role)
 $$;
 
-CREATE TABLE public.drivers (
+CREATE TABLE IF NOT EXISTS public.drivers (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   vehicle_make TEXT, vehicle_model TEXT, vehicle_plate TEXT, vehicle_color TEXT, license_number TEXT,
   verification public.driver_verification NOT NULL DEFAULT 'pending',
@@ -60,11 +82,14 @@ CREATE TABLE public.drivers (
 GRANT SELECT, INSERT, UPDATE ON public.drivers TO authenticated;
 GRANT ALL ON public.drivers TO service_role;
 ALTER TABLE public.drivers ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "drivers_select_for_authenticated" ON public.drivers;
 CREATE POLICY "drivers_select_for_authenticated" ON public.drivers FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "drivers_update_self" ON public.drivers;
 CREATE POLICY "drivers_update_self" ON public.drivers FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+DROP POLICY IF EXISTS "drivers_insert_self" ON public.drivers;
 CREATE POLICY "drivers_insert_self" ON public.drivers FOR INSERT TO authenticated WITH CHECK (auth.uid() = id AND public.has_role(auth.uid(),'driver'));
 
-CREATE TABLE public.driver_locations (
+CREATE TABLE IF NOT EXISTS public.driver_locations (
   driver_id UUID PRIMARY KEY REFERENCES public.drivers(id) ON DELETE CASCADE,
   lat DOUBLE PRECISION NOT NULL, lng DOUBLE PRECISION NOT NULL,
   heading DOUBLE PRECISION, speed DOUBLE PRECISION, accuracy DOUBLE PRECISION,
@@ -73,11 +98,13 @@ CREATE TABLE public.driver_locations (
 GRANT SELECT, INSERT, UPDATE ON public.driver_locations TO authenticated;
 GRANT ALL ON public.driver_locations TO service_role;
 ALTER TABLE public.driver_locations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "driver_locations_self_write" ON public.driver_locations;
 CREATE POLICY "driver_locations_self_write" ON public.driver_locations FOR ALL TO authenticated USING (auth.uid() = driver_id) WITH CHECK (auth.uid() = driver_id);
+DROP POLICY IF EXISTS "driver_locations_read_authenticated" ON public.driver_locations;
 CREATE POLICY "driver_locations_read_authenticated" ON public.driver_locations FOR SELECT TO authenticated USING (true);
-CREATE INDEX idx_driver_locations_lat_lng ON public.driver_locations (lat, lng);
+CREATE INDEX IF NOT EXISTS idx_driver_locations_lat_lng ON public.driver_locations (lat, lng);
 
-CREATE TABLE public.rides (
+CREATE TABLE IF NOT EXISTS public.rides (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   passenger_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   driver_id UUID REFERENCES public.drivers(id) ON DELETE SET NULL,
@@ -97,16 +124,21 @@ CREATE TABLE public.rides (
 GRANT SELECT, INSERT, UPDATE ON public.rides TO authenticated;
 GRANT ALL ON public.rides TO service_role;
 ALTER TABLE public.rides ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "rides_passenger_select" ON public.rides;
 CREATE POLICY "rides_passenger_select" ON public.rides FOR SELECT TO authenticated USING (auth.uid() = passenger_id);
+DROP POLICY IF EXISTS "rides_driver_select" ON public.rides;
 CREATE POLICY "rides_driver_select" ON public.rides FOR SELECT TO authenticated USING (auth.uid() = driver_id);
+DROP POLICY IF EXISTS "rides_passenger_insert" ON public.rides;
 CREATE POLICY "rides_passenger_insert" ON public.rides FOR INSERT TO authenticated WITH CHECK (auth.uid() = passenger_id);
+DROP POLICY IF EXISTS "rides_passenger_update" ON public.rides;
 CREATE POLICY "rides_passenger_update" ON public.rides FOR UPDATE TO authenticated USING (auth.uid() = passenger_id) WITH CHECK (auth.uid() = passenger_id);
+DROP POLICY IF EXISTS "rides_driver_update" ON public.rides;
 CREATE POLICY "rides_driver_update" ON public.rides FOR UPDATE TO authenticated USING (auth.uid() = driver_id) WITH CHECK (auth.uid() = driver_id);
-CREATE INDEX idx_rides_status ON public.rides (status);
-CREATE INDEX idx_rides_passenger ON public.rides (passenger_id, requested_at DESC);
-CREATE INDEX idx_rides_driver ON public.rides (driver_id, requested_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rides_status ON public.rides (status);
+CREATE INDEX IF NOT EXISTS idx_rides_passenger ON public.rides (passenger_id, requested_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rides_driver ON public.rides (driver_id, requested_at DESC);
 
-CREATE TABLE public.ride_offers (
+CREATE TABLE IF NOT EXISTS public.ride_offers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   ride_id UUID NOT NULL REFERENCES public.rides(id) ON DELETE CASCADE,
   driver_id UUID NOT NULL REFERENCES public.drivers(id) ON DELETE CASCADE,
@@ -120,13 +152,15 @@ CREATE TABLE public.ride_offers (
 GRANT SELECT, UPDATE ON public.ride_offers TO authenticated;
 GRANT ALL ON public.ride_offers TO service_role;
 ALTER TABLE public.ride_offers ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "ride_offers_driver_select" ON public.ride_offers;
 CREATE POLICY "ride_offers_driver_select" ON public.ride_offers FOR SELECT TO authenticated USING (auth.uid() = driver_id);
+DROP POLICY IF EXISTS "ride_offers_passenger_select" ON public.ride_offers;
 CREATE POLICY "ride_offers_passenger_select" ON public.ride_offers FOR SELECT TO authenticated
   USING (EXISTS (SELECT 1 FROM public.rides r WHERE r.id = ride_id AND r.passenger_id = auth.uid()));
-CREATE INDEX idx_ride_offers_driver_status ON public.ride_offers (driver_id, status);
-CREATE INDEX idx_ride_offers_ride ON public.ride_offers (ride_id);
+CREATE INDEX IF NOT EXISTS idx_ride_offers_driver_status ON public.ride_offers (driver_id, status);
+CREATE INDEX IF NOT EXISTS idx_ride_offers_ride ON public.ride_offers (ride_id);
 
-CREATE TABLE public.wallets (
+CREATE TABLE IF NOT EXISTS public.wallets (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   balance NUMERIC(12,2) NOT NULL DEFAULT 0,
   pending_balance NUMERIC(12,2) NOT NULL DEFAULT 0,
@@ -136,9 +170,10 @@ CREATE TABLE public.wallets (
 GRANT SELECT ON public.wallets TO authenticated;
 GRANT ALL ON public.wallets TO service_role;
 ALTER TABLE public.wallets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "wallets_select_own" ON public.wallets;
 CREATE POLICY "wallets_select_own" ON public.wallets FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
-CREATE TABLE public.transactions (
+CREATE TABLE IF NOT EXISTS public.transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   ride_id UUID REFERENCES public.rides(id) ON DELETE SET NULL,
@@ -153,10 +188,11 @@ CREATE TABLE public.transactions (
 GRANT SELECT ON public.transactions TO authenticated;
 GRANT ALL ON public.transactions TO service_role;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "transactions_select_own" ON public.transactions;
 CREATE POLICY "transactions_select_own" ON public.transactions FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE INDEX idx_tx_user ON public.transactions (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tx_user ON public.transactions (user_id, created_at DESC);
 
-CREATE TABLE public.withdrawals (
+CREATE TABLE IF NOT EXISTS public.withdrawals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   driver_id UUID NOT NULL REFERENCES public.drivers(id) ON DELETE CASCADE,
   amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
@@ -168,10 +204,12 @@ CREATE TABLE public.withdrawals (
 GRANT SELECT, INSERT ON public.withdrawals TO authenticated;
 GRANT ALL ON public.withdrawals TO service_role;
 ALTER TABLE public.withdrawals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "withdrawals_select_own" ON public.withdrawals;
 CREATE POLICY "withdrawals_select_own" ON public.withdrawals FOR SELECT TO authenticated USING (auth.uid() = driver_id);
+DROP POLICY IF EXISTS "withdrawals_insert_own" ON public.withdrawals;
 CREATE POLICY "withdrawals_insert_own" ON public.withdrawals FOR INSERT TO authenticated WITH CHECK (auth.uid() = driver_id AND public.has_role(auth.uid(),'driver'));
 
-CREATE TABLE public.notifications (
+CREATE TABLE IF NOT EXISTS public.notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   title TEXT NOT NULL, body TEXT, type TEXT NOT NULL,
@@ -182,14 +220,19 @@ CREATE TABLE public.notifications (
 GRANT SELECT, UPDATE ON public.notifications TO authenticated;
 GRANT ALL ON public.notifications TO service_role;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "notifications_select_own" ON public.notifications;
 CREATE POLICY "notifications_select_own" ON public.notifications FOR SELECT TO authenticated USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "notifications_update_own" ON public.notifications;
 CREATE POLICY "notifications_update_own" ON public.notifications FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE INDEX idx_notifications_user ON public.notifications (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON public.notifications (user_id, created_at DESC);
 
 CREATE OR REPLACE FUNCTION public.tg_set_updated_at() RETURNS TRIGGER LANGUAGE plpgsql AS $$
 BEGIN NEW.updated_at = now(); RETURN NEW; END $$;
+DROP TRIGGER IF EXISTS trg_profiles_updated ON public.profiles;
 CREATE TRIGGER trg_profiles_updated BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+DROP TRIGGER IF EXISTS trg_drivers_updated ON public.drivers;
 CREATE TRIGGER trg_drivers_updated BEFORE UPDATE ON public.drivers FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+DROP TRIGGER IF EXISTS trg_rides_updated ON public.rides;
 CREATE TRIGGER trg_rides_updated BEFORE UPDATE ON public.rides FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -201,6 +244,7 @@ BEGIN
   INSERT INTO public.user_roles (user_id, role) VALUES (NEW.id, 'passenger') ON CONFLICT DO NOTHING;
   RETURN NEW;
 END $$;
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- haversine, fixed: filter distance in outer query
@@ -300,10 +344,18 @@ BEGIN
   RETURN v_w;
 END $$;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.rides;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.ride_offers;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.driver_locations;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.rides;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.ride_offers;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.driver_locations;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 ALTER TABLE public.rides REPLICA IDENTITY FULL;
 ALTER TABLE public.ride_offers REPLICA IDENTITY FULL;
 ALTER TABLE public.driver_locations REPLICA IDENTITY FULL;
@@ -386,6 +438,7 @@ BEGIN
   PERFORM public.dispatch_ride(NEW.id);
   RETURN NEW;
 END $$;
+DROP TRIGGER IF EXISTS trg_dispatch_new_ride ON public.rides;
 CREATE TRIGGER trg_dispatch_new_ride AFTER INSERT ON public.rides
   FOR EACH ROW WHEN (NEW.status IN ('requested','searching')) EXECUTE FUNCTION public.tg_dispatch_new_ride();
 
@@ -429,6 +482,12 @@ GRANT EXECUTE ON FUNCTION public.expire_offers_and_redispatch() TO service_role;
 -- pg_cron: run every minute (smallest pg_cron grain). The DB-side trigger covers
 -- the moment a ride is created; this cron handles timeouts + retries.
 CREATE EXTENSION IF NOT EXISTS pg_cron;
+SELECT cron.unschedule('ridenow-redispatch')
+WHERE EXISTS (
+  SELECT 1
+  FROM cron.job
+  WHERE jobname = 'ridenow-redispatch'
+);
 SELECT cron.schedule('ridenow-redispatch', '* * * * *', $$SELECT public.expire_offers_and_redispatch();$$);
 
 
@@ -562,13 +621,17 @@ GRANT ALL ON public.verification_requests TO service_role;
 
 ALTER TABLE public.verification_requests ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS vr_select_own_or_admin ON public.verification_requests;
 CREATE POLICY vr_select_own_or_admin ON public.verification_requests FOR SELECT TO authenticated
   USING (user_id = auth.uid() OR public.has_role(auth.uid(),'admin'));
+DROP POLICY IF EXISTS vr_insert_own ON public.verification_requests;
 CREATE POLICY vr_insert_own ON public.verification_requests FOR INSERT TO authenticated
   WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS vr_update_admin ON public.verification_requests;
 CREATE POLICY vr_update_admin ON public.verification_requests FOR UPDATE TO authenticated
   USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
 
+DROP TRIGGER IF EXISTS trg_vr_updated ON public.verification_requests;
 CREATE TRIGGER trg_vr_updated BEFORE UPDATE ON public.verification_requests
   FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
 
@@ -696,12 +759,20 @@ END $$;
 -- MIGRATION: 20260630152329_c79d7070-bde9-4a25-b808-65a6228c060c.sql
 -- ============================================
 
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('verification', 'verification', false)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS ver_owner_insert ON storage.objects;
 CREATE POLICY ver_owner_insert ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (bucket_id='verification' AND (storage.foldername(name))[1] = auth.uid()::text);
+DROP POLICY IF EXISTS ver_owner_select ON storage.objects;
 CREATE POLICY ver_owner_select ON storage.objects FOR SELECT TO authenticated
   USING (bucket_id='verification' AND ((storage.foldername(name))[1] = auth.uid()::text OR public.has_role(auth.uid(),'admin')));
+DROP POLICY IF EXISTS ver_owner_update ON storage.objects;
 CREATE POLICY ver_owner_update ON storage.objects FOR UPDATE TO authenticated
   USING (bucket_id='verification' AND (storage.foldername(name))[1] = auth.uid()::text);
+DROP POLICY IF EXISTS ver_owner_delete ON storage.objects;
 CREATE POLICY ver_owner_delete ON storage.objects FOR DELETE TO authenticated
   USING (bucket_id='verification' AND (storage.foldername(name))[1] = auth.uid()::text);
 
@@ -1513,11 +1584,13 @@ END $function$;
 -- ============================================
 -- MIGRATION: 20260630192348_a2be176e-0f3f-4a73-af18-0359b5a79daf.sql
 -- ============================================
-CREATE TYPE public.ride_tariff AS ENUM ('standard','kids');
+DO $$ BEGIN
+  CREATE TYPE public.ride_tariff AS ENUM ('standard','kids');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 ALTER TABLE public.rides
-  ADD COLUMN tariff public.ride_tariff NOT NULL DEFAULT 'standard',
-  ADD COLUMN estimated_fare numeric(10,2);
+  ADD COLUMN IF NOT EXISTS tariff public.ride_tariff NOT NULL DEFAULT 'standard',
+  ADD COLUMN IF NOT EXISTS estimated_fare numeric(10,2);
 
 
 -- ============================================
@@ -1562,7 +1635,7 @@ BEGIN
 END;
 $$;
 
-CREATE TABLE public.saved_addresses (
+CREATE TABLE IF NOT EXISTS public.saved_addresses (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   label TEXT NOT NULL,
@@ -1575,9 +1648,11 @@ CREATE TABLE public.saved_addresses (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.saved_addresses TO authenticated;
 GRANT ALL ON public.saved_addresses TO service_role;
 ALTER TABLE public.saved_addresses ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own saved addresses" ON public.saved_addresses;
 CREATE POLICY "Users manage own saved addresses" ON public.saved_addresses
   FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE INDEX idx_saved_addresses_user ON public.saved_addresses(user_id);
+CREATE INDEX IF NOT EXISTS idx_saved_addresses_user ON public.saved_addresses(user_id);
+DROP TRIGGER IF EXISTS update_saved_addresses_updated_at ON public.saved_addresses;
 CREATE TRIGGER update_saved_addresses_updated_at
   BEFORE UPDATE ON public.saved_addresses
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
@@ -2107,8 +2182,23 @@ UPDATE public.passenger_children
 SET iin = COALESCE(iin, lpad(((random() * 100000000000)::bigint % 100000000000)::text, 12, '0'))
 WHERE iin IS NULL;
 
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'passenger_children'
+      AND column_name = 'iin'
+      AND is_nullable = 'YES'
+  ) THEN
+    ALTER TABLE public.passenger_children
+      ALTER COLUMN iin SET NOT NULL;
+  END IF;
+END $$;
+
 ALTER TABLE public.passenger_children
-  ALTER COLUMN iin SET NOT NULL;
+  DROP CONSTRAINT IF EXISTS passenger_children_iin_format_chk;
 
 ALTER TABLE public.passenger_children
   ADD CONSTRAINT passenger_children_iin_format_chk
@@ -2622,3 +2712,33 @@ BEGIN
 END
 $$;
 
+
+-- ============================================
+-- MIGRATION: 20260701143000_require_verified_identity_for_ride_creation.sql
+-- ============================================
+CREATE OR REPLACE FUNCTION public.enforce_verified_passenger_ride()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+DECLARE
+  v_status public.verify_status;
+BEGIN
+  SELECT verification_status
+  INTO v_status
+  FROM public.profiles
+  WHERE id = NEW.passenger_id;
+
+  IF v_status IS DISTINCT FROM 'approved' THEN
+    RAISE EXCEPTION 'Сначала подтвердите личность, чтобы создать заказ';
+  END IF;
+
+  RETURN NEW;
+END
+$$;
+
+DROP TRIGGER IF EXISTS trg_enforce_verified_passenger_ride ON public.rides;
+CREATE TRIGGER trg_enforce_verified_passenger_ride
+BEFORE INSERT ON public.rides
+FOR EACH ROW
+EXECUTE FUNCTION public.enforce_verified_passenger_ride();

@@ -1,4 +1,8 @@
 
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('verification', 'verification', false)
+ON CONFLICT (id) DO NOTHING;
+
 CREATE POLICY ver_owner_insert ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (bucket_id='verification' AND (storage.foldername(name))[1] = auth.uid()::text);
 CREATE POLICY ver_owner_select ON storage.objects FOR SELECT TO authenticated

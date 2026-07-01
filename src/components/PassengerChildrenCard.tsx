@@ -27,8 +27,20 @@ export function PassengerChildrenCard({ motherId, eligible, children, loading, o
     [children],
   );
 
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen && !eligible) {
+      toast.error("Добавлять детей могут только совершеннолетние женщины-пассажирки");
+      return;
+    }
+    setOpen(nextOpen);
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!eligible) {
+      toast.error("Добавлять детей могут только совершеннолетние женщины-пассажирки");
+      return;
+    }
     const form = new FormData(e.currentTarget);
     const fullName = String(form.get("full_name") ?? "").trim();
     const iin = String(form.get("iin") ?? "")
@@ -83,7 +95,7 @@ export function PassengerChildrenCard({ motherId, eligible, children, loading, o
         <Button
           type="button"
           size="sm"
-          onClick={() => setOpen(true)}
+          onClick={() => handleOpenChange(true)}
           disabled={!eligible || !!loading || limitReached}
         >
           <Plus className="mr-1.5 h-4 w-4" /> Добавить
@@ -136,7 +148,7 @@ export function PassengerChildrenCard({ motherId, eligible, children, loading, o
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Добавить ребёнка</DialogTitle>

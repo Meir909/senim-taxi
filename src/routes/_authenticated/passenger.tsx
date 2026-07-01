@@ -41,6 +41,7 @@ function PassengerHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const {
+    profile,
     children,
     eligibleMother,
     loading: childrenLoading,
@@ -69,6 +70,7 @@ function PassengerHome() {
   const [recipientRelation, setRecipientRelation] = useState("");
 
   const canUseKidsTariff = eligibleMother && children.length > 0;
+  const isIdentityVerified = profile?.verification_status === "approved";
   const selectedChild = children.find((child) => child.id === selectedChildId) ?? null;
 
   useEffect(() => {
@@ -149,6 +151,14 @@ function PassengerHome() {
   }, [activeRide, navigate]);
 
   useEffect(() => {
+    if (!user || childrenLoading) return;
+    if (profile && profile.verification_status !== "approved") {
+      toast.error("Сначала подтвердите личность");
+      void navigate({ to: "/verify-identity", replace: true });
+    }
+  }, [user, profile, childrenLoading, navigate]);
+
+  useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (p) => setCenter({ lat: p.coords.latitude, lng: p.coords.longitude }),
@@ -216,6 +226,10 @@ function PassengerHome() {
 
   async function handleRequest() {
     if (!user || !pickup || !dropoff) return;
+    if (!isIdentityVerified) {
+      toast.error("Сначала подтвердите личность, чтобы создать заказ");
+      return;
+    }
     if (tariff === "kids" && !eligibleMother) {
       toast.error("Детский тариф доступен только совершеннолетним женщинам-пассажиркам");
       return;
@@ -278,6 +292,7 @@ function PassengerHome() {
   const ready =
     pickup &&
     dropoff &&
+    isIdentityVerified &&
     !submitting &&
     (tariff !== "kids" ||
       (!!selectedChild &&
@@ -329,6 +344,11 @@ function PassengerHome() {
           />
           {pickup && dropoff && (
             <>
+              {!isIdentityVerified && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  Подтвердите личность в профиле, чтобы заказывать поездки.
+                </div>
+              )}
               <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-xs">
                 {routeLoading ? (
                   <span className="flex items-center gap-2 text-muted-foreground">
@@ -476,7 +496,9 @@ function PassengerHome() {
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {route && pickup && dropoff
               ? `Заказать — ${fmtKzt(calcFare(tariff, route.distance_m, route.duration_s))}`
-              : "Заказать поездку"}
+              : isIdentityVerified
+                ? "Заказать поездку"
+                : "Подтвердите личность"}
           </Button>
         </Card>
       </div>
