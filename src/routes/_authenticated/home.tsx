@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { isWaitingStatus } from "@/lib/passenger-rides";
+import { getPassengerRideRoute } from "@/lib/passenger-rides";
 
 export const Route = createFileRoute("/_authenticated/home")({
   component: HomeRedirect,
@@ -48,9 +48,7 @@ function HomeRedirect() {
         if (cancelled) return;
         if (activeRide?.id) {
           void navigate({
-            to: isWaitingStatus(activeRide.status)
-              ? "/passenger/ride/$rideId/waiting"
-              : "/passenger/ride/$rideId",
+            to: getPassengerRideRoute(activeRide.status),
             params: { rideId: activeRide.id },
             replace: true,
           });

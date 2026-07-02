@@ -2,12 +2,18 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { PassengerSearchingPage } from "@/components/PassengerSearchingPage";
 import { PassengerWaitingPage } from "@/components/PassengerWaitingPage";
 import { useRideDropoffPin } from "@/hooks/useRideDropoffPin";
 import { useRidePickupPin } from "@/hooks/useRidePickupPin";
 import { usePassengerRideLive } from "@/hooks/usePassengerRideLive";
 import { useAuth } from "@/lib/auth-context";
-import { cancelPassengerRide, isWaitingStatus } from "@/lib/passenger-rides";
+import {
+  cancelPassengerRide,
+  getPassengerRideRoute,
+  isSearchingStatus,
+  isWaitingStatus,
+} from "@/lib/passenger-rides";
 
 export const Route = createFileRoute("/_authenticated/passenger/ride/$rideId/waiting")({
   component: WaitingPage,
@@ -25,9 +31,9 @@ function WaitingPage() {
 
   useEffect(() => {
     if (!ride) return;
-    if (!isWaitingStatus(ride.status)) {
+    if (!isSearchingStatus(ride.status) && !isWaitingStatus(ride.status)) {
       void navigate({
-        to: "/passenger/ride/$rideId",
+        to: getPassengerRideRoute(ride.status),
         params: { rideId: ride.id },
         replace: true,
       });
@@ -60,6 +66,10 @@ function WaitingPage() {
 
   if (!ride) {
     return <div className="text-center text-muted-foreground">Поездка не найдена.</div>;
+  }
+
+  if (isSearchingStatus(ride.status)) {
+    return <PassengerSearchingPage ride={ride} onCancel={cancel} cancelling={cancelling} />;
   }
 
   if (!isWaitingStatus(ride.status)) {

@@ -17,7 +17,7 @@ import { usePassengerChildren } from "@/hooks/usePassengerChildren";
 import { geocode2gis, reverseGeocode2gis, getRoute2gis } from "@/lib/maps.functions";
 import { TARIFFS, calcFare, fmtKzt, type Tariff } from "@/lib/fare";
 import { formatChildMeta } from "@/lib/passenger-children";
-import { isWaitingStatus, primePassengerRideSnapshot } from "@/lib/passenger-rides";
+import { getPassengerRideRoute, primePassengerRideSnapshot } from "@/lib/passenger-rides";
 import { normalizePhone } from "@/lib/phone";
 import tariffStandardImg from "@/assets/tariff-standard.jpg";
 import tariffKidsImg from "@/assets/tariff-kids.jpg";
@@ -173,9 +173,7 @@ function PassengerHome() {
     const isOnRideRoute = pathname.startsWith(`/passenger/ride/${activeRide.id}`);
     if (isOnRideRoute) return;
     void navigate({
-      to: isWaitingStatus(activeRide.status)
-        ? "/passenger/ride/$rideId/waiting"
-        : "/passenger/ride/$rideId",
+      to: getPassengerRideRoute(activeRide.status),
       params: { rideId: activeRide.id },
       replace: true,
     });
@@ -321,9 +319,7 @@ function PassengerHome() {
       primePassengerRideSnapshot(data);
       setActiveRide(data);
       await navigate({
-        to: isWaitingStatus(data.status)
-          ? "/passenger/ride/$rideId/waiting"
-          : "/passenger/ride/$rideId",
+        to: getPassengerRideRoute(data.status),
         params: { rideId: data.id },
         replace: true,
       });
@@ -375,7 +371,7 @@ function PassengerHome() {
         </div>
       )}
 
-      <div className="absolute inset-x-3 bottom-3 z-10">
+      <div className="absolute inset-x-3 bottom-3 z-10 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain pr-1">
         <Card className="space-y-3 p-4 shadow-xl">
           <FieldButton
             color="#16a34a"

@@ -16,6 +16,11 @@ export const WAITING_STATUSES: ReadonlyArray<Ride["status"]> = [
 
 export const SEARCHING_STATUSES: ReadonlyArray<Ride["status"]> = ["requested", "searching"];
 
+export const PRE_RIDE_STATUSES: ReadonlyArray<Ride["status"]> = [
+  ...SEARCHING_STATUSES,
+  ...WAITING_STATUSES,
+];
+
 export const STATUS_LABEL: Record<Ride["status"], string> = {
   requested: "Создаём заказ…",
   searching: "Ищем водителя…",
@@ -34,6 +39,16 @@ export function isWaitingStatus(status: Ride["status"]): boolean {
 
 export function isSearchingStatus(status: Ride["status"]): boolean {
   return SEARCHING_STATUSES.includes(status);
+}
+
+export function isPreRideStatus(status: Ride["status"]): boolean {
+  return PRE_RIDE_STATUSES.includes(status);
+}
+
+export function getPassengerRideRoute(status: Ride["status"]) {
+  return isPreRideStatus(status)
+    ? "/passenger/ride/$rideId/waiting"
+    : "/passenger/ride/$rideId";
 }
 
 export function primePassengerRideSnapshot(ride: Ride | null) {
