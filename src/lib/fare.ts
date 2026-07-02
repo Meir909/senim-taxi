@@ -1,5 +1,7 @@
 export type Tariff = "standard" | "kids" | "delivery" | "cargo";
 
+const CHILD_SEAT_SURCHARGE = 300;
+
 export const TARIFFS: Record<
   Tariff,
   {
@@ -45,11 +47,16 @@ export const TARIFFS: Record<
   },
 };
 
-export function calcFare(tariff: Tariff, distanceM: number, durationS: number): number {
+export function calcFare(
+  tariff: Tariff,
+  distanceM: number,
+  durationS: number,
+  withChildSeat = false,
+): number {
   const t = TARIFFS[tariff];
   const km = Math.max(0, distanceM) / 1000;
   const min = Math.max(0, durationS) / 60;
-  const raw = t.base + km * t.perKm + min * t.perMin;
+  const raw = t.base + km * t.perKm + min * t.perMin + (withChildSeat ? CHILD_SEAT_SURCHARGE : 0);
   return Math.max(0, Math.round(raw / 50) * 50);
 }
 

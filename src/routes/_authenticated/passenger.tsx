@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Baby, Loader2, MapPin, Search, ShieldCheck, X, Crosshair } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
@@ -89,6 +90,7 @@ function PassengerHome() {
   } | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [tariff, setTariff] = useState<Tariff>("standard");
+  const [requiresChildSeat, setRequiresChildSeat] = useState(false);
   const [selectedChildId, setSelectedChildId] = useState<string>("");
   const [recipientFullName, setRecipientFullName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
@@ -217,6 +219,11 @@ function PassengerHome() {
     setRecipientRelation("");
   }, [tariff]);
 
+  useEffect(() => {
+    if (tariff === "standard" || tariff === "kids") return;
+    setRequiresChildSeat(false);
+  }, [tariff]);
+
   const markers = useMemo<MapMarker[]>(() => {
     const m: MapMarker[] = [];
     if (pickup)
@@ -280,7 +287,12 @@ function PassengerHome() {
     setSubmitting(true);
     try {
       const tripMetrics = route ?? buildFallbackTripMetrics(pickup, dropoff);
-      const fare = calcFare(tariff, tripMetrics.distance_m, tripMetrics.duration_s);
+      const fare = calcFare(
+        tariff,
+        tripMetrics.distance_m,
+        tripMetrics.duration_s,
+        requiresChildSeat,
+      );
       const { data, error } = await supabase
         .from("rides")
         .insert({
@@ -297,6 +309,7 @@ function PassengerHome() {
           recipient_full_name: tariff === "kids" ? recipientFullName.trim() : null,
           recipient_phone: tariff === "kids" ? normalizePhone(recipientPhone) : null,
           recipient_relation: tariff === "kids" ? recipientRelation.trim() : null,
+          requires_child_seat: requiresChildSeat,
           estimated_fare: fare,
           distance_km: Number((tripMetrics.distance_m / 1000).toFixed(2)),
           duration_min: Math.max(1, Math.round(tripMetrics.duration_s / 60)),
@@ -412,7 +425,14 @@ function PassengerHome() {
                 {(["standard", "kids", "delivery", "cargo"] as const).map((id) => {
                   const t = TARIFFS[id];
                   const img = TARIFF_IMAGES[id];
-                  const price = route ? calcFare(id, route.distance_m, route.duration_s) : null;
+                  const price = route
+                    ? calcFare(
+                        id,
+                        route.distance_m,
+                        route.duration_s,
+                        requiresChildSeat && (id === "standard" || id === "kids"),
+                      )
+                    : null;
                   const active = tariff === id;
                   const disabled = id === "kids" && !canUseKidsTariff;
                   return (
@@ -443,6 +463,33 @@ function PassengerHome() {
                   );
                 })}
               </div>
+              {(tariff === "standard" || tariff === "kids") && (
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold">С детским креслом</div>
+                      <div className="text-xs text-muted-foreground">
+                        Если включить, заказ увидят только водители с детским креслом.
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {requiresChildSeat ? "Вкл" : "Выкл"}
+                      </span>
+                      <Switch
+                        checked={requiresChildSeat}
+                        onCheckedChange={setRequiresChildSeat}
+                        aria-label="С детским креслом"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs font-medium text-primary">
+                    {requiresChildSeat
+                      ? "Стоимость будет чуть выше из-за детского кресла."
+                      : "Если кресло не нужно, заказ не ограничивается только такими водителями."}
+                  </div>
+                </div>
+              )}
               {!canUseKidsTariff && (
                 <div className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
                   {hasDriverRole
@@ -541,7 +588,9 @@ function PassengerHome() {
           <Button onClick={handleRequest} disabled={!ready} size="lg" className="w-full">
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {route && pickup && dropoff
-              ? `Заказать — ${fmtKzt(calcFare(tariff, route.distance_m, route.duration_s))}`
+              ? `Заказать — ${fmtKzt(
+                  calcFare(tariff, route.distance_m, route.duration_s, requiresChildSeat),
+                )}`
               : isIdentityVerified
                 ? "Заказать поездку"
                 : "Подтвердите личность"}

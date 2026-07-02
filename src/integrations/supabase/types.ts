@@ -438,6 +438,7 @@ export type Database = {
           recipient_full_name: string | null;
           recipient_phone: string | null;
           recipient_relation: string | null;
+          requires_child_seat: boolean;
           requested_at: string;
           started_at: string | null;
           status: Database["public"]["Enums"]["ride_status"];
@@ -474,6 +475,7 @@ export type Database = {
           recipient_full_name?: string | null;
           recipient_phone?: string | null;
           recipient_relation?: string | null;
+          requires_child_seat?: boolean;
           requested_at?: string;
           dropoff_pin_verified_at?: string | null;
           started_at?: string | null;
@@ -511,6 +513,7 @@ export type Database = {
           recipient_full_name?: string | null;
           recipient_phone?: string | null;
           recipient_relation?: string | null;
+          requires_child_seat?: boolean;
           requested_at?: string;
           dropoff_pin_verified_at?: string | null;
           started_at?: string | null;

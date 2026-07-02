@@ -39,6 +39,7 @@ type Offer = Database["public"]["Tables"]["ride_offers"]["Row"] & {
     | "distance_km"
     | "duration_min"
     | "estimated_fare"
+    | "requires_child_seat"
   >;
 };
 type PassengerInfo = { id: string; name: string; rating: number | null };
@@ -105,7 +106,7 @@ function DriverHome() {
       const { data } = await supabase
         .from("ride_offers")
         .select(
-          "*, rides(pickup_address, dropoff_address, pickup_lat, pickup_lng, passenger_id, tariff, child_name, distance_km, duration_min, estimated_fare)",
+          "*, rides(pickup_address, dropoff_address, pickup_lat, pickup_lng, passenger_id, tariff, child_name, distance_km, duration_min, estimated_fare, requires_child_seat)",
         )
         .eq("driver_id", user.id)
         .eq("status", "pending")
@@ -288,6 +289,7 @@ function DriverHome() {
               (activeRide.tariff as "standard" | "kids" | "delivery" | "cargo") ?? "standard",
               distanceKm * 1000,
               durationMin * 60,
+              activeRide.requires_child_seat,
             );
 
     const { data, error } = await supabase.rpc("complete_ride_secure", {
@@ -414,6 +416,11 @@ function DriverHome() {
                       {o.rides?.tariff === "kids" && (
                         <div className="mt-1 text-xs font-medium text-primary">
                           Детский тариф{o.rides.child_name ? ` · ${o.rides.child_name}` : ""}
+                        </div>
+                      )}
+                      {o.rides?.requires_child_seat && (
+                        <div className="mt-1 text-xs font-medium text-amber-600">
+                          Нужна машина с детским креслом
                         </div>
                       )}
                       <div className="mt-1 text-xs text-muted-foreground">
