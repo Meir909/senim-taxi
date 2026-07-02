@@ -30,6 +30,29 @@ const TARIFF_IMAGES: Record<Tariff, string> = {
   cargo: tariffCargoImg,
 };
 
+function haversineDistanceM(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371000;
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+function buildFallbackTripMetrics(
+  pickup: { lat: number; lng: number },
+  dropoff: { lat: number; lng: number },
+) {
+  const distance_m = Math.round(haversineDistanceM(pickup, dropoff));
+  const avgCitySpeedKmh = 28;
+  const duration_s = Math.max(60, Math.round((distance_m / 1000 / avgCitySpeedKmh) * 3600));
+  return { distance_m, duration_s };
+}
+
 type Ride = Database["public"]["Tables"]["rides"]["Row"];
 type Point = { lat: number; lng: number; address: string };
 type Field = "pickup" | "dropoff";
@@ -256,7 +279,8 @@ function PassengerHome() {
     }
     setSubmitting(true);
     try {
-      const fare = route ? calcFare(tariff, route.distance_m, route.duration_s) : null;
+      const tripMetrics = route ?? buildFallbackTripMetrics(pickup, dropoff);
+      const fare = calcFare(tariff, tripMetrics.distance_m, tripMetrics.duration_s);
       const { data, error } = await supabase
         .from("rides")
         .insert({
@@ -274,8 +298,8 @@ function PassengerHome() {
           recipient_phone: tariff === "kids" ? normalizePhone(recipientPhone) : null,
           recipient_relation: tariff === "kids" ? recipientRelation.trim() : null,
           estimated_fare: fare,
-          distance_km: route ? Number((route.distance_m / 1000).toFixed(2)) : null,
-          duration_min: route ? Math.max(1, Math.round(route.duration_s / 60)) : null,
+          distance_km: Number((tripMetrics.distance_m / 1000).toFixed(2)),
+          duration_min: Math.max(1, Math.round(tripMetrics.duration_s / 60)),
         })
         .select()
         .single();

@@ -43,6 +43,9 @@ type Offer = Database["public"]["Tables"]["ride_offers"]["Row"] & {
     | "passenger_id"
     | "tariff"
     | "child_name"
+    | "distance_km"
+    | "duration_min"
+    | "estimated_fare"
   >;
 };
 type PassengerInfo = { id: string; name: string; rating: number | null };
@@ -110,7 +113,7 @@ function DriverHome() {
       const { data } = await supabase
         .from("ride_offers")
         .select(
-          "*, rides(pickup_address, dropoff_address, pickup_lat, pickup_lng, passenger_id, tariff, child_name)",
+          "*, rides(pickup_address, dropoff_address, pickup_lat, pickup_lng, passenger_id, tariff, child_name, distance_km, duration_min, estimated_fare)",
         )
         .eq("driver_id", user.id)
         .eq("status", "pending")
@@ -372,8 +375,18 @@ function DriverHome() {
                         </div>
                       )}
                       <div className="mt-1 text-xs text-muted-foreground">
-                        {o.distance_km ? `${Number(o.distance_km).toFixed(2)} км` : ""} · истекает{" "}
-                        {new Date(o.expires_at).toLocaleTimeString("ru-RU")}
+                        {o.distance_km
+                          ? `${Number(o.distance_km).toFixed(2)} км до точки A`
+                          : "Дистанция до точки A уточняется"}{" "}
+                        · маршрут{" "}
+                        {o.rides?.distance_km != null
+                          ? `${Number(o.rides.distance_km).toFixed(1)} км`
+                          : "рассчитан по fallback"}{" "}
+                        ·{" "}
+                        {o.rides?.estimated_fare != null
+                          ? fmtKzt(Number(o.rides.estimated_fare))
+                          : "цена уточняется"}{" "}
+                        · истекает {new Date(o.expires_at).toLocaleTimeString("ru-RU")}
                       </div>
                     </div>
                     <div className="flex shrink-0 gap-2">
