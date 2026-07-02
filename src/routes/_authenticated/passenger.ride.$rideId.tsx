@@ -273,8 +273,8 @@ function RideView() {
               value={liveDistanceKm != null ? `${liveDistanceKm.toFixed(1)} км` : "—"}
             />
             <LiveMetric
-              label="Обновление"
-              value={locAgeSec != null ? `${locAgeSec} сек` : "—"}
+              label="К оплате"
+              value={fmtKzt(Number(ride.estimated_fare ?? ride.fare_amount ?? 0))}
             />
             <LiveMetric label="Тариф" value={tariffName} />
           </div>
@@ -376,6 +376,24 @@ function RideView() {
       )}
 
       {ride.status === "in_progress" && <TripSafetyCard />}
+
+      {ride.status !== "completed" &&
+        ride.status !== "cancelled" &&
+        ride.status !== "no_drivers" && (
+          <Button
+            variant="outline"
+            className="w-full"
+            disabled={cancelling}
+            onClick={() => void cancel()}
+          >
+            {cancelling ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <X className="mr-2 h-4 w-4" />
+            )}
+            Отменить заказ
+          </Button>
+        )}
 
       {ride.status === "completed" && (
         <Button
