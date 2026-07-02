@@ -88,6 +88,36 @@ const routeSchema = z.object({
 
 type RoutePoint = [number, number];
 
+function haversineDistanceM(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const R = 6371000;
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+function buildFallbackRoute(data: z.infer<typeof routeSchema>) {
+  const distance_m = Math.round(haversineDistanceM(data.pickup, data.dropoff));
+  const avgCitySpeedKmh = 28;
+  const duration_s = Math.max(60, Math.round((distance_m / 1000 / avgCitySpeedKmh) * 3600));
+  return {
+    coordinates: [
+      [data.pickup.lng, data.pickup.lat],
+      [data.dropoff.lng, data.dropoff.lat],
+    ] as RoutePoint[],
+    distance_m,
+    duration_s,
+  };
+}
+
 function parseLineString(wkt: string): RoutePoint[] {
   const m = wkt.match(/LINESTRING\s*\(([^)]+)\)/i);
   if (!m) return [];
@@ -102,7 +132,7 @@ export const getRoute2gis = createServerFn({ method: "POST" })
   .validator((d: unknown) => routeSchema.parse(d))
   .handler(async ({ data }) => {
     const key = get2gisKey();
-    if (!key) return { coordinates: [] as RoutePoint[], distance_m: 0, duration_s: 0 };
+    if (!key) return buildFallbackRoute(data);
     try {
       const res = await fetch(
         `https://routing.api.2gis.com/routing/7.0.0/global?key=${encodeURIComponent(key)}`,
@@ -116,12 +146,12 @@ export const getRoute2gis = createServerFn({ method: "POST" })
             ],
             transport: "driving",
             route_mode: "fastest",
-            traffic_mode: "jam",
+            traffic_mode: "disabled",
             output: "detailed",
           }),
         },
       );
-      if (!res.ok) return { coordinates: [], distance_m: 0, duration_s: 0 };
+      if (!res.ok) return buildFallbackRoute(data);
       const json = (await res.json()) as {
         result?: Array<{
           total_distance?: number;
@@ -130,7 +160,7 @@ export const getRoute2gis = createServerFn({ method: "POST" })
         }>;
       };
       const r = json.result?.[0];
-      if (!r) return { coordinates: [], distance_m: 0, duration_s: 0 };
+      if (!r) return buildFallbackRoute(data);
       const coords: RoutePoint[] = [];
       for (const mv of r.maneuvers ?? []) {
         for (const g of mv.outcoming_path?.geometry ?? []) {
@@ -147,12 +177,15 @@ export const getRoute2gis = createServerFn({ method: "POST" })
           }
         }
       }
+      if (coords.length < 2) {
+        return buildFallbackRoute(data);
+      }
       return {
         coordinates: coords,
         distance_m: r.total_distance ?? 0,
         duration_s: r.total_duration ?? 0,
       };
     } catch {
-      return { coordinates: [], distance_m: 0, duration_s: 0 };
+      return buildFallbackRoute(data);
     }
   });
