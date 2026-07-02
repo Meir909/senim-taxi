@@ -8,14 +8,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +19,7 @@ import { Loader2, Navigation, X } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { MapGL, type MapMarker } from "@/components/MapGL";
 import { getRoute2gis } from "@/lib/maps.functions";
+import { calcFare } from "@/lib/fare";
 import { RideSettlementCard } from "@/components/RideSettlementCard";
 import { UserBadgeCard } from "@/components/UserBadgeCard";
 import { StarRating } from "@/components/StarRating";
@@ -85,7 +78,6 @@ function DriverHome() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [activeRide, setActiveRide] = useState<Ride | null>(null);
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
-  const [completeOpen, setCompleteOpen] = useState(false);
   const [rideToRate, setRideToRate] = useState<Ride | null>(null);
 
   useEffect(() => {
@@ -267,6 +259,56 @@ function DriverHome() {
     }
   }
 
+  async function completeRide(dropoffPin?: string) {
+    if (!activeRide) return;
+    if (!pos) {
+      toast.error("Не удалось определить местоположение");
+      return;
+    }
+
+    const distanceKm =
+      activeRide.distance_km != null
+        ? Number(activeRide.distance_km)
+        : distanceMeters(
+            { lat: activeRide.pickup_lat, lng: activeRide.pickup_lng },
+            { lat: activeRide.dropoff_lat, lng: activeRide.dropoff_lng },
+          ) / 1000;
+    const durationMin =
+      activeRide.duration_min != null
+        ? Math.max(1, Number(activeRide.duration_min))
+        : activeRide.started_at
+          ? Math.max(1, Math.round((Date.now() - new Date(activeRide.started_at).getTime()) / 60000))
+          : 1;
+    const fareNum =
+      activeRide.estimated_fare != null
+        ? Number(activeRide.estimated_fare)
+        : activeRide.fare_amount != null
+          ? Number(activeRide.fare_amount)
+          : calcFare(
+              (activeRide.tariff as "standard" | "kids" | "delivery" | "cargo") ?? "standard",
+              distanceKm * 1000,
+              durationMin * 60,
+            );
+
+    const { data, error } = await supabase.rpc("complete_ride_secure", {
+      _ride_id: activeRide.id,
+      _fare: fareNum,
+      _distance: Number(distanceKm.toFixed(2)),
+      _duration: durationMin,
+      _lat: pos.lat,
+      _lng: pos.lng,
+      _dropoff_pin: activeRide.tariff === "kids" ? dropoffPin?.trim() || null : null,
+    });
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    toast.success(`Зачислено: ${(fareNum * 0.83).toFixed(2)}`);
+    setRideToRate((data as Ride | null) ?? activeRide);
+  }
+
   if (loading)
     return (
       <div className="grid h-64 place-items-center">
@@ -339,7 +381,7 @@ function DriverHome() {
           pos={pos}
           onArrived={() => void setRideStatus("driver_arrived")}
           onStart={(pin) => void setRideStatus("in_progress", pin)}
-          onComplete={() => setCompleteOpen(true)}
+          onComplete={(pin) => void completeRide(pin)}
           onCancel={() => void cancelRide()}
         />
       ) : rideToRate ? (
@@ -414,17 +456,6 @@ function DriverHome() {
         </div>
       )}
 
-      <CompleteDialog
-        open={completeOpen}
-        onOpenChange={setCompleteOpen}
-        ride={activeRide}
-        pos={pos}
-        startedAt={activeRide?.started_at ?? null}
-        onDone={(completed) => {
-          setCompleteOpen(false);
-          if (completed) setRideToRate(completed);
-        }}
-      />
     </div>
   );
 }
@@ -702,17 +733,13 @@ function ActiveRideCard({
   pos: { lat: number; lng: number } | null;
   onArrived: () => void;
   onStart: (pin?: string) => void;
-  onComplete: () => void;
+  onComplete: (pin?: string) => void;
   onCancel: () => void;
 }) {
   const [pin, setPin] = useState("");
+  const [dropoffPin, setDropoffPin] = useState("");
+  const [completing, setCompleting] = useState(false);
   const nextLabel = STATUS_NEXT_LABEL[ride.status];
-  const handleNext =
-    ride.status === "in_progress"
-      ? onComplete
-      : ride.status === "driver_arrived"
-        ? () => onStart(pin)
-        : onArrived;
 
   const distToDropoff = pos
     ? distanceMeters(pos, { lat: ride.dropoff_lat, lng: ride.dropoff_lng })
@@ -730,6 +757,23 @@ function ActiveRideCard({
     yandex: `https://yandex.ru/maps/?rtext=${pos ? `${pos.lat}%2C${pos.lng}~` : ""}${target.lat}%2C${target.lng}&rtt=auto`,
   };
   const openNav = (url: string) => window.open(url, "_blank", "noopener");
+
+  async function handleNext() {
+    if (ride.status === "in_progress") {
+      setCompleting(true);
+      try {
+        await onComplete(dropoffPin);
+      } finally {
+        setCompleting(false);
+      }
+      return;
+    }
+    if (ride.status === "driver_arrived") {
+      onStart(pin);
+      return;
+    }
+    onArrived();
+  }
 
   return (
     <Card className="space-y-3 p-5">
@@ -787,15 +831,34 @@ function ActiveRideCard({
           />
         </div>
       )}
+      {ride.tariff === "kids" && ride.status === "in_progress" && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+          <div className="text-sm font-semibold">PIN получателя</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            Для завершения поездки введите 4-значный PIN человека, который принимает ребёнка.
+          </div>
+          <Input
+            className="mt-3 text-center text-lg tracking-[0.3em]"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="0000"
+            value={dropoffPin}
+            onChange={(e) => setDropoffPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+          />
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
         {nextLabel && (
           <Button
             onClick={handleNext}
             disabled={
+              completing ||
               (ride.status === "in_progress" && tooFar) ||
-              (ride.tariff === "kids" && ride.status === "driver_arrived" && pin.length !== 4)
+              (ride.tariff === "kids" && ride.status === "driver_arrived" && pin.length !== 4) ||
+              (ride.tariff === "kids" && ride.status === "in_progress" && dropoffPin.length !== 4)
             }
           >
+            {completing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {nextLabel}
           </Button>
         )}
@@ -822,173 +885,5 @@ function ActiveRideCard({
         )}
       </div>
     </Card>
-  );
-}
-
-function CompleteDialog({
-  open,
-  onOpenChange,
-  ride,
-  pos,
-  startedAt,
-  onDone,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  ride: Ride | null;
-  pos: { lat: number; lng: number } | null;
-  startedAt: string | null;
-  onDone: (completed: Ride | null) => void;
-}) {
-  const [fare, setFare] = useState("");
-  const [distance, setDistance] = useState("");
-  const [dropoffPin, setDropoffPin] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setFare("");
-      setDistance("");
-      setDropoffPin("");
-    }
-  }, [open]);
-
-  if (!ride) return null;
-
-  const durationMin = startedAt
-    ? Math.max(1, Math.round((Date.now() - new Date(startedAt).getTime()) / 60000))
-    : 1;
-
-  const distToDropoff = pos
-    ? distanceMeters(pos, { lat: ride.dropoff_lat, lng: ride.dropoff_lng })
-    : null;
-  const tooFar = distToDropoff == null || distToDropoff > 200;
-
-  async function submit() {
-    const fareNum = Number(fare);
-    const distNum = Number(distance);
-    if (!ride) return;
-    if (!pos) {
-      toast.error("Не удалось определить местоположение");
-      return;
-    }
-    if (tooFar) {
-      toast.error(
-        `Подъезжайте к точке назначения${distToDropoff != null ? ` (${Math.round(distToDropoff)} м)` : ""}`,
-      );
-      return;
-    }
-    if (!fareNum || fareNum <= 0) {
-      toast.error("Укажите стоимость");
-      return;
-    }
-    if (!distNum || distNum <= 0) {
-      toast.error("Укажите расстояние");
-      return;
-    }
-    if (ride.tariff === "kids" && dropoffPin.length !== 4) {
-      toast.error("Введите PIN получателя");
-      return;
-    }
-    setBusy(true);
-    const { data, error } = await supabase.rpc("complete_ride_secure", {
-      _ride_id: ride.id,
-      _fare: fareNum,
-      _distance: distNum,
-      _duration: durationMin,
-      _lat: pos.lat,
-      _lng: pos.lng,
-      _dropoff_pin: ride.tariff === "kids" ? dropoffPin : null,
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success(`Зачислено: ${(fareNum * 0.83).toFixed(2)}`);
-    onDone((data as Ride | null) ?? ride);
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Завершить поездку</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          {tooFar && (
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
-              Завершить можно только в радиусе 200 м от точки назначения
-              {distToDropoff != null && ` (сейчас ${Math.round(distToDropoff)} м)`}.
-            </div>
-          )}
-          <div>
-            <Label htmlFor="fare">Стоимость (₸)</Label>
-            <Input
-              id="fare"
-              inputMode="decimal"
-              value={fare}
-              onChange={(e) => setFare(e.target.value)}
-              placeholder="напр. 1500"
-            />
-          </div>
-          <div>
-            <Label htmlFor="dist">Расстояние (км)</Label>
-            <Input
-              id="dist"
-              inputMode="decimal"
-              value={distance}
-              onChange={(e) => setDistance(e.target.value)}
-              placeholder="напр. 4.3"
-            />
-          </div>
-          {ride.tariff === "kids" && (
-            <div className="space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
-              <div>
-                <div className="text-sm font-semibold">Передача ребёнка получателю</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Завершить поездку можно только после передачи ребёнка указанному получателю и
-                  ввода его PIN-кода.
-                </div>
-              </div>
-              <div className="rounded-lg border bg-background p-3 text-sm">
-                <div className="font-medium">
-                  {ride.recipient_full_name || "Получатель не указан"}
-                </div>
-                <div className="mt-1 text-muted-foreground">
-                  {[ride.recipient_relation, ride.recipient_phone].filter(Boolean).join(" · ")}
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="dropoff_pin">PIN получателя</Label>
-                <Input
-                  id="dropoff_pin"
-                  inputMode="numeric"
-                  maxLength={4}
-                  placeholder="0000"
-                  value={dropoffPin}
-                  onChange={(e) => setDropoffPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  className="text-center text-lg tracking-[0.3em]"
-                />
-              </div>
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Длительность: {durationMin} мин · Комиссия платформы: 17%
-          </p>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>
-            Отмена
-          </Button>
-          <Button
-            onClick={submit}
-            disabled={busy || tooFar || (ride.tariff === "kids" && dropoffPin.length !== 4)}
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Завершить"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
