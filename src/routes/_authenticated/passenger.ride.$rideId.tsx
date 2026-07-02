@@ -151,15 +151,6 @@ function RideView() {
     { id: "pickup", lat: ride.pickup_lat, lng: ride.pickup_lng, color: "#16a34a", label: "A" },
     { id: "dropoff", lat: ride.dropoff_lat, lng: ride.dropoff_lng, color: "#2563eb", label: "B" },
   ];
-  if (driverLoc) {
-    markers.push({
-      id: "driver",
-      lat: driverLoc.lat,
-      lng: driverLoc.lng,
-      color: "#f59e0b",
-    });
-  }
-
   const liveDistanceKm =
     driverLoc && ride.status === "in_progress"
       ? haversineKm(
@@ -399,7 +390,7 @@ function RideView() {
         <Button
           variant="ghost"
           className="w-full"
-          onClick={() => void navigate({ to: "/passenger", replace: true })}
+          onClick={() => window.location.replace("/passenger")}
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> На главную
         </Button>
@@ -506,16 +497,11 @@ function LiveMetric({ label, value }: { label: string; value: string }) {
 
 const SEARCH_MESSAGES = [
   "Ищем ближайшего водителя…",
-  "Отправляем запрос подходящим водителям рядом",
+  "Отправляем запрос подходящим водителям по городу",
   "Подбираем оптимальный вариант для вас",
   "Чуть-чуть терпения — почти нашли",
-  "Расширяем зону поиска…",
+  "Проверяем водителей в зоне вашего города",
 ];
-
-function searchRadiusKm(elapsedSec: number): number {
-  const km = 1.5 + Math.floor(elapsedSec / 15) * 0.5;
-  return Math.min(8, km);
-}
 
 function estimatedPickupMin(elapsedSec: number): number {
   const base = 4 + Math.floor(elapsedSec / 30);
@@ -552,9 +538,7 @@ function SearchingScreen({
   }, []);
 
   const tariff = TARIFFS[(ride.tariff as keyof typeof TARIFFS) ?? "standard"] ?? TARIFFS.standard;
-  const radiusKm = searchRadiusKm(elapsed);
   const etaMin = estimatedPickupMin(elapsed);
-  const radiusPct = Math.min(100, Math.round((radiusKm / 8) * 100));
 
   return (
     <div className="space-y-4">
@@ -573,15 +557,8 @@ function SearchingScreen({
           <div className="mt-4 grid w-full grid-cols-2 gap-2">
             <div className="rounded-lg bg-primary-foreground/15 px-3 py-2 text-left">
               <div className="text-[10px] uppercase tracking-wide opacity-80">Зона поиска</div>
-              <div className="mt-0.5 text-base font-semibold tabular-nums">
-                ~{radiusKm.toFixed(1)} км
-              </div>
-              <div className="mt-1 h-1 overflow-hidden rounded-full bg-primary-foreground/20">
-                <div
-                  className="h-full bg-primary-foreground transition-all duration-700 ease-out"
-                  style={{ width: `${radiusPct}%` }}
-                />
-              </div>
+              <div className="mt-0.5 text-base font-semibold">Весь город</div>
+              <div className="mt-1 text-[11px] opacity-80">Поиск идёт по зоне вашего заказа</div>
             </div>
             <div className="rounded-lg bg-primary-foreground/15 px-3 py-2 text-left">
               <div className="text-[10px] uppercase tracking-wide opacity-80">ETA подачи</div>

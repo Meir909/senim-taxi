@@ -103,14 +103,13 @@ export function PassengerWaitingPage({
     { id: "dropoff", lat: ride.dropoff_lat, lng: ride.dropoff_lng, color: "#3b82f6", label: "B" },
   ];
 
-  if (driverLoc) {
-    markers.push({
-      id: "driver",
-      lat: driverLoc.lat,
-      lng: driverLoc.lng,
-      color: "#f59e0b",
-    });
-  }
+  const livePolyline =
+    driverLoc
+      ? ([
+          [driverLoc.lng, driverLoc.lat],
+          [ride.pickup_lng, ride.pickup_lat],
+        ] as Array<[number, number]>)
+      : undefined;
 
   const tariff = TARIFFS[(ride.tariff as keyof typeof TARIFFS) ?? "standard"] ?? TARIFFS.standard;
   const driverName =
@@ -196,6 +195,8 @@ export function PassengerWaitingPage({
         <MapGL
           className="h-64 w-full sm:h-80"
           markers={markers}
+          polyline={livePolyline}
+          polylineColor="#f59e0b"
           center={
             driverLoc
               ? { lat: driverLoc.lat, lng: driverLoc.lng }
